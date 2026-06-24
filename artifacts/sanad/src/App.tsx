@@ -1,16 +1,20 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/lib/auth";
-import { Header } from "@/components/layout/header";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 
-// Pages
+// Auth Pages
+import Welcome from "@/pages/welcome";
+import AuthPhone from "@/pages/auth-phone";
+import AuthEmail from "@/pages/auth-email";
+import ForgotPassword from "@/pages/forgot-password";
+
+// App Pages
 import Home from "@/pages/home";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
+import Discover from "@/pages/discover";
 import Providers from "@/pages/providers";
 import ProviderDetail from "@/pages/provider-detail";
 import NewRequest from "@/pages/new-request";
@@ -21,6 +25,8 @@ import Messages from "@/pages/messages";
 import Chat from "@/pages/chat";
 import Notifications from "@/pages/notifications";
 import Profile from "@/pages/profile";
+import Settings from "@/pages/settings";
+import Emergency from "@/pages/emergency";
 import NotFound from "@/pages/not-found";
 
 // Admin Pages
@@ -30,153 +36,150 @@ import AdminProviders from "@/pages/admin/providers";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
+    queries: { retry: 1, refetchOnWindowFocus: false },
   },
 });
 
-function Router() {
+const AdminLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
+    <aside className="w-64 bg-card border-l border-border p-4 flex flex-col gap-1">
+      <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة سند</h2>
+      <a href="/admin" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">لوحة التحكم</a>
+      <a href="/admin/users" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">المستخدمين</a>
+      <a href="/admin/providers" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">المهنيين</a>
+      <a href="/" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm text-muted-foreground mt-auto">← العودة للتطبيق</a>
+    </aside>
+    <main className="flex-1 overflow-y-auto">{children}</main>
+  </div>
+);
+
+function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin">
-          <ProtectedRoute allowedRoles={['admin']}>
-            <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
-              <aside className="w-64 bg-card border-l border-border p-4 flex flex-col gap-2">
-                <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة سند</h2>
-                <a href="/admin" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">لوحة التحكم</a>
-                <a href="/admin/users" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المستخدمين</a>
-                <a href="/admin/providers" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المهنيين</a>
-                <a href="/" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium text-muted-foreground mt-auto">العودة للتطبيق</a>
-              </aside>
-              <main className="flex-1 overflow-y-auto">
-                <AdminDashboard />
-              </main>
-            </div>
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/admin/users">
-          <ProtectedRoute allowedRoles={['admin']}>
-             <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
-              <aside className="w-64 bg-card border-l border-border p-4 flex flex-col gap-2">
-                <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة سند</h2>
-                <a href="/admin" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">لوحة التحكم</a>
-                <a href="/admin/users" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المستخدمين</a>
-                <a href="/admin/providers" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المهنيين</a>
-                <a href="/" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium text-muted-foreground mt-auto">العودة للتطبيق</a>
-              </aside>
-              <main className="flex-1 overflow-y-auto">
-                <AdminUsers />
-              </main>
-            </div>
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/admin/providers">
-          <ProtectedRoute allowedRoles={['admin']}>
-            <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
-              <aside className="w-64 bg-card border-l border-border p-4 flex flex-col gap-2">
-                <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة سند</h2>
-                <a href="/admin" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">لوحة التحكم</a>
-                <a href="/admin/users" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المستخدمين</a>
-                <a href="/admin/providers" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium">المهنيين</a>
-                <a href="/" className="px-4 py-2 hover:bg-muted rounded-xl transition-colors font-medium text-muted-foreground mt-auto">العودة للتطبيق</a>
-              </aside>
-              <main className="flex-1 overflow-y-auto">
-                <AdminProviders />
-              </main>
-            </div>
-          </ProtectedRoute>
-        </Route>
-
-        {/* Client & Provider Routes */}
-        <Route path="/">
-          <Header />
-          <Home />
-          <BottomNav />
-        </Route>
-
-        <Route path="/providers">
-          <Header />
-          <Providers />
-          <BottomNav />
-        </Route>
-
-        <Route path="/providers/:id">
-          <ProviderDetail />
-          <BottomNav />
-        </Route>
-
-        <Route path="/request/new">
-          <ProtectedRoute>
-            <NewRequest />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/my-requests">
-          <ProtectedRoute>
-            <Header />
-            <MyRequests />
-            <BottomNav />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/my-requests/:id">
-          <ProtectedRoute>
-            <RequestDetail />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/favorites">
-          <ProtectedRoute>
-            <Header />
-            <Favorites />
-            <BottomNav />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/messages">
-          <ProtectedRoute>
-            <Header />
-            <Messages />
-            <BottomNav />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/messages/:id">
-          <ProtectedRoute>
-            <Chat />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/notifications">
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        </Route>
-
-        <Route path="/profile">
-          <ProtectedRoute>
-            <Header />
-            <Profile />
-            <BottomNav />
-          </ProtectedRoute>
-        </Route>
-        
-        <Route>
-          <Header />
-          <NotFound />
-          <BottomNav />
-        </Route>
-      </Switch>
+      {children}
+      <BottomNav />
     </>
+  );
+}
+
+function Router() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center animate-pulse">
+            <span className="text-2xl font-extrabold text-primary">س</span>
+          </div>
+          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Switch>
+      {/* ── Auth Routes (public) ── */}
+      <Route path="/welcome" component={Welcome} />
+      <Route path="/auth/phone" component={AuthPhone} />
+      <Route path="/auth/email" component={AuthEmail} />
+      <Route path="/auth/forgot-password" component={ForgotPassword} />
+      {/* Legacy redirects */}
+      <Route path="/login"><Redirect to="/auth/email" /></Route>
+      <Route path="/register"><Redirect to="/welcome" /></Route>
+
+      {/* ── Admin Routes ── */}
+      <Route path="/admin">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout><AdminDashboard /></AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/users">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout><AdminUsers /></AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/providers">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout><AdminProviders /></AdminLayout>
+        </ProtectedRoute>
+      </Route>
+
+      {/* ── Protected App Routes ── */}
+      <Route path="/">
+        <ProtectedRoute>
+          <AppShell><Home /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/discover">
+        <ProtectedRoute>
+          <AppShell><Discover /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/providers">
+        <ProtectedRoute>
+          <AppShell><Providers /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/providers/:id">
+        <ProtectedRoute>
+          <AppShell><ProviderDetail /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/emergency">
+        <ProtectedRoute>
+          <Emergency />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/request/new">
+        <ProtectedRoute>
+          <NewRequest />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/my-requests">
+        <ProtectedRoute>
+          <AppShell><MyRequests /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/my-requests/:id">
+        <ProtectedRoute>
+          <RequestDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/favorites">
+        <ProtectedRoute>
+          <AppShell><Favorites /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/messages">
+        <ProtectedRoute>
+          <AppShell><Messages /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/messages/:id">
+        <ProtectedRoute>
+          <Chat />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/notifications">
+        <ProtectedRoute>
+          <AppShell><Notifications /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <AppShell><Profile /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+
+      <Route><NotFound /></Route>
+    </Switch>
   );
 }
 

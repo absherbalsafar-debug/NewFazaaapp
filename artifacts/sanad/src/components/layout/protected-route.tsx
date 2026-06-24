@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from "react";
-import { useLocation } from "wouter";
+import { ReactNode } from "react";
+import { Redirect } from "wouter";
 import { useAuth } from "@/lib/auth";
 
 interface ProtectedRouteProps {
@@ -9,27 +9,17 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      setLocation("/login");
-    } else if (!isLoading && user && allowedRoles && !allowedRoles.includes(user.role)) {
-      setLocation("/");
-    }
-  }, [user, isLoading, setLocation, allowedRoles]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-[100dvh] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!user || (allowedRoles && !allowedRoles.includes(user.role))) {
-    return null;
-  }
+  if (!user) return <Redirect to="/welcome" />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) return <Redirect to="/" />;
 
   return <>{children}</>;
 }

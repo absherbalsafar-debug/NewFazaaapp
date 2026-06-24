@@ -1,45 +1,100 @@
-# [Project name]
+# سند — منصة الخدمات والمهنيين
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+منصة رقمية متكاملة تربط العملاء بأفضل المهنيين ومقدمي الخدمات داخل اليمن بطريقة آمنة وسريعة.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/sanad run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL`, `SESSION_SECRET`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite, Tailwind CSS v4, Wouter, TanStack Query, Framer Motion
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Fonts: Alexandria, Cairo, IBM Plex Arabic
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/sanad/` — React+Vite frontend
+- `artifacts/api-server/` — Express 5 API server
+- `artifacts/api-server/src/routes/auth.ts` — all auth routes (OTP, email, Google)
+- `lib/db/src/schema/` — Drizzle ORM schema (source of truth)
+- `lib/api-spec/` — OpenAPI spec (generates client hooks)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first API: OpenAPI spec → Orval codegen → React Query hooks + Zod schemas
+- Auth: simple bearer token (base64url `userId:timestamp:sanad_secret_2024`) stored in localStorage
+- OTP: stored in `otps` table with 10-min expiry; dev mode returns OTP in response body
+- Google OAuth: gracefully degrades if `VITE_GOOGLE_CLIENT_ID` not set
+- RTL-first: entire app uses `dir="rtl"` and Arabic fonts (Alexandria/Cairo/IBM Plex Arabic)
+- Dark green (#1a4731) + Gold (#c9973a) brand colors
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+**Three account types:** client, provider, admin
+
+**Auth flows:**
+- Phone OTP (send-otp → verify-otp → auto-register or navigate to home)
+- Email/password (register with email verification, login, forgot password/reset)
+- Google OAuth (one-tap via @react-oauth/google)
+
+**Main pages:**
+- `/welcome` — onboarding screen with 3 auth options
+- `/` — Home dashboard (search, categories, stats, emergency quick-access, top rated, nearby)
+- `/discover` — Trending services, offers, badges, newest providers
+- `/providers` — Browse & filter providers
+- `/providers/:id` — Provider detail with portfolio, reviews
+- `/emergency` — Emergency services (electrician, plumber, locksmith) with instant request
+- `/my-requests` — Client's request history with status tracking
+- `/messages`, `/messages/:id` — Direct messaging
+- `/notifications` — Push notifications
+- `/profile` — User profile with verification badge, provider availability toggle
+- `/settings` — Theme, notifications, security, support, logout
+- `/admin` — Admin dashboard with user/provider management
+
+**Provider verification system:**
+- Green checkmark badge on verified providers
+- Phone verification via OTP
+- `isVerified` field in providers table
+- Verification banner in profile page for unverified users
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Arabic RTL-first design
+- Deep dark green + gold color scheme
+- Modern, premium UI matching international app standards (2026 design trends)
+- Smooth animations via Framer Motion
+- Mobile-first layout with bottom navigation (5 items)
+- Alexandria/Cairo/IBM Plex Arabic fonts
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run `pnpm run typecheck:libs` after changing `lib/db` schema before checking API server
+- `@workspace/db` exports must be rebuilt before leaf package checks (`pnpm run typecheck:libs`)
+- Express 5: all async handlers typed `Promise<void>`, no `return res.json(...)`
+- `passwordHash` is nullable (Google/OTP users have no password)
+- `PORT` env var is set by the workflow; do not hard-code ports
+- Proxy routes by path: frontend at `/`, API at `/api` — no custom Vite proxy needed
+
+## Seed data
+
+- Admin: phone `777000001`, password `admin2024`
+- 3 clients (phones 777000003, 777000004, 777000005)
+- 10 providers in Sana'a with realistic data
+- 18 service categories
 
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Auth token format: `base64url(userId:timestamp:sanad_secret_2024)` in `generateToken()` at `artifacts/api-server/src/lib/auth.ts`
