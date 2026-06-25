@@ -27,6 +27,7 @@ import Notifications from "@/pages/notifications";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import Emergency from "@/pages/emergency";
+import ProviderVerify from "@/pages/provider-verify";
 import NotFound from "@/pages/not-found";
 
 // Admin Pages
@@ -175,6 +176,11 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/verify">
+        <ProtectedRoute allowedRoles={['provider']}>
+          <ProviderVerify />
         </ProtectedRoute>
       </Route>
 

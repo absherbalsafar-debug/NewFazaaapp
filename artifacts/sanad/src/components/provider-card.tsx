@@ -1,4 +1,4 @@
-import { ProviderSummary } from "@workspace/api-client-react/src/generated/api.schemas";
+import { ProviderSummary } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

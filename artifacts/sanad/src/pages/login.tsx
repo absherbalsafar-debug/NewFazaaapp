@@ -34,7 +34,7 @@ export default function Login() {
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     loginMutation.mutate({ data: values }, {
       onSuccess: (res) => {
-        setAuth(res.token, res.user);
+        setAuth(res.token, res.user as any);
         toast({
           title: "مرحباً بك مجدداً",
           description: "تم تسجيل الدخول بنجاح",

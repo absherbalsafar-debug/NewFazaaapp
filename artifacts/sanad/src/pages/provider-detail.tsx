@@ -79,14 +79,29 @@ export default function ProviderDetail() {
             )}
           </div>
           
-          <h2 className="text-2xl font-bold mt-4">{provider.name}</h2>
+          <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+            <h2 className="text-2xl font-bold">{provider.name}</h2>
+            {provider.isVerified && (
+              <div className="flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                موثق
+              </div>
+            )}
+          </div>
           
-          <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary hover:bg-primary/20 text-sm">
-            <span className="ml-1.5 text-lg">{provider.categoryIcon}</span>
-            {provider.categoryName}
-          </Badge>
+          <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+            <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 text-sm">
+              <span className="ml-1.5 text-base">{provider.categoryIcon}</span>
+              {provider.categoryName}
+            </Badge>
+            {provider.isAvailable && (
+              <Badge className="bg-green-500/10 text-green-700 border-green-500/20 text-xs">
+                متاح الآن ⚡
+              </Badge>
+            )}
+          </div>
 
-          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-4 mt-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4" />
               <span>{provider.city}، {provider.district}</span>
@@ -155,11 +170,33 @@ export default function ProviderDetail() {
               <h3 className="font-bold text-lg mb-3">معرض الأعمال</h3>
               <div className="grid grid-cols-2 gap-3">
                 {portfolio.map((item) => (
-                  <div key={item.id} className="aspect-square rounded-xl overflow-hidden bg-muted">
-                    <img src={item.imageUrl} alt={item.description || ""} className="w-full h-full object-cover" />
+                  <div key={item.id} className="rounded-2xl overflow-hidden bg-muted relative group">
+                    <div className="aspect-square">
+                      <img src={item.imageUrl} alt={item.description || ""} className="w-full h-full object-cover" />
+                    </div>
+                    {item.description && (
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                        <p className="text-white text-xs font-medium line-clamp-2">{item.description}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* No portfolio placeholder */}
+          {(!portfolio || portfolio.length === 0) && (
+            <section>
+              <h3 className="font-bold text-lg mb-3">معرض الأعمال</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="aspect-square rounded-2xl bg-muted/50 border-2 border-dashed border-border flex items-center justify-center">
+                    <span className="text-2xl opacity-20">🖼</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-xs text-muted-foreground mt-3">لم يُضف المهني صور أعمال بعد</p>
             </section>
           )}
 

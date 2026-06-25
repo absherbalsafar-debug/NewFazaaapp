@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Eye, EyeOff, ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CitySelector } from "@/components/city-selector";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -105,12 +106,7 @@ export default function AuthEmail() {
                 onChange={e => setName(e.target.value)}
                 className="h-12 rounded-xl"
               />
-              <Input
-                placeholder="المدينة"
-                value={city}
-                onChange={e => setCity(e.target.value)}
-                className="h-12 rounded-xl"
-              />
+              <CitySelector value={city} onChange={setCity} />
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setRole('client')}

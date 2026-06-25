@@ -63,7 +63,6 @@ function GoogleButton() {
         size="large"
         width="100%"
         text="continue_with"
-        locale="ar"
         shape="rectangular"
       />
     </GoogleOAuthProvider>

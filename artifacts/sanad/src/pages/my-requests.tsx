@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock, Calendar, CheckCircle2, XCircle, AlertCircle, PlayCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ServiceRequestStatus } from "@workspace/api-client-react/src/generated/api.schemas";
 
 const statusConfig = {
   pending: { label: "قيد الانتظار", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", icon: Clock },
@@ -54,7 +53,7 @@ export default function MyRequests() {
         ) : (
           <div className="space-y-4">
             {requests.map((request) => {
-              const config = statusConfig[request.status as ServiceRequestStatus];
+              const config = statusConfig[request.status as keyof typeof statusConfig] ?? statusConfig.pending;
               const StatusIcon = config.icon;
               const isProvider = user?.role === 'provider';
               

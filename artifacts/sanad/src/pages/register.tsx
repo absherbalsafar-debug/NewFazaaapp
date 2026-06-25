@@ -62,7 +62,7 @@ export default function Register() {
 
     registerMutation.mutate({ data: payload as any }, {
       onSuccess: (res) => {
-        setAuth(res.token, res.user);
+        setAuth(res.token, res.user as any);
         toast({
           title: "تم التسجيل بنجاح",
           description: "مرحباً بك في منصة سند",

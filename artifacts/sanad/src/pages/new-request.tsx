@@ -23,7 +23,7 @@ const requestSchema = z.object({
 });
 
 export default function NewRequest() {
-  const [searchParams] = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(window.location.search);
   const providerId = searchParams.get("providerId") ? parseInt(searchParams.get("providerId")!) : 0;
   const [, setLocation] = useLocation();
   const { toast } = useToast();

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, MapPin, AlignLeft, Calendar, Loader2, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ServiceRequestStatus, ServiceRequestUpdateStatus } from "@workspace/api-client-react/src/generated/api.schemas";
+import { ServiceRequestUpdateStatus } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statusConfig = {
@@ -49,7 +49,7 @@ export default function RequestDetail() {
   const isProvider = user?.role === 'provider';
   const otherName = isProvider ? request.clientName : request.providerName;
   const otherAvatar = isProvider ? request.clientAvatarUrl : request.providerAvatarUrl;
-  const config = statusConfig[request.status as ServiceRequestStatus];
+  const config = statusConfig[request.status as keyof typeof statusConfig] ?? statusConfig.pending;
 
   return (
     <div className="pb-24 bg-background min-h-screen">

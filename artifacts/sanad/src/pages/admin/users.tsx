@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { UserStatusUpdateStatus } from "@workspace/api-client-react/src/generated/api.schemas";
+import { UserStatusUpdateStatus } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminUsers() {

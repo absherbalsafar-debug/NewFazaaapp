@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { useGetHomeFeed, useListProviders } from "@workspace/api-client-react";
+import { useGetHomeFeed, useListProviders, useListRequests } from "@workspace/api-client-react";
 import { ProviderCard } from "@/components/provider-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import {
   Search, MapPin, Sparkles, ChevronLeft, AlertTriangle,
-  Bell, Zap, TrendingUp, Star, ShieldCheck
+  Bell, Zap, TrendingUp, Star, ShieldCheck, Clock, CheckCircle2, PlayCircle
 } from "lucide-react";
 
 export default function Home() {
@@ -21,6 +21,22 @@ export default function Home() {
     { limit: 4, sortBy: 'experience' },
     { query: { queryKey: ['home-most-requested'] } }
   );
+
+  const { data: myRequests } = useListRequests(
+    { role: user?.role === 'provider' ? 'provider' : 'client' },
+    { query: { queryKey: ['home-requests', user?.id], enabled: !!user } }
+  );
+
+  const recentRequests = (myRequests ?? []).slice(0, 3);
+
+  const requestStatusMap: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+    pending: { label: "قيد الانتظار", color: "text-yellow-600 bg-yellow-50", icon: Clock },
+    accepted: { label: "تم القبول", color: "text-blue-600 bg-blue-50", icon: CheckCircle2 },
+    in_progress: { label: "جاري التنفيذ", color: "text-purple-600 bg-purple-50", icon: PlayCircle },
+    completed: { label: "مكتمل", color: "text-green-600 bg-green-50", icon: CheckCircle2 },
+    cancelled: { label: "ملغي", color: "text-gray-500 bg-gray-50", icon: Clock },
+    rejected: { label: "مرفوض", color: "text-red-600 bg-red-50", icon: Clock },
+  };
 
   function handleSearch() {
     if (searchQuery.trim()) navigate(`/providers?search=${encodeURIComponent(searchQuery)}`);
@@ -251,6 +267,43 @@ export default function Home() {
                   {feed.nearbyProviders.slice(0, 3).map(p => (
                     <ProviderCard key={p.id} provider={p} />
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── Recent Requests ── */}
+            {recentRequests.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-bold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    آخر طلباتك
+                  </h2>
+                  <Link href="/my-requests" className="text-xs text-primary font-medium flex items-center gap-1">
+                    عرض الكل <ChevronLeft className="w-3 h-3" />
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  {recentRequests.map(req => {
+                    const st = requestStatusMap[req.status] ?? requestStatusMap.pending;
+                    const StatusIcon = st.icon;
+                    return (
+                      <Link key={req.id} href={`/my-requests/${req.id}`}>
+                        <div className="bg-card border border-border rounded-2xl p-3.5 flex items-center gap-3 hover:border-primary/30 transition-colors cursor-pointer">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${st.color}`}>
+                            <StatusIcon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm truncate">{(req as any).title ?? (req as any).serviceType ?? 'طلب خدمة'}</p>
+                            <p className="text-xs text-muted-foreground">{(req as any).providerName ?? 'جاري البحث عن مهني'}</p>
+                          </div>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${st.color}`}>
+                            {st.label}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             )}
