@@ -107,7 +107,7 @@ export default function Welcome() {
   );
 
   return (
-    <main className="min-h-[100dvh] overflow-hidden bg-[#f5f3ee] text-[#162a2a]" dir="rtl">
+    <main className="min-h-[100dvh] overflow-hidden bg-[#f5f3ee] text-primary" dir="rtl">
       <AnimatePresence mode="wait">
         {step === 'intro' ? (
           <motion.section
@@ -116,9 +116,9 @@ export default function Welcome() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 28 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[100dvh] overflow-hidden bg-[#122b2b]"
+            className="relative min-h-[100dvh] overflow-hidden bg-primary"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(202,164,74,0.22),transparent_28%),radial-gradient(circle_at_85%_70%,rgba(56,113,101,0.36),transparent_32%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(202,164,74,0.22),transparent_28%),radial-gradient(circle_at_85%_70%,rgba(54,97,151,0.36),transparent_32%)]" />
             <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.4)_1px,transparent_1px)] [background-size:42px_42px]" />
             <div className="absolute -left-28 top-36 h-72 w-72 rounded-full border border-[#d9b765]/20" />
             <div className="absolute -left-20 top-44 h-56 w-56 rounded-full border border-[#d9b765]/15" />
@@ -126,7 +126,7 @@ export default function Welcome() {
             <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-6 pb-7 pt-7 sm:max-w-lg sm:px-9">
               <header className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-[#e4c778]/50 bg-[#e4c778] text-[#122b2b] shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-[#e4c778]/50 bg-[#e4c778] text-primary shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
                     <ShieldCheck className="h-5 w-5" strokeWidth={2.5} />
                   </div>
                   <div className="leading-none">
@@ -175,9 +175,9 @@ export default function Welcome() {
                   className="relative mt-9 h-40 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.07] shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
                 >
                   <div className="absolute -left-7 -top-10 h-36 w-36 rounded-full bg-[#d9b765]/20 blur-2xl" />
-                  <div className="absolute -bottom-14 right-5 h-36 w-36 rounded-full bg-[#77a898]/25 blur-2xl" />
-                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0f2525]/70 to-transparent" />
-                  <div className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e4c778] text-[#122b2b] shadow-[0_10px_28px_rgba(228,199,120,0.25)]">
+                  <div className="absolute -bottom-14 right-5 h-36 w-36 rounded-full bg-[#7695be]/25 blur-2xl" />
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0b2348]/70 to-transparent" />
+                  <div className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e4c778] text-primary shadow-[0_10px_28px_rgba(228,199,120,0.25)]">
                     <MapPin className="h-6 w-6" />
                   </div>
                   <div className="absolute right-[5.25rem] top-9 h-2 w-2 rounded-full bg-[#e4c778] shadow-[0_0_0_7px_rgba(228,199,120,0.12)]" />
@@ -199,10 +199,10 @@ export default function Welcome() {
                 <button
                   type="button"
                   onClick={() => setStep('start')}
-                  className="group flex h-14 w-full items-center justify-between rounded-2xl bg-[#e4c778] px-5 text-right text-[15px] font-extrabold text-[#122b2b] shadow-[0_14px_28px_rgba(228,199,120,0.2)] transition-transform hover:bg-[#f0d68e] active:scale-[0.98]"
+                  className="group flex h-14 w-full items-center justify-between rounded-2xl bg-[#e4c778] px-5 text-right text-[15px] font-extrabold text-primary shadow-[0_14px_28px_rgba(228,199,120,0.2)] transition-transform hover:bg-[#f0d68e] active:scale-[0.98]"
                 >
                   <span>اكتشف فزعة</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#122b2b]/10 transition-transform group-hover:-translate-x-1">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 transition-transform group-hover:-translate-x-1">
                     <ChevronLeft className="h-5 w-5" />
                   </span>
                 </button>
@@ -227,7 +227,7 @@ export default function Welcome() {
                 <button
                   type="button"
                   onClick={() => setStep('intro')}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ddd8ce] bg-white text-[#162a2a] transition-colors hover:bg-[#ebe8e0]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ddd8ce] bg-white text-primary transition-colors hover:bg-[#ebe8e0]"
                   aria-label="العودة للشاشة السابقة"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -246,7 +246,7 @@ export default function Welcome() {
                   transition={{ delay: 0.1, duration: 0.55 }}
                 >
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a17b29]">مرحباً بك في فزعة</p>
-                  <h2 className="mt-3 text-[34px] font-black leading-[1.2] tracking-[-0.04em] text-[#162a2a]">
+                  <h2 className="mt-3 text-[34px] font-black leading-[1.2] tracking-[-0.04em] text-primary">
                     اختر تجربتك،
                     <span className="block text-[#a17b29]">ونبدأ معاً.</span>
                   </h2>
@@ -270,13 +270,13 @@ export default function Welcome() {
                         onClick={() => setSelectedRole(role)}
                         className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-[24px] border p-4 text-right transition-all duration-300 ${
                           isSelected
-                            ? "border-[#162a2a] bg-[#162a2a] text-white shadow-[0_16px_32px_rgba(22,42,42,0.16)]"
-                            : "border-[#dedad1] bg-white text-[#162a2a] hover:border-[#c9b77c]"
+                            ? "border-primary bg-primary text-white shadow-[0_16px_32px_rgba(14,47,98,0.16)]"
+                            : "border-[#dedad1] bg-white text-primary hover:border-[#c9b77c]"
                         }`}
                       >
                         {isSelected && <div className="absolute -left-6 -top-10 h-24 w-24 rounded-full bg-[#d9b765]/20 blur-xl" />}
                         <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
-                          isSelected ? "bg-[#e4c778] text-[#162a2a]" : "bg-[#f1eee7] text-[#a17b29]"
+                          isSelected ? "bg-[#e4c778] text-primary" : "bg-[#f1eee7] text-[#a17b29]"
                         }`}>
                           <Icon className="h-6 w-6" />
                         </div>
@@ -304,7 +304,7 @@ export default function Welcome() {
                   <p className="mb-3 text-center text-[11px] font-semibold text-[#9a978e]">ابدأ بطريقتك المفضلة</p>
                   <motion.div whileTap={{ scale: 0.985 }}>
                     <Button
-                      className="h-14 w-full rounded-2xl bg-[#162a2a] text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(22,42,42,0.16)] hover:bg-[#234444]"
+                      className="h-14 w-full rounded-2xl bg-primary text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(14,47,98,0.16)] hover:bg-primary/90"
                       onClick={() => navigate(getAuthPath('phone'))}
                     >
                       <Phone className="ml-2 h-5 w-5 text-[#e4c778]" />
@@ -330,7 +330,7 @@ export default function Welcome() {
                   <button
                     type="button"
                     onClick={() => navigate('/auth/email')}
-                    className="mt-5 block w-full text-center text-xs text-[#8b897f] transition-colors hover:text-[#162a2a]"
+                    className="mt-5 block w-full text-center text-xs text-[#8b897f] transition-colors hover:text-primary"
                   >
                     لديك حساب بالفعل؟ <span className="font-extrabold text-[#a17b29]">تسجيل الدخول</span>
                   </button>
