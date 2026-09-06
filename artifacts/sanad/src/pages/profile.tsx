@@ -39,14 +39,14 @@ export default function Profile() {
     { icon: ClipboardList, label: "طلباتي", sub: "تتبع حالة طلباتك", href: "/my-requests", color: "bg-blue-50 text-blue-600" },
     { icon: Heart, label: "المفضلة", sub: "المهنيون المحفوظون", href: "/favorites", color: "bg-red-50 text-red-500" },
     { icon: Bell, label: "الإشعارات", sub: "إدارة التنبيهات", href: "/notifications", color: "bg-amber-50 text-amber-600" },
-    { icon: Wallet, label: "وسائل الدفع", sub: "بطاقات وأرصدة", href: "/settings", color: "bg-green-50 text-green-600" },
+    { icon: Wallet, label: "وسائل الدفع", sub: "بطاقات وأرصدة", href: "/wallet", color: "bg-green-50 text-green-600" },
     { icon: Settings, label: "الإعدادات", sub: "الحساب والأمان", href: "/settings", color: "bg-gray-50 text-gray-600" },
   ];
 
   const providerMenu = [
     { icon: TrendingUp, label: "إحصائياتي", sub: "الأداء والأرباح", href: "/my-requests", color: "bg-blue-50 text-blue-600" },
     { icon: ClipboardList, label: "الطلبات", sub: "طلبات العملاء", href: "/my-requests", color: "bg-purple-50 text-purple-600" },
-    { icon: Wallet, label: "أرباحي", sub: "سحب الأرباح", href: "/settings", color: "bg-green-50 text-green-600" },
+    { icon: Wallet, label: "أرباحي", sub: "الرصيد وعمليات السحب", href: "/earnings", color: "bg-green-50 text-green-600" },
     { icon: ShieldCheck, label: "التوثيق", sub: "رفع المستندات", href: "/verify", color: "bg-amber-50 text-amber-600" },
     { icon: Bell, label: "الإشعارات", sub: "تنبيهات الطلبات", href: "/notifications", color: "bg-red-50 text-red-500" },
     { icon: Settings, label: "الإعدادات", sub: "الحساب والأمان", href: "/settings", color: "bg-gray-50 text-gray-600" },

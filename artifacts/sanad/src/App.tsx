@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ThemeProvider } from "@/components/theme-provider";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -36,6 +37,10 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminProviders from "@/pages/admin/providers";
 import ProviderDashboard from "@/pages/provider-dashboard";
+import Earnings from "@/pages/earnings";
+import Wallet from "@/pages/wallet";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -204,6 +209,22 @@ function Router() {
           <AppShell showNav={false}><Settings /></AppShell>
         </ProtectedRoute>
       </Route>
+      <Route path="/earnings">
+        <ProtectedRoute allowedRoles={['provider']}>
+          <AppShell><Earnings /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/wallet">
+        <ProtectedRoute allowedRoles={['client']}>
+          <AppShell><Wallet /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/privacy">
+        <AppShell showNav={false}><Privacy /></AppShell>
+      </Route>
+      <Route path="/terms">
+        <AppShell showNav={false}><Terms /></AppShell>
+      </Route>
       <Route path="/verify">
         <ProtectedRoute allowedRoles={['provider']}>
           <AppShell showNav={false}><ProviderVerify /></AppShell>
@@ -218,16 +239,18 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <div dir="rtl" className="min-h-[100dvh] bg-background text-foreground font-sans">
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
-            </WouterRouter>
-          </div>
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="system" storageKey="fazaah-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <div dir="rtl" className="min-h-[100dvh] bg-background text-foreground font-sans">
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <Router />
+              </WouterRouter>
+            </div>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

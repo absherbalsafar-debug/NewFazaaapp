@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Search, ClipboardList, MessageSquare, User, WalletCards, BarChart3 } from "lucide-react";
+import { Home, Search, ClipboardList, MessageSquare, User, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -16,7 +16,7 @@ export function BottomNav() {
     { href: "/my-requests", icon: ClipboardList, label: "الطلبات" },
     { href: "/messages", icon: MessageSquare, label: "الرسائل" },
     { href: "/profile", icon: User, label: "ملفي" },
-    { href: "/settings", icon: WalletCards, label: "الإعدادات" },
+    { href: "/settings", icon: Settings2, label: "الإعدادات" },
   ] : [
     { href: "/", icon: Home, label: "الرئيسية" },
     { href: "/providers", icon: Search, label: "استعرض" },
