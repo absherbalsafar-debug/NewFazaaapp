@@ -261,7 +261,7 @@ router.post("/auth/verify-email", async (req, res): Promise<void> => {
 
 // ─── تسجيل/دخول بجوجل ────────────────────────────────────────────────────────
 router.post("/auth/google", async (req, res): Promise<void> => {
-  const { googleId, email, name, avatarUrl } = req.body;
+  const { googleId, email, name, avatarUrl, role } = req.body;
   if (!googleId || !email) {
     res.status(400).json({ error: "بيانات جوجل غير مكتملة" });
     return;
@@ -288,10 +288,24 @@ router.post("/auth/google", async (req, res): Promise<void> => {
           emailVerified: true,
           phoneVerified: false,
           avatarUrl: avatarUrl ?? null,
-          role: "client",
+          role: (role === "provider" ? "provider" : "client") as "client" | "provider",
           status: "active",
         })
         .returning();
+
+      if (user.role === "provider") {
+        const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
+        if (defaultCategory) {
+          await db.insert(providersTable).values({
+            userId: user.id,
+            categoryId: defaultCategory.id,
+            city: "صنعاء",
+            district: "",
+            bio: "",
+            yearsExperience: 1,
+          });
+        }
+      }
     }
   }
 

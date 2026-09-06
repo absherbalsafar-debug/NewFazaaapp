@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
-function GoogleButton() {
+function GoogleButton({ role }: { role: "client" | "provider" }) {
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -37,6 +37,7 @@ function GoogleButton() {
           email: payload.email,
           name: payload.name,
           avatarUrl: payload.picture,
+          role,
         }),
       });
       login(data.token, data.user);
@@ -316,7 +317,7 @@ export default function Welcome() {
                     <span className="text-[10px] font-bold text-[#aaa69b]">أو</span>
                     <div className="h-px flex-1 bg-[#dedad1]" />
                   </div>
-                  <GoogleButton />
+                  <GoogleButton role={selectedRole} />
                   <motion.div whileTap={{ scale: 0.985 }} className="mt-3">
                     <Button
                       variant="outline"

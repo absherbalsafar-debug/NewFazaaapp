@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { ArrowRight, Moon, Sun, Bell, Lock, Trash2, LogOut, HelpCircle, Info, Phone, Shield, Globe, ChevronLeft } from "lucide-react";
+import { ArrowRight, Moon, Sun, Bell, Lock, Trash2, LogOut, HelpCircle, Info, Phone, Shield, Globe, ChevronLeft, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/theme-provider";
@@ -18,9 +18,9 @@ export default function Settings() {
   }
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="mb-6">
-      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider px-4 mb-2">{title}</p>
-      <div className="bg-card rounded-2xl border border-border divide-y divide-border overflow-hidden mx-4">
+      <div className="mb-6">
+      <p className="px-4 mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a17b29]">{title}</p>
+      <div className="premium-card mx-4 divide-y divide-border overflow-hidden rounded-[24px] bg-card">
         {children}
       </div>
     </div>
@@ -40,9 +40,9 @@ export default function Settings() {
   }) => (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 text-start hover:bg-muted/50 transition-colors ${danger ? 'text-destructive' : ''}`}
+      className={`w-full flex items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-primary/[0.04] ${danger ? 'text-destructive' : ''}`}
     >
-      <div className={`w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0 ${iconColor}`}>
+        <div className={`w-9 h-9 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 ${iconColor}`}>
         <Icon className="w-4.5 h-4.5" />
       </div>
       <div className="flex-1 min-w-0">
@@ -54,13 +54,21 @@ export default function Settings() {
   );
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-8" dir="rtl">
+    <div className="premium-surface min-h-[100dvh] bg-background pb-8" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-4 sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-10">
-        <button onClick={() => navigate('/profile')} className="w-10 h-10 flex items-center justify-center rounded-full bg-muted">
-          <ArrowRight className="w-5 h-5" />
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-primary/10 bg-background/80 px-4 py-4 backdrop-blur-xl">
+        <button onClick={() => navigate('/profile')} className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card hover:bg-muted">
+          <ArrowRight className="h-4 w-4" />
         </button>
-        <h1 className="text-lg font-bold">الإعدادات</h1>
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-primary">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="text-base font-black">الإعدادات</h1>
+            <p className="text-[10px] text-muted-foreground">خصص تجربة فزعة كما تحب</p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4">

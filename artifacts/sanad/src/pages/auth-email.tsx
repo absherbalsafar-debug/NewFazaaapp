@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Eye, EyeOff, ArrowRight, Lock } from "lucide-react";
+import { Mail, Eye, EyeOff, ArrowRight, BriefcaseBusiness, Check, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CitySelector } from "@/components/city-selector";
@@ -16,14 +16,15 @@ export default function AuthEmail() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [role, setRole] = useState<"client" | "provider">(
-    new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client",
-  );
+  const role: "client" | "provider" = new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client";
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const RoleIcon = role === "provider" ? BriefcaseBusiness : UserRound;
+  const roleTitle = role === "provider" ? "حساب مقدم خدمة" : "حساب عميل";
+  const roleDescription = role === "provider" ? "استقبل الطلبات وأدر خدماتك" : "اكتشف المهنيين واطلب خدماتك";
 
   async function handleSubmit() {
     if (!email.trim() || !password) {
@@ -62,42 +63,58 @@ export default function AuthEmail() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col" dir="rtl">
+    <main className="min-h-[100dvh] bg-[#f5f3ee] text-primary" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-4 p-4 pt-safe">
-        <button onClick={() => navigate('/welcome')} className="w-10 h-10 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80">
-          <ArrowRight className="w-5 h-5" />
+      <div className="mx-auto flex w-full max-w-md items-center justify-between px-5 pb-2 pt-6 sm:max-w-lg sm:px-9">
+        <button onClick={() => navigate('/welcome')} className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ddd8ce] bg-white hover:bg-[#ebe8e0]">
+          <ArrowRight className="h-4 w-4" />
         </button>
-        <h1 className="text-lg font-bold">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-primary shadow-sm">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div className="text-right leading-none">
+            <p className="text-sm font-black">فزعة</p>
+            <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.24em] text-[#a17b29]">FAZAAH</p>
+          </div>
+        </div>
+        <span className="w-10 text-center text-[10px] font-bold text-[#a17b29]">آمن</span>
+      </div>
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 pb-10 sm:max-w-lg sm:px-9">
+        <h1 className="text-3xl font-black tracking-[-0.04em]">
           {mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
         </h1>
-      </div>
-
-      <div className="flex-1 flex flex-col justify-center px-6 pb-12 max-w-sm mx-auto w-full">
+        <p className="mt-3 text-sm leading-7 text-[#77766f]">
+          {mode === 'login' ? 'أهلاً بعودتك، تابع رحلتك مع فزعة.' : 'أنشئ حسابك وابدأ تجربة خدمات أكثر سهولة.'}
+        </p>
         {/* Mode toggle */}
-        <div className="flex bg-muted rounded-2xl p-1 mb-8">
+        <div className="my-8 flex rounded-2xl border border-[#dedad1] bg-white/60 p-1">
           <button
             onClick={() => setMode("login")}
-            className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-colors ${mode === 'login' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-colors ${mode === 'login' ? 'bg-primary text-white shadow-sm' : 'text-[#8c897f]'}`}
           >
             تسجيل الدخول
           </button>
           <button
             onClick={() => setMode("register")}
-            className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-colors ${mode === 'register' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            className={`flex-1 h-10 rounded-xl font-semibold text-sm transition-colors ${mode === 'register' ? 'bg-primary text-white shadow-sm' : 'text-[#8c897f]'}`}
           >
             حساب جديد
           </button>
         </div>
 
-        <motion.div
+        <motion.form
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
           key={mode}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Mail className="w-7 h-7 text-primary" />
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Mail className="h-7 w-7" />
           </div>
 
           {mode === "register" && (
@@ -109,39 +126,37 @@ export default function AuthEmail() {
                 className="h-12 rounded-xl"
               />
               <CitySelector value={city} onChange={setCity} />
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setRole('client')}
-                  className={`h-12 rounded-xl border-2 font-semibold text-sm transition-colors ${role === 'client' ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-foreground'}`}
-                >
-                  عميل
-                </button>
-                <button
-                  onClick={() => setRole('provider')}
-                  className={`h-12 rounded-xl border-2 font-semibold text-sm transition-colors ${role === 'provider' ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-foreground'}`}
-                >
-                  مقدم خدمة
-                </button>
+              <div className="flex items-center gap-3 rounded-2xl border border-primary/10 bg-primary p-3.5 text-white shadow-[0_12px_24px_rgba(14,47,98,0.1)]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary">
+                  <RoleIcon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-extrabold">{roleTitle}</p>
+                  <p className="mt-0.5 text-[10px] text-white/60">{roleDescription}</p>
+                </div>
+                <Check className="h-4 w-4 text-accent" />
               </div>
             </>
           )}
 
           <Input
             type="email"
+              autoComplete="email"
             placeholder="البريد الإلكتروني"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="h-12 rounded-xl"
+             className="h-13 rounded-2xl border-[#d4d9df] bg-white shadow-sm focus-visible:ring-primary"
             dir="ltr"
           />
 
           <div className="relative">
             <Input
               type={showPwd ? "text" : "password"}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               placeholder="كلمة المرور"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="h-12 rounded-xl pl-12"
+               className="h-13 rounded-2xl border-[#d4d9df] bg-white pl-12 shadow-sm focus-visible:ring-primary"
               dir="ltr"
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             />
@@ -164,14 +179,16 @@ export default function AuthEmail() {
           )}
 
           <Button
+            type="submit"
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full h-14 rounded-2xl text-lg font-bold mt-2"
+             className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90"
           >
             {loading ? 'جاري المعالجة...' : mode === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب'}
           </Button>
-        </motion.div>
+        </motion.form>
       </div>
-    </div>
+      <p className="pb-6 text-center text-[10px] text-[#aaa69b]">فزعة FAZAAH · تجربة آمنة ومصممة لك</p>
+    </main>
   );
 }
