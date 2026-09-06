@@ -8,7 +8,7 @@ import {
   Heart, ClipboardList, CheckCircle2, Phone, Mail, Award,
   TrendingUp, Wallet, Star, Briefcase, Camera, Edit3
 } from "lucide-react";
-import { useUpdateProvider, useGetProvider } from "@workspace/api-client-react";
+  import { useUpdateProvider, useGetMyProvider } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -17,16 +17,16 @@ export default function Profile() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  const { data: providerDetails, refetch } = useGetProvider(user?.id || 0, {
-    query: { enabled: user?.role === 'provider', queryKey: ['provider-profile', user?.id] }
+  const { data: providerDetails, refetch } = useGetMyProvider({
+    query: { enabled: user?.role === 'provider', queryKey: ['my-provider-profile', user?.id], refetchOnMount: "always" }
   });
 
   const updateProvider = useUpdateProvider();
 
   const handleAvailabilityToggle = (checked: boolean) => {
-    if (!user) return;
+    if (!user || !providerDetails) return;
     updateProvider.mutate(
-      { id: user.id, data: { isAvailable: checked } },
+      { id: providerDetails.id, data: { isAvailable: checked } },
       { onSuccess: () => { toast({ title: "✓ تم تحديث حالة التوفر" }); refetch(); } }
     );
   };
@@ -246,7 +246,7 @@ export default function Profile() {
           تسجيل الخروج
         </button>
 
-        <p className="text-center text-[10px] text-muted-foreground/50 pb-2">سند © 2025 · الإصدار 1.0.0</p>
+        <p className="text-center text-[10px] text-muted-foreground/50 pb-2">فزعة © 2026 · الإصدار 1.0.0</p>
       </div>
     </div>
   );

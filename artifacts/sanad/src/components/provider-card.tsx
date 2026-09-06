@@ -144,7 +144,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
         </Link>
         {whatsappNumber && (
           <a
-            href={`https://wa.me/967${whatsappNumber}?text=مرحباً، وجدتك على منصة سند`}
+            href={`https://wa.me/967${whatsappNumber}?text=مرحباً، وجدتك على منصة فزعة`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-none"

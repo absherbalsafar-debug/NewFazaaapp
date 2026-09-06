@@ -1,0 +1,747 @@
+انسخ هذا الأمر بالكامل إلى Replit AI أو Bolt.new أو أي منصة تطوير بالذكاء الاصطناعي:
+
+
+---
+
+FAZAAH (فزعة) - COMPLETE PROFESSIONAL REBUILD
+
+Project Mission
+
+Transform the current prototype into a real production-ready platform called:
+
+فزعة | FAZAAH
+
+A trusted marketplace connecting customers with verified professionals and skilled workers across Yemen.
+
+The application must be rebuilt professionally from the ground up and prepared for deployment on Hostinger VPS or any cloud infrastructure.
+
+
+---
+
+CRITICAL TECHNOLOGY CHANGE
+
+Current project structure is not suitable for long-term scalability.
+
+I want the entire mobile application migrated and rebuilt using:
+
+Flutter
+
+Reasons:
+
+Single codebase
+
+Android
+
+iPhone (iOS)
+
+Better performance
+
+Better animations
+
+Easier future maintenance
+
+Production-ready architecture
+
+
+Backend:
+
+FastAPI OR
+
+NestJS
+
+
+Database:
+
+PostgreSQL
+
+
+Storage:
+
+Cloud Storage
+
+
+Notifications:
+
+Firebase Cloud Messaging (FCM)
+
+
+Authentication:
+
+JWT
+
+OTP
+
+Phone Verification
+
+
+
+---
+
+NEW APP NAME
+
+Arabic:
+
+فزعة
+
+English:
+
+FAZAAH
+
+Remove all references to:
+
+سند
+
+Sanad
+
+
+Replace everywhere with:
+
+FAZAAH / فزعة
+
+
+---
+
+COMPLETE SYSTEM RESTRUCTURE
+
+The application must separate users into TWO completely different experiences.
+
+
+---
+
+USER TYPE 1
+
+Customer (Client)
+
+The person looking for a service.
+
+Examples:
+
+Plumber
+
+Electrician
+
+Carpenter
+
+Cleaner
+
+AC Technician
+
+Programmer
+
+Designer
+
+Mason
+
+Contractor
+
+
+Customer can:
+
+Search professionals
+
+View profiles
+
+Request service
+
+Track orders
+
+Chat
+
+Pay
+
+Rate professionals
+
+Save favorites
+
+Emergency requests
+
+
+
+---
+
+USER TYPE 2
+
+Professional (Worker)
+
+The person providing services.
+
+Professional can:
+
+Create profile
+
+Upload documents
+
+Upload ID
+
+Upload personal photo
+
+Upload certificates
+
+Add skills
+
+Add services
+
+Set prices
+
+Set availability
+
+Accept/reject requests
+
+Chat with clients
+
+Track earnings
+
+Withdraw money
+
+Receive ratings
+
+
+
+---
+
+FIRST SCREEN
+
+Before login show:
+
+Choose Account Type
+
+(1)
+
+I Need A Service
+
+أريد خدمة
+
+(Customer)
+
+
+---
+
+(2)
+
+I Want To Work
+
+أريد العمل كمحترف
+
+(Professional)
+
+Each role must have its own onboarding flow and dashboard.
+
+
+---
+
+CUSTOMER APP FEATURES
+
+Home
+
+Smart search
+
+Categories
+
+Emergency button
+
+Nearby professionals
+
+Featured professionals
+
+Recommendations
+
+
+Categories
+
+Plumbing
+
+Electrical
+
+Carpentry
+
+Cleaning
+
+Air Conditioning
+
+Painting
+
+Programming
+
+Design
+
+Construction
+
+Moving Services
+
+Home Maintenance
+
+Internet Services
+
+
+Admin can add unlimited categories.
+
+
+---
+
+Professional Profile
+
+Show:
+
+Name
+
+Photo
+
+Rating
+
+Reviews
+
+Completed Jobs
+
+Experience Years
+
+Skills
+
+Certificates
+
+Portfolio
+
+Availability Status
+
+Distance
+
+Verification Badge
+
+
+
+---
+
+Service Request Flow
+
+Customer creates request:
+
+Service Category
+
+Description
+
+Photos
+
+Videos
+
+Location
+
+Preferred Date
+
+Budget
+
+
+Professionals receive notification instantly.
+
+
+---
+
+Real-Time Chat
+
+WhatsApp-like experience:
+
+Text
+
+Images
+
+Voice Notes
+
+Read Receipts
+
+Typing Indicator
+
+Push Notifications
+
+
+
+---
+
+Ratings
+
+After completion:
+
+Rate from 1 to 5
+
+Written review
+
+Service quality
+
+Speed
+
+Professionalism
+
+
+
+---
+
+PROFESSIONAL APP FEATURES
+
+Dashboard
+
+Show:
+
+Active Jobs
+
+Pending Jobs
+
+Earnings
+
+Reviews
+
+Availability
+
+
+
+---
+
+Service Management
+
+Add:
+
+Services
+
+Prices
+
+Packages
+
+Estimated Time
+
+
+
+---
+
+Earnings
+
+Show:
+
+Daily
+
+Weekly
+
+Monthly
+
+Yearly
+
+
+
+---
+
+Availability
+
+Available Now
+
+Busy
+
+Offline
+
+
+---
+
+EMERGENCY SYSTEM
+
+Special feature.
+
+Customer presses:
+
+🚨 Emergency Request
+
+Examples:
+
+Electrical outage
+
+Water leakage
+
+Door lock problem
+
+Urgent AC issue
+
+
+Nearby professionals receive emergency alerts immediately.
+
+
+---
+
+ADMIN PANEL (VERY IMPORTANT)
+
+Build a professional web dashboard.
+
+Role:
+
+Super Admin
+
+
+---
+
+Dashboard
+
+Show:
+
+Total Users
+
+Total Professionals
+
+Total Customers
+
+Active Jobs
+
+Revenue
+
+Ratings
+
+New Registrations
+
+
+Charts required.
+
+
+---
+
+User Management
+
+View users
+
+Suspend users
+
+Activate users
+
+Delete users
+
+
+
+---
+
+Professional Verification
+
+Review:
+
+National ID
+
+Certificates
+
+Photos
+
+
+Approve / Reject
+
+
+---
+
+Categories Management
+
+Create
+
+Edit
+
+Delete
+
+Unlimited categories
+
+
+---
+
+Service Requests
+
+Monitor all requests.
+
+
+---
+
+Reviews Management
+
+Moderate reviews.
+
+
+---
+
+Payments
+
+Manage:
+
+Wallets
+
+Transactions
+
+Withdrawals
+
+
+
+---
+
+Notifications Center
+
+Send:
+
+Push Notifications
+
+Announcements
+
+Promotions
+
+
+To all users or selected groups.
+
+
+---
+
+UI/UX REDESIGN
+
+Current UI is basic.
+
+Rebuild using premium design.
+
+Inspired by:
+
+Uber
+
+Careem
+
+TaskRabbit
+
+Fiverr
+
+Upwork
+
+
+Requirements:
+
+Modern cards
+
+Smooth animations
+
+Skeleton loading
+
+Dark Mode
+
+Light Mode
+
+RTL Arabic Support
+
+Responsive Design
+
+
+
+---
+
+DATABASE DESIGN
+
+Create proper production schema:
+
+Users
+
+Customers
+
+Professionals
+
+Categories
+
+Services
+
+Requests
+
+Orders
+
+Reviews
+
+Messages
+
+Notifications
+
+Wallets
+
+Transactions
+
+Certificates
+
+Portfolio
+
+Settings
+
+Audit Logs
+
+
+---
+
+SECURITY
+
+Implement:
+
+JWT Authentication
+
+OTP Verification
+
+Role Based Access
+
+File Validation
+
+Rate Limiting
+
+Input Sanitization
+
+Secure APIs
+
+
+
+---
+
+PERFORMANCE
+
+Target:
+
+App launch under 2 seconds
+
+Fast scrolling
+
+Lazy loading
+
+Image optimization
+
+Caching
+
+Offline support
+
+
+
+---
+
+FINAL GOAL
+
+Deliver a complete production-ready platform called:
+
+فزعة | FAZAAH
+
+with:
+
+✅ Flutter Mobile App
+
+✅ Customer App
+
+✅ Professional App
+
+✅ Real-Time Chat
+
+✅ Emergency Requests
+
+✅ Professional Verification
+
+✅ Admin Dashboard
+
+✅ PostgreSQL Database
+
+✅ FastAPI/NestJS Backend
+
+✅ Push Notifications
+
+✅ Wallet System
+
+✅ Ratings & Reviews
+
+✅ Modern Premium UI
+
+✅ Deployment Ready For Hostinger VPS
+
+Do not create demo screens only. Build real backend APIs, real database models, real authentication, real admin panel, and production-ready architecture suitable for thousands of users.
+
+
+---
+
+وأضيف ملاحظة أخيرة للمطور:
+
+"قم بمراجعة المشروع الحالي بالكامل، اكتشاف جميع الأخطاء البرمجية وأخطاء قاعدة البيانات والواجهات وتجربة المستخدم، ثم إصلاحها وإعادة هيكلة المشروع بالكامل وفق المعايير الاحترافية، مع إنشاء وثيقة Technical Audit Report توضح جميع المشاكل التي تم اكتشافها وما تم إصلاحه."

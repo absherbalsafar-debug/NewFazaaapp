@@ -15,7 +15,9 @@ export default function AuthPhone() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"client" | "provider">("client");
+  const [role, setRole] = useState<"client" | "provider">(
+    new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client",
+  );
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState<string | null>(null);

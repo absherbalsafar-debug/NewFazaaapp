@@ -26,9 +26,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE = import.meta.env.BASE_URL?.replace(/\/$/, '') + '/api';
+const TOKEN_KEY = 'fazaah_token';
 
 export async function apiRequest(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('sanad_token');
+  const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -46,11 +47,11 @@ export async function apiRequest(path: string, options: RequestInit = {}) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('sanad_token'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState(true);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('sanad_token');
+    localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
   }, []);
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [token, logout]);
 
   const login = useCallback((newToken: string, newUser: AuthUser) => {
-    localStorage.setItem('sanad_token', newToken);
+    localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
     setUser(newUser);
   }, []);

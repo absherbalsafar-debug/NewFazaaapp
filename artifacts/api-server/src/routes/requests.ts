@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, serviceRequestsTable, usersTable, providersTable, categoriesTable, notificationsTable } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
-import { requireAuth, type AuthRequest } from "../middlewares/auth";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { requireAuth, requireRole, type AuthRequest } from "../middlewares/auth";
 import { CreateRequestBody, ListRequestsQueryParams, GetRequestParams, UpdateRequestParams, UpdateRequestBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -37,10 +37,12 @@ router.get("/requests", requireAuth, async (req: AuthRequest, res): Promise<void
 
   const conditions: any[] = [];
   if (role === "provider") {
+    if (req.userRole !== "provider") { res.status(403).json({ error: "هذه الطلبات مخصصة للمهنيين" }); return; }
     const [provider] = await db.select().from(providersTable).where(eq(providersTable.userId, req.userId!));
     if (provider) conditions.push(eq(serviceRequestsTable.providerId, provider.id));
     else { res.json([]); return; }
   } else {
+    if (req.userRole !== "client") { res.status(403).json({ error: "هذه الطلبات مخصصة للعملاء" }); return; }
     conditions.push(eq(serviceRequestsTable.clientId, req.userId!));
   }
   if (status) conditions.push(eq(serviceRequestsTable.status, status as any));
@@ -62,7 +64,7 @@ router.get("/requests", requireAuth, async (req: AuthRequest, res): Promise<void
   res.json(result);
 });
 
-router.post("/requests", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+router.post("/requests", requireAuth, requireRole("client"), async (req: AuthRequest, res): Promise<void> => {
   const parsed = CreateRequestBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const d = parsed.data;
@@ -107,6 +109,12 @@ router.get("/requests/:id", requireAuth, async (req: AuthRequest, res): Promise<
 
   const [r] = await db.select().from(serviceRequestsTable).where(eq(serviceRequestsTable.id, id));
   if (!r) { res.status(404).json({ error: "Request not found" }); return; }
+  const [viewerProvider] = req.userRole === "provider"
+    ? await db.select().from(providersTable).where(eq(providersTable.userId, req.userId!))
+    : [null];
+  if (req.userRole !== "admin" && r.clientId !== req.userId && r.providerId !== viewerProvider?.id) {
+    res.status(403).json({ error: "لا تملك صلاحية عرض هذا الطلب" }); return;
+  }
 
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, r.clientId));
   const [provider] = await db.select().from(providersTable).where(eq(providersTable.id, r.providerId));
@@ -126,14 +134,26 @@ router.patch("/requests/:id", requireAuth, async (req: AuthRequest, res): Promis
 
   const [r] = await db.select().from(serviceRequestsTable).where(eq(serviceRequestsTable.id, id));
   if (!r) { res.status(404).json({ error: "Request not found" }); return; }
+  const [viewerProvider] = req.userRole === "provider"
+    ? await db.select().from(providersTable).where(eq(providersTable.userId, req.userId!))
+    : [null];
+  if (req.userRole !== "admin" && r.clientId !== req.userId && r.providerId !== viewerProvider?.id) {
+    res.status(403).json({ error: "لا تملك صلاحية تعديل هذا الطلب" }); return;
+  }
+  if (req.userRole === "client" && parsed.data.status && !["cancelled"].includes(parsed.data.status)) {
+    res.status(403).json({ error: "يمكن للعميل إلغاء الطلب فقط" }); return;
+  }
+  if (req.userRole === "provider" && !viewerProvider) {
+    res.status(403).json({ error: "ملف المهني غير مكتمل" }); return;
+  }
 
   const updateData: any = {};
   if (parsed.data.status) updateData.status = parsed.data.status;
-  if (parsed.data.status === "completed") {
+  if (parsed.data.status === "completed" && r.status !== "completed") {
     updateData.completedAt = new Date();
     await db
       .update(providersTable)
-      .set({ completedJobs: serviceRequestsTable.providerId as any })
+      .set({ completedJobs: sql`${providersTable.completedJobs} + 1` })
       .where(eq(providersTable.id, r.providerId));
   }
 

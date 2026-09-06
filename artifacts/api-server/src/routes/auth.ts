@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or } from "drizzle-orm";
 import { randomBytes, createHash } from "crypto";
-import { db, usersTable, providersTable, otpsTable, emailTokensTable } from "@workspace/db";
+import { db, usersTable, providersTable, categoriesTable, otpsTable, emailTokensTable } from "@workspace/db";
 import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
 
@@ -80,12 +80,11 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
     return;
   }
 
-  await db.update(otpsTable).set({ used: true }).where(eq(otpsTable.id, otp.id));
-
   let [user] = await db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone));
 
   if (!user) {
     if (!name) {
+      // Keep the OTP usable for the registration completion step.
       res.status(200).json({ needsRegistration: true, phone: normalizedPhone });
       return;
     }
@@ -100,7 +99,23 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         status: "active",
       })
       .returning();
+
+    if (user.role === "provider") {
+      const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
+      if (defaultCategory) {
+        await db.insert(providersTable).values({
+          userId: user.id,
+          categoryId: defaultCategory.id,
+          city: city ?? "صنعاء",
+          district: "",
+          bio: "",
+          yearsExperience: 1,
+        });
+      }
+    }
+    await db.update(otpsTable).set({ used: true }).where(eq(otpsTable.id, otp.id));
   } else {
+    await db.update(otpsTable).set({ used: true }).where(eq(otpsTable.id, otp.id));
     await db.update(usersTable).set({ phoneVerified: true }).where(eq(usersTable.id, user.id));
     [user] = await db.select().from(usersTable).where(eq(usersTable.id, user.id));
   }
@@ -156,10 +171,11 @@ router.post("/auth/register/email", async (req, res): Promise<void> => {
     })
     .returning();
 
-  if (role === "provider" && categoryId) {
+  if (role === "provider") {
+    const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
     await db.insert(providersTable).values({
       userId: user.id,
-      categoryId: Number(categoryId),
+      categoryId: categoryId ? Number(categoryId) : defaultCategory?.id ?? 1,
       city: city ?? "صنعاء",
       district: district ?? "",
       bio: bio ?? "",

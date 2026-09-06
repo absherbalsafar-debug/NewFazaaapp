@@ -16,7 +16,9 @@ export default function AuthEmail() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [role, setRole] = useState<"client" | "provider">("client");
+  const [role, setRole] = useState<"client" | "provider">(
+    new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client",
+  );
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();

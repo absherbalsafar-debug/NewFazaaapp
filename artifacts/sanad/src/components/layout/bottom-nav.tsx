@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Search, ClipboardList, MessageSquare, User } from "lucide-react";
+import { Home, Search, ClipboardList, MessageSquare, User, WalletCards, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -11,7 +11,13 @@ export function BottomNav() {
   if (!user) return null;
   if (user.role === "admin") return null;
 
-  const items = [
+  const items = user.role === "provider" ? [
+    { href: "/provider-dashboard", icon: Home, label: "لوحتي" },
+    { href: "/my-requests", icon: ClipboardList, label: "الطلبات" },
+    { href: "/messages", icon: MessageSquare, label: "الرسائل" },
+    { href: "/profile", icon: User, label: "ملفي" },
+    { href: "/settings", icon: WalletCards, label: "الإعدادات" },
+  ] : [
     { href: "/", icon: Home, label: "الرئيسية" },
     { href: "/providers", icon: Search, label: "استعرض" },
     { href: "/my-requests", icon: ClipboardList, label: "طلباتي" },

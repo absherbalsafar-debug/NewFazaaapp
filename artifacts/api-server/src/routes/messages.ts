@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, conversationsTable, messagesTable, usersTable, notificationsTable } from "@workspace/db";
-import { eq, and, or, desc, count } from "drizzle-orm";
+import { eq, and, or, desc, count, ne } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
 import { SendMessageBody } from "@workspace/api-zod";
 
@@ -25,6 +25,7 @@ router.get("/conversations", requireAuth, async (req: AuthRequest, res): Promise
       .where(and(
         eq(messagesTable.conversationId, conv.id),
         eq(messagesTable.isRead, false),
+        ne(messagesTable.senderId, req.userId!),
       ));
 
     return {
@@ -46,6 +47,15 @@ router.get("/conversations/:id/messages", requireAuth, async (req: AuthRequest, 
   const id = parseInt(raw, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
+  const [conversation] = await db
+    .select()
+    .from(conversationsTable)
+    .where(eq(conversationsTable.id, id));
+  if (!conversation) { res.status(404).json({ error: "Conversation not found" }); return; }
+  if (![conversation.userAId, conversation.userBId].includes(req.userId!)) {
+    res.status(403).json({ error: "لا تملك صلاحية عرض هذه المحادثة" }); return;
+  }
+
   const msgs = await db
     .select({ m: messagesTable, u: usersTable })
     .from(messagesTable)
@@ -60,6 +70,7 @@ router.get("/conversations/:id/messages", requireAuth, async (req: AuthRequest, 
     .where(and(
       eq(messagesTable.conversationId, id),
       eq(messagesTable.isRead, false),
+      ne(messagesTable.senderId, req.userId!),
     ));
 
   res.json(msgs.map(({ m, u }) => ({
@@ -84,6 +95,9 @@ router.post("/conversations/:id/messages", requireAuth, async (req: AuthRequest,
 
   const [conv] = await db.select().from(conversationsTable).where(eq(conversationsTable.id, id));
   if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
+  if (![conv.userAId, conv.userBId].includes(req.userId!)) {
+    res.status(403).json({ error: "لا تملك صلاحية الكتابة في هذه المحادثة" }); return;
+  }
 
   const [msg] = await db.insert(messagesTable).values({
     conversationId: id,

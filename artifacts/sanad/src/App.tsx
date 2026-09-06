@@ -34,6 +34,7 @@ import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminProviders from "@/pages/admin/providers";
+import ProviderDashboard from "@/pages/provider-dashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +45,7 @@ const queryClient = new QueryClient({
 const AdminLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
     <aside className="w-64 bg-card border-l border-border p-4 flex flex-col gap-1">
-      <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة سند</h2>
+      <h2 className="text-xl font-bold text-primary mb-6 px-2">إدارة فزعة</h2>
       <a href="/admin" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">لوحة التحكم</a>
       <a href="/admin/users" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">المستخدمين</a>
       <a href="/admin/providers" className="px-4 py-2.5 hover:bg-muted rounded-xl transition-colors font-medium text-sm">المهنيين</a>
@@ -63,6 +64,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function RoleHome() {
+  const { user } = useAuth();
+  return user?.role === "provider" ? <ProviderDashboard /> : <Home />;
+}
+
 function Router() {
   const { user, isLoading } = useAuth();
 
@@ -71,7 +77,7 @@ function Router() {
       <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center animate-pulse">
-            <span className="text-2xl font-extrabold text-primary">س</span>
+            <span className="text-2xl font-extrabold text-primary">ف</span>
           </div>
           <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
@@ -110,7 +116,12 @@ function Router() {
       {/* ── Protected App Routes ── */}
       <Route path="/">
         <ProtectedRoute>
-          <AppShell><Home /></AppShell>
+          <AppShell><RoleHome /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/provider-dashboard">
+        <ProtectedRoute allowedRoles={['provider']}>
+          <AppShell><ProviderDashboard /></AppShell>
         </ProtectedRoute>
       </Route>
       <Route path="/discover">

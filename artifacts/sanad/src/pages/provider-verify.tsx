@@ -47,7 +47,7 @@ export default function ProviderVerify() {
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold mb-3">تم إرسال الطلب!</h2>
-          <p className="text-muted-foreground mb-2">سيتم مراجعة بياناتك من قِبل فريق سند</p>
+          <p className="text-muted-foreground mb-2">سيتم مراجعة بياناتك من قِبل فريق فزعة</p>
           <p className="text-sm text-muted-foreground bg-muted rounded-xl p-3 mb-8">
             ⏱ مدة المراجعة: 24 - 48 ساعة عمل
           </p>

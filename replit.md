@@ -1,4 +1,4 @@
-# سند — منصة الخدمات والمهنيين
+# فزعة FAZAAH — منصة الخدمات والمهنيين
 
 منصة رقمية متكاملة تربط العملاء بأفضل المهنيين ومقدمي الخدمات داخل اليمن بطريقة آمنة وسريعة.
 
@@ -34,11 +34,11 @@
 ## Architecture decisions
 
 - Contract-first API: OpenAPI spec → Orval codegen → React Query hooks + Zod schemas
-- Auth: simple bearer token (base64url `userId:timestamp:sanad_secret_2024`) stored in localStorage
+- Auth: signed bearer token (HMAC with `SESSION_SECRET`) stored in localStorage
 - OTP: stored in `otps` table with 10-min expiry; dev mode returns OTP in response body
 - Google OAuth: gracefully degrades if `VITE_GOOGLE_CLIENT_ID` not set
 - RTL-first: entire app uses `dir="rtl"` and Arabic fonts (Alexandria/Cairo/IBM Plex Arabic)
-- Dark green (#1a4731) + Gold (#c9973a) brand colors
+- Deep navy + white + gray + gold FAZAAH brand colors
 
 ## Product
 
@@ -97,4 +97,4 @@
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
-- Auth token format: `base64url(userId:timestamp:sanad_secret_2024)` in `generateToken()` at `artifacts/api-server/src/lib/auth.ts`
+- Auth token format: signed `base64url(userId:timestamp).signature` in `generateToken()` at `artifacts/api-server/src/lib/auth.ts`

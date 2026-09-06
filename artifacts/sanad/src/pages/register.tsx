@@ -65,7 +65,7 @@ export default function Register() {
         setAuth(res.token, res.user as any);
         toast({
           title: "تم التسجيل بنجاح",
-          description: "مرحباً بك في منصة سند",
+          description: "مرحباً بك في منصة فزعة",
         });
         setLocation("/");
       },
@@ -88,7 +88,7 @@ export default function Register() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">إنشاء حساب جديد</h1>
           <p className="text-muted-foreground">
-            {step === 1 ? "انضم إلى منصة سند الآن" : "أكمل بياناتك كمزود خدمة"}
+            {step === 1 ? "انضم إلى منصة فزعة الآن" : "أكمل بياناتك كمقدم خدمة"}
           </p>
         </div>
 

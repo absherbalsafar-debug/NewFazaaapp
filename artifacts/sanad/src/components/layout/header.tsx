@@ -12,7 +12,7 @@ export function Header() {
       <div className="container mx-auto max-w-md h-14 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link href="/">
-            <span className="text-xl font-bold text-primary tracking-tight cursor-pointer">سند</span>
+            <span className="text-xl font-bold text-primary tracking-tight cursor-pointer">فزعة</span>
           </Link>
         </div>
         

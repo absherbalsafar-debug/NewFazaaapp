@@ -186,6 +186,41 @@ router.get("/providers", optionalAuth, async (req: AuthRequest, res): Promise<vo
   });
 });
 
+router.get("/providers/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  if (req.userRole !== "provider") { res.status(403).json({ error: "هذا المسار للمهنيين فقط" }); return; }
+  const [row] = await db
+    .select({ p: providersTable, u: usersTable, c: categoriesTable })
+    .from(providersTable)
+    .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+    .leftJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
+    .where(eq(providersTable.userId, req.userId!));
+  if (!row) { res.status(404).json({ error: "لم يتم إنشاء ملف مهني بعد" }); return; }
+  res.json({
+    id: row.p.id,
+    name: row.u.name,
+    avatarUrl: row.u.avatarUrl ?? null,
+    categoryId: row.p.categoryId,
+    categoryName: row.c?.name ?? "",
+    categoryIcon: row.c?.icon ?? null,
+    city: row.p.city,
+    district: row.p.district,
+    bio: row.p.bio,
+    rating: parseFloat(row.p.rating ?? "0"),
+    reviewCount: row.p.reviewCount,
+    completedJobs: row.p.completedJobs,
+    yearsExperience: row.p.yearsExperience,
+    hourlyRate: row.p.hourlyRate ? parseFloat(row.p.hourlyRate) : null,
+    phone: row.u.phone,
+    whatsapp: row.p.whatsapp ?? null,
+    isVerified: row.p.isVerified,
+    isAvailable: row.p.isAvailable,
+    lat: row.p.lat ? parseFloat(row.p.lat) : null,
+    lng: row.p.lng ? parseFloat(row.p.lng) : null,
+    isFavorited: false,
+    createdAt: row.p.createdAt.toISOString(),
+  });
+});
+
 router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);

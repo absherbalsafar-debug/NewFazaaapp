@@ -26,15 +26,22 @@ export default function Emergency() {
     const service = EMERGENCY_SERVICES.find(s => s.id === serviceId)!;
     setSending(true);
     try {
+      const query = new URLSearchParams({ limit: "20" });
+      if (service.categoryId) query.set("categoryId", String(service.categoryId));
+      const providersPage = await apiRequest(`/providers?${query.toString()}`);
+      const provider = providersPage.providers.find((item: { isAvailable: boolean }) => item.isAvailable)
+        ?? providersPage.providers[0];
+      if (!provider) throw new Error("لا يوجد مهني متاح لهذا النوع حالياً");
       await apiRequest('/requests', {
         method: 'POST',
         body: JSON.stringify({
-          title: service.label,
+          providerId: provider.id,
+          serviceType: service.label,
           description: `طلب طارئ: ${service.desc}`,
-          categoryId: service.categoryId ?? 2,
-          isEmergency: true,
           city: user?.city ?? 'صنعاء',
+          district: "",
           scheduledAt: null,
+          isImmediate: true,
         }),
       });
       setSent(true);

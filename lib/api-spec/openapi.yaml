@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Api
   version: 0.1.0
-  description: سند – منصة الخدمات والمهنيين في اليمن
+  description: فزعة FAZAAH – منصة الخدمات والمهنيين في اليمن
 servers:
   - url: /api
     description: Base API path
@@ -130,6 +130,18 @@ paths:
                 $ref: "#/components/schemas/Category"
 
   # ─── PROVIDERS ───────────────────────────────────────────────────────────────
+  /providers/me:
+    get:
+      operationId: getMyProvider
+      tags: [providers]
+      summary: Get the authenticated professional profile
+      responses:
+        "200":
+          description: Professional profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderDetail"
   /providers:
     get:
       operationId: listProviders

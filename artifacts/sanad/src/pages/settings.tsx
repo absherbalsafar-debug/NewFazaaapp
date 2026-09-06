@@ -125,7 +125,7 @@ export default function Settings() {
         <Section title="الدعم والمساعدة">
           <Item icon={HelpCircle} label="الأسئلة الشائعة" onClick={() => toast({ title: "قريباً" })} />
           <Item icon={Phone} label="تواصل معنا" onClick={() => toast({ title: "قريباً" })} />
-          <Item icon={Info} label="من نحن" onClick={() => toast({ title: "سند — منصة الخدمات المهنية في اليمن" })} />
+          <Item icon={Info} label="من نحن" onClick={() => toast({ title: "فزعة — منصة الخدمات المهنية في اليمن" })} />
           <Item icon={Info} label="سياسة الاستخدام" onClick={() => toast({ title: "قريباً" })} />
         </Section>
 
@@ -148,7 +148,7 @@ export default function Settings() {
           />
         </Section>
 
-        <p className="text-center text-xs text-muted-foreground mt-2 pb-4">سند v1.0.0 — صنعاء، اليمن</p>
+        <p className="text-center text-xs text-muted-foreground mt-2 pb-4">فزعة FAZAAH v1.0.0 — صنعاء، اليمن</p>
       </div>
     </div>
   );

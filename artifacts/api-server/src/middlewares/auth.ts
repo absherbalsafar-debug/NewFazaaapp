@@ -49,3 +49,13 @@ export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction
   }
   next();
 }
+
+export function requireRole(...roles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.userRole || !roles.includes(req.userRole)) {
+      res.status(403).json({ error: "لا تملك صلاحية تنفيذ هذا الإجراء" });
+      return;
+    }
+    next();
+  };
+}
