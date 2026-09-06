@@ -26,10 +26,10 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-border pb-safe"
-      style={{ boxShadow: '0 -4px 24px rgba(15,32,66,0.08)' }}
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/10 bg-background/90 pb-safe backdrop-blur-2xl"
+      style={{ boxShadow: '0 -10px 32px rgba(14,47,98,0.1)' }}
     >
-      <div className="flex justify-around items-center h-[60px] max-w-lg mx-auto px-2">
+      <div className="mx-auto flex h-[68px] max-w-lg items-center justify-around px-2">
         {items.map((item) => {
           const isActive =
             item.href === "/" ? location === "/" : location.startsWith(item.href);
@@ -44,21 +44,21 @@ export function BottomNav() {
                 {isActive && (
                   <motion.div
                     layoutId="nav-active"
-                    className="absolute inset-0 bg-primary/8 rounded-xl"
+                    className="absolute inset-0 rounded-2xl bg-primary/8"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
                 <Icon
                   className={cn(
-                    "relative w-[22px] h-[22px] transition-all duration-200",
-                    isActive ? "text-primary" : "text-muted-foreground"
+                    "relative h-[21px] w-[21px] transition-all duration-200",
+                    isActive ? "text-primary" : "text-muted-foreground/75"
                   )}
                   strokeWidth={isActive ? 2.5 : 1.8}
                 />
                 <span
                   className={cn(
-                    "relative text-[10px] font-medium transition-colors leading-none",
-                    isActive ? "text-primary" : "text-muted-foreground"
+                    "relative text-[10px] font-semibold leading-none transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground/75"
                   )}
                 >
                   {item.label}
