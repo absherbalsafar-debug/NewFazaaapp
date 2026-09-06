@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Eye, EyeOff, ArrowRight, BriefcaseBusiness, Check, ShieldCheck, UserRound } from "lucide-react";
+import { Mail, Eye, EyeOff, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CitySelector } from "@/components/city-selector";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 type Mode = "login" | "register";
+type Category = { id: number; name: string; icon?: string | null };
 
 export default function AuthEmail() {
   const [mode, setMode] = useState<Mode>("login");
@@ -18,6 +20,11 @@ export default function AuthEmail() {
   const [showPwd, setShowPwd] = useState(false);
   const role: "client" | "provider" = new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client";
   const [city, setCity] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [bio, setBio] = useState("");
+  const [yearsExperience, setYearsExperience] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -25,6 +32,25 @@ export default function AuthEmail() {
   const RoleIcon = role === "provider" ? BriefcaseBusiness : UserRound;
   const roleTitle = role === "provider" ? "حساب مقدم خدمة" : "حساب عميل";
   const roleDescription = role === "provider" ? "استقبل الطلبات وأدر خدماتك" : "اكتشف المهنيين واطلب خدماتك";
+
+  useEffect(() => {
+    if (mode !== "register" || role !== "provider") return;
+    let active = true;
+    setCategoriesLoading(true);
+    apiRequest("/categories")
+      .then((data) => {
+        if (active) setCategories(Array.isArray(data) ? data : []);
+      })
+      .catch((err: any) => {
+        if (active) toast({ title: "تعذر تحميل مجالات الخدمة", description: err.message, variant: "destructive" });
+      })
+      .finally(() => {
+        if (active) setCategoriesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [mode, role, toast]);
 
   async function handleSubmit() {
     if (!email.trim() || !password) {
@@ -45,16 +71,35 @@ export default function AuthEmail() {
           setLoading(false);
           return;
         }
+        if (role === "provider" && !categoryId) {
+          toast({ title: "حدد مجال خدمتك", description: "اختر المجال الذي ستقدم خدماته للعملاء", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        if (role === "provider" && bio.trim().length < 10) {
+          toast({ title: "اكتب نبذة عن خدمتك", description: "أضف وصفاً مختصراً لا يقل عن 10 أحرف", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
         data = await apiRequest('/auth/register/email', {
           method: 'POST',
-          body: JSON.stringify({ name: name.trim(), email: email.trim(), password, role, city }),
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim(),
+            password,
+            role,
+            city: city || undefined,
+            categoryId: categoryId ? Number(categoryId) : undefined,
+            bio: bio.trim() || undefined,
+            yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+          }),
         });
         if (data.emailVerifyToken) {
           toast({ title: "تحقق من بريدك", description: `رمز التفعيل: ${data.emailVerifyToken}` });
         }
       }
       login(data.token, data.user);
-      navigate('/');
+      navigate(role === "provider" ? "/provider-dashboard" : "/");
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -136,6 +181,56 @@ export default function AuthEmail() {
                 </div>
                 <Check className="h-4 w-4 text-accent" />
               </div>
+              {role === "provider" && (
+                <div className="space-y-4 rounded-[26px] border border-primary/10 bg-white p-4 shadow-[0_12px_28px_rgba(14,47,98,0.06)]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 text-[#a17b29]">
+                      <BriefcaseBusiness className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-extrabold text-primary">ما الخدمة التي تقدمها؟</p>
+                      <p className="mt-0.5 text-[10px] text-[#8b897f]">ستظهر هذه المعلومات للعملاء</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={categoryId}
+                      onChange={(event) => setCategoryId(event.target.value)}
+                      disabled={categoriesLoading}
+                      className="h-14 w-full appearance-none rounded-2xl border border-[#d4d9df] bg-[#fbfaf7] px-4 pl-10 text-sm font-bold text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">{categoriesLoading ? "جاري تحميل مجالات الخدمة..." : "اختر مجال خدمتك"}</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.icon ? `${category.icon} ` : ""}{category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8e8b82]" />
+                  </div>
+                  <div className="relative">
+                    <FileText className="pointer-events-none absolute right-4 top-4 h-4 w-4 text-[#a17b29]" />
+                    <Textarea
+                      value={bio}
+                      onChange={(event) => setBio(event.target.value)}
+                      placeholder="مثال: أقدم خدمات السباكة المنزلية وإصلاح التسربات..."
+                      className="min-h-[96px] resize-none rounded-2xl border-[#d4d9df] bg-[#fbfaf7] pr-11 pt-3 text-sm leading-6 shadow-none focus-visible:ring-primary"
+                      maxLength={240}
+                    />
+                    <span className="mt-1 block text-left text-[10px] text-[#aaa69b]">{bio.length}/240</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={60}
+                    inputMode="numeric"
+                    placeholder="سنوات الخبرة (اختياري)"
+                    value={yearsExperience}
+                    onChange={(event) => setYearsExperience(event.target.value)}
+                    className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
+                  />
+                </div>
+              )}
             </>
           )}
 
@@ -180,7 +275,6 @@ export default function AuthEmail() {
 
           <Button
             type="submit"
-            onClick={handleSubmit}
             disabled={loading}
              className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90"
           >

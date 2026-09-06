@@ -25,6 +25,7 @@ interface ProviderProfile {
   name: string;
   categoryName: string;
   city: string;
+  bio: string;
   rating: number;
   reviewCount: number;
   completedJobs: number;
@@ -116,7 +117,8 @@ export default function ProviderDashboard() {
             <div>
               <p className="text-sm text-white/65">لوحة المهني</p>
               <h1 className="mt-1 text-2xl font-extrabold">مرحباً، {profile.name}</h1>
-              <p className="mt-2 text-xs text-white/70">{profile.categoryName} · {profile.city}</p>
+          <p className="mt-2 text-xs text-white/70">{profile.categoryName} · {profile.city}</p>
+          {profile.bio && <p className="mt-2 max-w-[290px] text-xs leading-5 text-white/65">{profile.bio}</p>}
             </div>
             <Link href="/settings"><button className="rounded-2xl bg-white/10 p-3"><Settings2 className="h-5 w-5" /></button></Link>
           </div>

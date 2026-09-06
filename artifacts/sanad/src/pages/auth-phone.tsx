@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CitySelector } from "@/components/city-selector";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 type Step = "phone" | "otp" | "name";
 type Role = "client" | "provider";
+type Category = { id: number; name: string; icon?: string | null };
 
 const roleLabels: Record<Role, { title: string; description: string }> = {
   client: { title: "أبحث عن خدمة", description: "ستظهر لك أفضل الخدمات والمهنيين" },
@@ -22,6 +24,11 @@ export default function AuthPhone() {
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [bio, setBio] = useState("");
+  const [yearsExperience, setYearsExperience] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const { login } = useAuth();
@@ -30,6 +37,25 @@ export default function AuthPhone() {
   const role: Role = new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client";
   const selectedRole = roleLabels[role];
   const RoleIcon = role === "provider" ? BriefcaseBusiness : UserRound;
+
+  useEffect(() => {
+    if (role !== "provider" || step !== "name") return;
+    let active = true;
+    setCategoriesLoading(true);
+    apiRequest("/categories")
+      .then((data) => {
+        if (active) setCategories(Array.isArray(data) ? data : []);
+      })
+      .catch((err: any) => {
+        if (active) toast({ title: "تعذر تحميل مجالات الخدمة", description: err.message, variant: "destructive" });
+      })
+      .finally(() => {
+        if (active) setCategoriesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [role, step, toast]);
 
   async function sendOtp() {
     if (phone.trim().length < 7) {
@@ -81,11 +107,28 @@ export default function AuthPhone() {
       toast({ title: "خطأ", description: "أدخل اسمك الكامل", variant: "destructive" });
       return;
     }
+    if (role === "provider" && !categoryId) {
+      toast({ title: "حدد مجال خدمتك", description: "اختر المجال الذي ستقدم خدماته للعملاء", variant: "destructive" });
+      return;
+    }
+    if (role === "provider" && bio.trim().length < 10) {
+      toast({ title: "اكتب نبذة عن خدمتك", description: "أضف وصفاً مختصراً لا يقل عن 10 أحرف", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const data = await apiRequest('/auth/verify-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: phone.trim(), code: otp, name: name.trim(), role, city: city || undefined }),
+        body: JSON.stringify({
+          phone: phone.trim(),
+          code: otp,
+          name: name.trim(),
+          role,
+          city: city || undefined,
+          categoryId: categoryId ? Number(categoryId) : undefined,
+          bio: bio.trim() || undefined,
+          yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+        }),
       });
       login(data.token, data.user);
       navigate(role === 'provider' ? '/provider-dashboard' : '/');
@@ -101,7 +144,7 @@ export default function AuthPhone() {
 
   return (
     <main className="min-h-[100dvh] bg-[#f5f3ee] text-primary" dir="rtl">
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pb-8 pt-6 sm:max-w-lg sm:px-9">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col overflow-y-auto px-5 pb-8 pt-6 sm:max-w-lg sm:px-9">
         <header className="flex items-center justify-between">
           <button
             type="button"
@@ -139,7 +182,9 @@ export default function AuthPhone() {
               <p className="mt-3 text-sm leading-7 text-[#77766f]">
                 {step === "phone" && "سنرسل رمزاً قصيراً إلى رقمك لتبدأ تجربتك بأمان."}
                 {step === "otp" && "أدخل الرمز الذي وصل إلى هاتفك لإكمال الدخول."}
-                {step === "name" && "تعرف عليك فزعة باسمك، وأكملنا لك حسابك في خطوة واحدة."}
+                {step === "name" && (role === "provider"
+                  ? "عرّف العملاء بخدمتك حتى تصل إليك الطلبات المناسبة."
+                  : "تعرف عليك فزعة باسمك، وأكملنا لك حسابك في خطوة واحدة.")}
               </p>
             </div>
 
@@ -223,6 +268,56 @@ export default function AuthPhone() {
                   className="h-14 rounded-2xl border-[#d4d9df] bg-white text-base shadow-sm focus-visible:ring-primary"
                   autoFocus
                 />
+                {role === "provider" && (
+                  <div className="space-y-4 rounded-[26px] border border-primary/10 bg-white p-4 shadow-[0_12px_28px_rgba(14,47,98,0.06)]">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 text-[#a17b29]">
+                        <BriefcaseBusiness className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-extrabold text-primary">ما الخدمة التي تقدمها؟</p>
+                        <p className="mt-0.5 text-[10px] text-[#8b897f]">هذه المعلومات تظهر للعملاء عند تصفح المهنيين</p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <select
+                        value={categoryId}
+                        onChange={(event) => setCategoryId(event.target.value)}
+                        disabled={categoriesLoading}
+                        className="h-14 w-full appearance-none rounded-2xl border border-[#d4d9df] bg-[#fbfaf7] px-4 pl-10 text-sm font-bold text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      >
+                        <option value="">{categoriesLoading ? "جاري تحميل مجالات الخدمة..." : "اختر مجال خدمتك"}</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.icon ? `${category.icon} ` : ""}{category.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8e8b82]" />
+                    </div>
+                    <div className="relative">
+                      <FileText className="pointer-events-none absolute right-4 top-4 h-4 w-4 text-[#a17b29]" />
+                      <Textarea
+                        value={bio}
+                        onChange={(event) => setBio(event.target.value)}
+                        placeholder="مثال: أقدم خدمات السباكة المنزلية وإصلاح التسربات وتركيب الأدوات الصحية..."
+                        className="min-h-[96px] resize-none rounded-2xl border-[#d4d9df] bg-[#fbfaf7] pr-11 pt-3 text-sm leading-6 shadow-none focus-visible:ring-primary"
+                        maxLength={240}
+                      />
+                      <span className="mt-1 block text-left text-[10px] text-[#aaa69b]">{bio.length}/240</span>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={60}
+                      inputMode="numeric"
+                      placeholder="سنوات الخبرة (اختياري)"
+                      value={yearsExperience}
+                      onChange={(event) => setYearsExperience(event.target.value)}
+                      className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
+                    />
+                  </div>
+                )}
                 <div className="relative">
                   <MapPin className="absolute right-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#a17b29]" />
                   <CitySelector value={city} onChange={setCity} placeholder="المدينة (اختياري)" />
