@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { Phone, Mail, ChevronLeft, Briefcase, User, Star, Shield, Zap, ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpLeft,
+  BriefcaseBusiness,
+  Check,
+  ChevronLeft,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useAuth, apiRequest } from "@/lib/auth";
@@ -37,11 +49,11 @@ function GoogleButton() {
   if (!GOOGLE_CLIENT_ID) {
     return (
       <button
-        className="w-full flex items-center justify-center gap-3 h-12 rounded-2xl border border-border bg-white hover:bg-gray-50 transition-colors text-foreground font-medium text-sm shadow-sm"
+        className="w-full flex items-center justify-center gap-3 h-13 rounded-2xl border border-[#d9d5cd] bg-white hover:bg-[#faf9f6] transition-colors text-[#162a2a] font-bold text-sm shadow-[0_8px_24px_rgba(22,42,42,0.05)]"
         onClick={() => window.alert('يرجى تكوين VITE_GOOGLE_CLIENT_ID لتفعيل تسجيل الدخول بجوجل')}
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
@@ -52,263 +64,285 @@ function GoogleButton() {
   }
 
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <GoogleLogin
-        onSuccess={handleGoogleSuccess}
-        onError={() => {}}
-        size="large"
-        width="100%"
-        text="continue_with"
-        shape="rectangular"
-      />
-    </GoogleOAuthProvider>
+    <div className="overflow-hidden rounded-2xl [&>div]:w-full">
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => {}}
+          size="large"
+          width="100%"
+          text="continue_with"
+          shape="rectangular"
+        />
+      </GoogleOAuthProvider>
+    </div>
   );
 }
 
-type Step = 'role' | 'auth';
+type Step = 'intro' | 'start';
 type Role = 'client' | 'provider';
+
+const roleCopy = {
+  client: {
+    title: "أبحث عن خدمة",
+    description: "أصل إلى الشخص المناسب بثقة",
+    icon: UserRound,
+    detail: "اطلب، تابع، وقيّم تجربتك من مكان واحد",
+  },
+  provider: {
+    title: "أقدّم خدمة",
+    description: "أحوّل خبرتي إلى فرص حقيقية",
+    icon: BriefcaseBusiness,
+    detail: "اعرض مهارتك واستقبل طلبات من حولك",
+  },
+} as const;
 
 export default function Welcome() {
   const [, navigate] = useLocation();
-  const [step, setStep] = useState<Step>('role');
+  const [step, setStep] = useState<Step>('intro');
   const [selectedRole, setSelectedRole] = useState<Role>('client');
 
-  const handleRoleSelect = (role: Role) => {
-    setSelectedRole(role);
-    setStep('auth');
-  };
-
-  const getAuthPath = (type: 'phone' | 'email') => {
-    return `${type === 'phone' ? '/auth/phone' : '/auth/email'}?role=${selectedRole}`;
-  };
+  const getAuthPath = (type: 'phone' | 'email') => (
+    `${type === 'phone' ? '/auth/phone' : '/auth/email'}?role=${selectedRole}`
+  );
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col" dir="rtl">
+    <main className="min-h-[100dvh] overflow-hidden bg-[#f5f3ee] text-[#162a2a]" dir="rtl">
       <AnimatePresence mode="wait">
-        {step === 'role' ? (
-          <motion.div
-            key="role"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: 40 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col"
+        {step === 'intro' ? (
+          <motion.section
+            key="intro"
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 28 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="relative min-h-[100dvh] overflow-hidden bg-[#122b2b]"
           >
-            {/* Header gradient */}
-            <div className="gradient-primary pt-16 pb-24 px-6 relative overflow-hidden">
-              <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/5" />
-              <div className="absolute -top-8 right-4 w-32 h-32 rounded-full bg-white/5" />
-              <div className="absolute top-16 right-8 w-16 h-16 rounded-full bg-accent/20" />
-              <div className="relative z-10 max-w-sm mx-auto">
-                {/* Logo */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(202,164,74,0.22),transparent_28%),radial-gradient(circle_at_85%_70%,rgba(56,113,101,0.36),transparent_32%)]" />
+            <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.4)_1px,transparent_1px)] [background-size:42px_42px]" />
+            <div className="absolute -left-28 top-36 h-72 w-72 rounded-full border border-[#d9b765]/20" />
+            <div className="absolute -left-20 top-44 h-56 w-56 rounded-full border border-[#d9b765]/15" />
+
+            <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-6 pb-7 pt-7 sm:max-w-lg sm:px-9">
+              <header className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-[#e4c778]/50 bg-[#e4c778] text-[#122b2b] shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+                    <ShieldCheck className="h-5 w-5" strokeWidth={2.5} />
+                  </div>
+                  <div className="leading-none">
+                    <p className="text-[17px] font-black tracking-tight text-white">فزعة</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#d9b765]">FAZAAH</p>
+                  </div>
+                </div>
+                <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold tracking-wide text-white/70">
+                  ٠١ <span className="mx-1 text-[#d9b765]">/</span> ٠٢
+                </span>
+              </header>
+
+              <div className="flex flex-1 flex-col justify-center py-9">
                 <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: "spring" }}
-                  className="w-16 h-16 gradient-gold rounded-2xl flex items-center justify-center mb-6 shadow-lg"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12, duration: 0.65 }}
+                  className="mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-[#d9b765]/25 bg-[#d9b765]/10 px-3.5 py-2 text-[11px] font-semibold text-[#f2d991]"
                 >
-                  <Shield className="w-8 h-8 text-white" />
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>خدمة تستحق الثقة</span>
                 </motion.div>
+
                 <motion.h1
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-3xl font-extrabold text-white mb-2"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.7 }}
+                  className="max-w-[16rem] text-[42px] font-black leading-[1.14] tracking-[-0.04em] text-white sm:text-[52px]"
                 >
-                  فزعة
+                  راحتك تبدأ
+                  <span className="block text-[#e4c778]">بفزعة.</span>
                 </motion.h1>
                 <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-white/75 text-base leading-relaxed"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.65 }}
+                  className="mt-5 max-w-[19rem] text-[15px] leading-8 text-white/65"
                 >
-                  منصة الخدمات المهنية الموثوقة في اليمن
+                  منصة يمنية تجمعك بالمهني المناسب، في الوقت المناسب، وبطريقة تشعرك بالاطمئنان.
                 </motion.p>
 
-                {/* Trust indicators */}
                 <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="flex items-center gap-4 mt-5"
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.38, duration: 0.7 }}
+                  className="relative mt-9 h-40 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.07] shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
                 >
-                  {[
-                    { icon: Star, text: "٤.٨+ تقييم" },
-                    { icon: Shield, text: "مهنيون موثقون" },
-                    { icon: Zap, text: "استجابة فورية" },
-                  ].map((item) => (
-                    <div key={item.text} className="flex items-center gap-1.5">
-                      <item.icon className="w-3.5 h-3.5 text-accent" />
-                      <span className="text-white/70 text-xs font-medium">{item.text}</span>
+                  <div className="absolute -left-7 -top-10 h-36 w-36 rounded-full bg-[#d9b765]/20 blur-2xl" />
+                  <div className="absolute -bottom-14 right-5 h-36 w-36 rounded-full bg-[#77a898]/25 blur-2xl" />
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0f2525]/70 to-transparent" />
+                  <div className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e4c778] text-[#122b2b] shadow-[0_10px_28px_rgba(228,199,120,0.25)]">
+                    <MapPin className="h-6 w-6" />
+                  </div>
+                  <div className="absolute right-[5.25rem] top-9 h-2 w-2 rounded-full bg-[#e4c778] shadow-[0_0_0_7px_rgba(228,199,120,0.12)]" />
+                  <div className="absolute bottom-5 right-6 left-6 flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] font-medium text-white/55">خدمات حولك</p>
+                      <p className="mt-1 text-sm font-bold text-white">قريب منك، موثوق لك</p>
                     </div>
-                  ))}
+                    <ArrowUpLeft className="h-5 w-5 text-[#e4c778]" />
+                  </div>
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setStep('start')}
+                  className="group flex h-14 w-full items-center justify-between rounded-2xl bg-[#e4c778] px-5 text-right text-[15px] font-extrabold text-[#122b2b] shadow-[0_14px_28px_rgba(228,199,120,0.2)] transition-transform hover:bg-[#f0d68e] active:scale-[0.98]"
+                >
+                  <span>اكتشف فزعة</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#122b2b]/10 transition-transform group-hover:-translate-x-1">
+                    <ChevronLeft className="h-5 w-5" />
+                  </span>
+                </button>
+                <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-medium text-white/45">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#d9b765]" />
+                  <span>تجربة آمنة ومصممة لك</span>
+                </div>
+              </motion.div>
+            </div>
+          </motion.section>
+        ) : (
+          <motion.section
+            key="start"
+            initial={{ opacity: 0, x: -28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="min-h-[100dvh] bg-[#f5f3ee]"
+          >
+            <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pb-7 pt-7 sm:max-w-lg sm:px-9">
+              <header className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep('intro')}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ddd8ce] bg-white text-[#162a2a] transition-colors hover:bg-[#ebe8e0]"
+                  aria-label="العودة للشاشة السابقة"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-7 rounded-full bg-[#162a2a]" />
+                  <span className="h-1.5 w-7 rounded-full bg-[#d9b765]" />
+                  <span className="text-[10px] font-bold text-[#8e8b82]">٠٢ / ٠٢</span>
+                </div>
+              </header>
+
+              <div className="flex flex-1 flex-col pt-11">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.55 }}
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a17b29]">مرحباً بك في فزعة</p>
+                  <h2 className="mt-3 text-[34px] font-black leading-[1.2] tracking-[-0.04em] text-[#162a2a]">
+                    اختر تجربتك،
+                    <span className="block text-[#a17b29]">ونبدأ معاً.</span>
+                  </h2>
+                  <p className="mt-4 max-w-[19rem] text-sm leading-7 text-[#77766f]">
+                    أخبرنا كيف ستستخدم فزعة لنجهز لك رحلة تناسب احتياجك من أول خطوة.
+                  </p>
+                </motion.div>
+
+                <div className="mt-8 space-y-3">
+                  {(Object.entries(roleCopy) as [Role, typeof roleCopy[Role]][]).map(([role, item], index) => {
+                    const Icon = item.icon;
+                    const isSelected = selectedRole === role;
+                    return (
+                      <motion.button
+                        key={role}
+                        type="button"
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + index * 0.08, duration: 0.5 }}
+                        whileTap={{ scale: 0.985 }}
+                        onClick={() => setSelectedRole(role)}
+                        className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-[24px] border p-4 text-right transition-all duration-300 ${
+                          isSelected
+                            ? "border-[#162a2a] bg-[#162a2a] text-white shadow-[0_16px_32px_rgba(22,42,42,0.16)]"
+                            : "border-[#dedad1] bg-white text-[#162a2a] hover:border-[#c9b77c]"
+                        }`}
+                      >
+                        {isSelected && <div className="absolute -left-6 -top-10 h-24 w-24 rounded-full bg-[#d9b765]/20 blur-xl" />}
+                        <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
+                          isSelected ? "bg-[#e4c778] text-[#162a2a]" : "bg-[#f1eee7] text-[#a17b29]"
+                        }`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <div className="relative min-w-0 flex-1">
+                          <p className="text-[15px] font-extrabold">{item.title}</p>
+                          <p className={`mt-1 text-xs ${isSelected ? "text-white/60" : "text-[#8a887f]"}`}>{item.description}</p>
+                          <p className={`mt-2 text-[10px] font-medium ${isSelected ? "text-[#e4c778]" : "text-[#aaa69b]"}`}>{item.detail}</p>
+                        </div>
+                        <div className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                          isSelected ? "border-[#e4c778] bg-[#e4c778] text-[#162a2a]" : "border-[#d4d0c6] text-transparent"
+                        }`}>
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="mt-auto pt-8"
+                >
+                  <p className="mb-3 text-center text-[11px] font-semibold text-[#9a978e]">ابدأ بطريقتك المفضلة</p>
+                  <motion.div whileTap={{ scale: 0.985 }}>
+                    <Button
+                      className="h-14 w-full rounded-2xl bg-[#162a2a] text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(22,42,42,0.16)] hover:bg-[#234444]"
+                      onClick={() => navigate(getAuthPath('phone'))}
+                    >
+                      <Phone className="ml-2 h-5 w-5 text-[#e4c778]" />
+                      التسجيل برقم الهاتف
+                    </Button>
+                  </motion.div>
+                  <div className="my-3 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-[#dedad1]" />
+                    <span className="text-[10px] font-bold text-[#aaa69b]">أو</span>
+                    <div className="h-px flex-1 bg-[#dedad1]" />
+                  </div>
+                  <GoogleButton />
+                  <motion.div whileTap={{ scale: 0.985 }} className="mt-3">
+                    <Button
+                      variant="outline"
+                      className="h-12 w-full rounded-2xl border-[#d9d5cd] bg-transparent text-sm font-bold text-[#3a4a48] hover:bg-white"
+                      onClick={() => navigate(getAuthPath('email'))}
+                    >
+                      <Mail className="ml-2 h-4 w-4 text-[#a17b29]" />
+                      التسجيل بالبريد الإلكتروني
+                    </Button>
+                  </motion.div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/auth/email')}
+                    className="mt-5 block w-full text-center text-xs text-[#8b897f] transition-colors hover:text-[#162a2a]"
+                  >
+                    لديك حساب بالفعل؟ <span className="font-extrabold text-[#a17b29]">تسجيل الدخول</span>
+                  </button>
+                  <p className="mt-4 text-center text-[10px] leading-5 text-[#aaa69b]">
+                    بالمتابعة توافق على شروط الاستخدام وسياسة الخصوصية
+                  </p>
                 </motion.div>
               </div>
             </div>
-
-            {/* Role selection cards */}
-            <div className="flex-1 px-5 pt-8 pb-12 max-w-sm mx-auto w-full space-y-4">
-              <motion.p
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-center font-bold text-lg text-foreground"
-              >
-                  كيف تريد استخدام فزعة؟
-              </motion.p>
-
-              {/* Client card */}
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, type: "spring" }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleRoleSelect('client')}
-                className="w-full bg-white rounded-3xl p-5 border-2 border-border hover:border-primary/40 hover:shadow-lg transition-all duration-200 text-right group card-shadow"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/12 transition-colors">
-                    <User className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-base text-foreground">أريد طلب خدمة</p>
-                    <p className="text-muted-foreground text-sm mt-0.5">ابحث عن المهنيين واحجز خدماتهم</p>
-                  </div>
-                  <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 pr-[4.5rem]">
-                  {["🔧 سباكة", "⚡ كهرباء", "🏠 نظافة", "❄️ تكييف"].map(s => (
-                    <span key={s} className="text-xs bg-secondary text-secondary-foreground px-2.5 py-1 rounded-full font-medium">{s}</span>
-                  ))}
-                </div>
-              </motion.button>
-
-              {/* Provider card */}
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7, type: "spring" }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleRoleSelect('provider')}
-                className="w-full bg-white rounded-3xl p-5 border-2 border-border hover:border-accent/60 hover:shadow-lg transition-all duration-200 text-right group card-shadow"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
-                    <Briefcase className="w-7 h-7 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-base text-foreground">أريد العمل كمهني</p>
-                    <p className="text-muted-foreground text-sm mt-0.5">قدّم خدماتك واكسب دخلاً إضافياً</p>
-                  </div>
-                  <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 pr-[4.5rem]">
-                  {["💰 أرباح مرتفعة", "🏅 شارة توثيق", "📊 لوحة إحصائيات"].map(s => (
-                    <span key={s} className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full font-medium border border-amber-100">{s}</span>
-                  ))}
-                </div>
-              </motion.button>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="text-center text-xs text-muted-foreground pt-2"
-              >
-                يمكنك تغيير نوع حسابك لاحقاً من الإعدادات
-              </motion.p>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="auth"
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col"
-          >
-            {/* Header */}
-            <div className="gradient-primary pt-12 pb-16 px-6 relative overflow-hidden">
-              <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/5" />
-              <div className="relative z-10 max-w-sm mx-auto">
-                <button
-                  onClick={() => setStep('role')}
-                  className="flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6 text-sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  رجوع
-                </button>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${selectedRole === 'provider' ? 'bg-accent/20 border border-accent/30' : 'bg-white/10 border border-white/20'}`}>
-                  {selectedRole === 'provider'
-                    ? <Briefcase className="w-7 h-7 text-accent" />
-                    : <User className="w-7 h-7 text-white" />
-                  }
-                </div>
-                <h2 className="text-2xl font-extrabold text-white mb-1">
-                  {selectedRole === 'provider' ? 'انضم كمهني' : 'ابدأ الآن'}
-                </h2>
-                <p className="text-white/70 text-sm">
-                  {selectedRole === 'provider'
-                    ? 'سجّل حسابك وابدأ استقبال الطلبات'
-                    : 'أنشئ حساباً وابحث عن أفضل المهنيين'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex-1 px-5 pt-8 pb-12 max-w-sm mx-auto w-full space-y-3">
-              {/* Phone OTP */}
-              <motion.div whileTap={{ scale: 0.98 }}>
-                <Button
-                  className="w-full h-13 rounded-2xl bg-primary text-white font-bold text-base flex items-center gap-3 shadow-sm hover:bg-primary/90"
-                  onClick={() => navigate(getAuthPath('phone'))}
-                >
-                  <Phone className="w-5 h-5" />
-                  التسجيل برقم الهاتف
-                </Button>
-              </motion.div>
-
-              {/* Google */}
-              <GoogleButton />
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">أو</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-
-              {/* Email */}
-              <motion.div whileTap={{ scale: 0.98 }}>
-                <Button
-                  variant="outline"
-                  className="w-full h-12 rounded-2xl border-border font-medium text-sm flex items-center gap-3"
-                  onClick={() => navigate(getAuthPath('email'))}
-                >
-                  <Mail className="w-5 h-5 text-muted-foreground" />
-                  التسجيل بالبريد الإلكتروني
-                </Button>
-              </motion.div>
-
-              {/* Already have account */}
-              <div className="pt-4 text-center">
-                <button
-                  onClick={() => navigate('/auth/email')}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  لديك حساب بالفعل؟{" "}
-                  <span className="text-primary font-bold">تسجيل الدخول</span>
-                </button>
-              </div>
-
-              <p className="text-center text-[11px] text-muted-foreground/60 pt-2 leading-relaxed">
-                بالمتابعة توافق على شروط الاستخدام وسياسة الخصوصية
-              </p>
-            </div>
-          </motion.div>
+          </motion.section>
         )}
       </AnimatePresence>
-    </div>
+    </main>
   );
 }
