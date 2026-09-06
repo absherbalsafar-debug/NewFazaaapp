@@ -55,7 +55,7 @@ router.post("/auth/send-otp", async (req, res): Promise<void> => {
 
 // ─── OTP: التحقق وتسجيل الدخول/إنشاء حساب ───────────────────────────────────
 router.post("/auth/verify-otp", async (req, res): Promise<void> => {
-  const { phone, code, name, role, city } = req.body;
+  const { phone, code, name, role, city, categoryId, bio, yearsExperience } = req.body;
   if (!phone || !code) {
     res.status(400).json({ error: "الهاتف والرمز مطلوبان" });
     return;
@@ -101,15 +101,15 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
       .returning();
 
     if (user.role === "provider") {
-      const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
+        const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
       if (defaultCategory) {
         await db.insert(providersTable).values({
           userId: user.id,
-          categoryId: defaultCategory.id,
+            categoryId: categoryId ? Number(categoryId) : defaultCategory.id,
           city: city ?? "صنعاء",
           district: "",
-          bio: "",
-          yearsExperience: 1,
+            bio: bio?.trim() ?? "",
+            yearsExperience: yearsExperience ? Number(yearsExperience) : 1,
         });
       }
     }
