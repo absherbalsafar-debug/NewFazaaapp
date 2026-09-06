@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CitySelector } from "@/components/city-selector";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getPostAuthPath, getRegistrationRole } from "@/lib/registration";
 
 type Mode = "login" | "register";
 type Category = { id: number; name: string; icon?: string | null };
@@ -18,7 +19,7 @@ export default function AuthEmail() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const role: "client" | "provider" = new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client";
+  const role = getRegistrationRole(window.location.search);
   const [city, setCity] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [bio, setBio] = useState("");
@@ -99,7 +100,7 @@ export default function AuthEmail() {
         }
       }
       login(data.token, data.user);
-      navigate(role === "provider" ? "/provider-dashboard" : "/");
+      navigate(getPostAuthPath(data.user.role === "provider" ? "provider" : "client"));
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {

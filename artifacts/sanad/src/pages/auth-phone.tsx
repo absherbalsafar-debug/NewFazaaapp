@@ -8,12 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { CitySelector } from "@/components/city-selector";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { getPostAuthPath, getRegistrationRole, type RegistrationRole } from "@/lib/registration";
 
 type Step = "phone" | "otp" | "name";
-type Role = "client" | "provider";
 type Category = { id: number; name: string; icon?: string | null };
 
-const roleLabels: Record<Role, { title: string; description: string }> = {
+const roleLabels: Record<RegistrationRole, { title: string; description: string }> = {
   client: { title: "أبحث عن خدمة", description: "ستظهر لك أفضل الخدمات والمهنيين" },
   provider: { title: "أقدّم خدمة", description: "ستستقبل طلبات العملاء وتدير عملك" },
 };
@@ -34,7 +34,7 @@ export default function AuthPhone() {
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const role: Role = new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client";
+  const role = getRegistrationRole(window.location.search);
   const selectedRole = roleLabels[role];
   const RoleIcon = role === "provider" ? BriefcaseBusiness : UserRound;
 
@@ -93,7 +93,7 @@ export default function AuthPhone() {
         setStep("name");
       } else {
         login(data.token, data.user);
-        navigate('/');
+        navigate(getPostAuthPath(data.user.role === "provider" ? "provider" : "client"));
       }
     } catch (err: any) {
       toast({ title: "رمز خاطئ", description: err.message, variant: "destructive" });
@@ -131,7 +131,7 @@ export default function AuthPhone() {
         }),
       });
       login(data.token, data.user);
-      navigate(role === 'provider' ? '/provider-dashboard' : '/');
+      navigate(getPostAuthPath(role));
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {

@@ -18,10 +18,11 @@ import { Button } from "@/components/ui/button";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { buildGoogleAuthPayload, getPostAuthPath, type RegistrationRole } from "@/lib/registration";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
-function GoogleButton({ role }: { role: "client" | "provider" }) {
+function GoogleButton({ role }: { role: RegistrationRole }) {
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -32,16 +33,10 @@ function GoogleButton({ role }: { role: "client" | "provider" }) {
       const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
       const data = await apiRequest('/auth/google', {
         method: 'POST',
-        body: JSON.stringify({
-          googleId: payload.sub,
-          email: payload.email,
-          name: payload.name,
-          avatarUrl: payload.picture,
-          role,
-        }),
+        body: JSON.stringify(buildGoogleAuthPayload(payload, role)),
       });
       login(data.token, data.user);
-      navigate('/');
+      navigate(getPostAuthPath(data.user.role === "provider" ? "provider" : "client"));
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     }
