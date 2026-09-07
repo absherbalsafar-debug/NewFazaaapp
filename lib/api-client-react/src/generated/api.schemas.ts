@@ -119,6 +119,7 @@ export interface ProviderSummary {
 
 export interface ProviderDetail {
   id: number;
+  userId: number;
   name: string;
   /** @nullable */
   avatarUrl?: string | null;

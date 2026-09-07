@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import { useGetMessages, useSendMessage } from "@workspace/api-client-react";
-import { useAuth } from "@/lib/auth";
+import { apiRequest, useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,17 +9,67 @@ import { ArrowLeft, Send, Loader2, Phone, MoreVertical, CheckCheck } from "lucid
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+
+interface ChatTarget {
+  id: number;
+  otherUserId: number;
+  otherUserName: string;
+  otherUserAvatarUrl?: string | null;
+  otherUserPhone?: string | null;
+}
+
+function getApiErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return "الرجاء المحاولة مرة أخرى";
+}
 
 export default function Chat() {
   const [, params] = useRoute("/messages/:id");
+  const [, setLocation] = useLocation();
   const otherUserId = parseInt(params?.id || "0");
   const { user } = useAuth();
+  const { toast } = useToast();
   const [content, setContent] = useState("");
+  const [target, setTarget] = useState<ChatTarget | null>(null);
+  const [isResolvingTarget, setIsResolvingTarget] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: messages, isLoading, refetch } = useGetMessages(otherUserId, {
-    query: { enabled: !!otherUserId, queryKey: ['messages', otherUserId], refetchInterval: 3000 }
+  useEffect(() => {
+    let cancelled = false;
+    setTarget(null);
+    setIsResolvingTarget(true);
+
+    if (!otherUserId) {
+      setIsResolvingTarget(false);
+      return;
+    }
+
+    apiRequest(`/conversations/with/${otherUserId}`, { method: "POST" })
+      .then((conversation) => {
+        if (!cancelled) setTarget(conversation as ChatTarget);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          toast({
+            title: "تعذر فتح المحادثة",
+            description: error instanceof Error ? error.message : "الرجاء المحاولة مرة أخرى",
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsResolvingTarget(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [otherUserId, toast]);
+
+  const { data: messages, isLoading: isMessagesLoading, refetch } = useGetMessages(target?.id ?? 0, {
+    query: { enabled: !!target?.id, queryKey: ['messages', target?.id], refetchInterval: 3000 }
   });
 
   const sendMutation = useSendMessage();
@@ -33,17 +83,43 @@ export default function Chat() {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = content.trim();
-    if (!trimmed) return;
-    sendMutation.mutate({ id: otherUserId, data: { content: trimmed } }, {
-      onSuccess: () => { setContent(""); refetch(); inputRef.current?.focus(); }
+    if (!trimmed || !target?.id) return;
+    sendMutation.mutate({ id: target.id, data: { content: trimmed } }, {
+      onSuccess: () => { setContent(""); refetch(); inputRef.current?.focus(); },
+      onError: (error) => {
+        toast({
+          title: "تعذر إرسال الرسالة",
+          description: error instanceof Error ? error.message : "الرجاء المحاولة مرة أخرى",
+          variant: "destructive",
+        });
+      },
     });
   };
 
   const otherMessage = messages?.find(m => m.senderId === otherUserId);
-  const otherName = otherMessage?.senderName || "مستخدم";
-  const otherAvatar = (otherMessage as any)?.senderAvatarUrl || "";
+  const otherName = target?.otherUserName || otherMessage?.senderName || "مستخدم";
+  const otherAvatar = target?.otherUserAvatarUrl || "";
 
-  if (isLoading) {
+  const handleCall = () => {
+    if (target?.otherUserId) {
+      apiRequest("/calls", {
+        method: "POST",
+        body: JSON.stringify({ calleeId: target.otherUserId }),
+      })
+        .then((call) => setLocation(`/call/${(call as { id: string }).id}`))
+        .catch((error: unknown) => {
+          toast({
+            title: "تعذر بدء المكالمة",
+            description: getApiErrorMessage(error),
+            variant: "destructive",
+          });
+        });
+      return;
+    }
+    toast({ title: "تعذر تحديد المستخدم", variant: "destructive" });
+  };
+
+  if (isResolvingTarget || isMessagesLoading) {
     return (
       <div className="h-[100dvh] flex flex-col items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -70,7 +146,12 @@ export default function Chat() {
           <h1 className="font-bold text-white text-sm truncate">{otherName}</h1>
           <p className="text-white/60 text-[10px]">آخر ظهور منذ قليل</p>
         </div>
-        <button className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center shrink-0">
+        <button
+          type="button"
+          onClick={handleCall}
+          aria-label="اتصال"
+          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center shrink-0"
+        >
           <Phone className="w-4.5 h-4.5 text-white" />
         </button>
         <button className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center shrink-0">
@@ -118,7 +199,7 @@ export default function Chat() {
                     className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       isMe
                         ? 'gradient-primary text-white rounded-tr-sm shadow-sm'
-                        : 'bg-white text-foreground rounded-tl-sm border border-border/60 shadow-sm'
+                         : 'bg-card text-foreground rounded-tl-sm border border-border/60 shadow-sm'
                     }`}
                   >
                     {msg.content}
@@ -137,7 +218,7 @@ export default function Chat() {
       </div>
 
       {/* Input bar */}
-      <div className="shrink-0 bg-white border-t border-border px-3 py-3 pb-safe">
+      <div className="shrink-0 bg-card border-t border-border px-3 py-3 pb-safe">
         <form onSubmit={handleSend} className="flex items-center gap-2 max-w-lg mx-auto">
           <Input
             ref={inputRef}

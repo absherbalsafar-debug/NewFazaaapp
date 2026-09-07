@@ -7,6 +7,7 @@ import requestsRouter from "./requests";
 import reviewsRouter from "./reviews";
 import favoritesRouter from "./favorites";
 import messagesRouter from "./messages";
+import callsRouter from "./calls";
 import notificationsRouter from "./notifications";
 import adminRouter from "./admin";
 
@@ -20,6 +21,7 @@ router.use(requestsRouter);
 router.use(reviewsRouter);
 router.use(favoritesRouter);
 router.use(messagesRouter);
+router.use(callsRouter);
 router.use(notificationsRouter);
 router.use(adminRouter);
 

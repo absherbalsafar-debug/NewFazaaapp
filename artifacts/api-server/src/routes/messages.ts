@@ -42,6 +42,50 @@ router.get("/conversations", requireAuth, async (req: AuthRequest, res): Promise
   res.json(result);
 });
 
+router.post("/conversations/with/:userId", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const raw = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+  const otherUserId = parseInt(raw, 10);
+  if (isNaN(otherUserId) || otherUserId === req.userId) {
+    res.status(400).json({ error: "مستخدم المحادثة غير صالح" });
+    return;
+  }
+
+  const [otherUser] = await db.select().from(usersTable).where(eq(usersTable.id, otherUserId));
+  if (!otherUser) {
+    res.status(404).json({ error: "المستخدم غير موجود" });
+    return;
+  }
+
+  let [conversation] = await db
+    .select()
+    .from(conversationsTable)
+    .where(or(
+      and(
+        eq(conversationsTable.userAId, req.userId!),
+        eq(conversationsTable.userBId, otherUserId),
+      ),
+      and(
+        eq(conversationsTable.userAId, otherUserId),
+        eq(conversationsTable.userBId, req.userId!),
+      ),
+    ));
+
+  if (!conversation) {
+    [conversation] = await db.insert(conversationsTable).values({
+      userAId: req.userId!,
+      userBId: otherUserId,
+    }).returning();
+  }
+
+  res.json({
+    id: conversation.id,
+    otherUserId,
+    otherUserName: otherUser.name,
+    otherUserAvatarUrl: otherUser.avatarUrl ?? null,
+    otherUserPhone: otherUser.phone ?? null,
+  });
+});
+
 router.get("/conversations/:id/messages", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
