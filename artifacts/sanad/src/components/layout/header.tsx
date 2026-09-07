@@ -2,8 +2,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
 import { Link } from "wouter";
 import { Bell } from "lucide-react";
-import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function Header() {
   const { user } = useAuth();
@@ -12,11 +12,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-primary/10 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 max-w-md items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-primary shadow-sm">
-            <ShieldCheck className="h-4 w-4" />
-          </span>
           <Link href="/">
-            <span className="cursor-pointer text-lg font-black tracking-tight text-primary">فزعة</span>
+            <BrandLogo className="h-12 w-20 cursor-pointer object-contain" />
           </Link>
         </div>
         
