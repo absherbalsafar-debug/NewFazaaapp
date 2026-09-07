@@ -66,10 +66,14 @@ export default function NewRequest() {
       onSuccess: () => {
         setIsSuccess(true);
       },
-      onError: () => {
+      onError: (error) => {
+        const apiError = error as { status?: number; data?: { error?: string } };
+        const description = apiError.status === 401
+          ? "انتهت جلسة الدخول، الرجاء تسجيل الدخول مرة أخرى"
+          : apiError.data?.error || "لم نتمكن من إرسال الطلب، الرجاء المحاولة مرة أخرى";
         toast({
           title: "حدث خطأ",
-          description: "لم نتمكن من إرسال الطلب، الرجاء المحاولة مرة أخرى",
+          description,
           variant: "destructive"
         });
       }
