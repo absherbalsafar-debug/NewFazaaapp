@@ -45,6 +45,7 @@
 }
 
 :root {
+  color-scheme: light;
   /* Background: Very light blue-grey */
   --background: 220 25% 97%;
   --foreground: 215 60% 12%;
@@ -80,6 +81,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: 218 30% 8%;
   --foreground: 215 15% 92%;
   --border: 215 20% 18%;
@@ -108,6 +110,157 @@
 
   --destructive: 0 62% 40%;
   --destructive-foreground: 0 0% 100%;
+}
+
+/*
+ * Theme compatibility for legacy screens.
+ * A few older screens still use literal white/light utility classes. Keep
+ * those screens visually coherent with the semantic theme tokens in dark mode
+ * until each surface is migrated to bg-card/bg-background.
+ */
+.dark .bg-white,
+.dark [class~="bg-white/60"],
+.dark [class~="bg-white/80"],
+.dark [class~="bg-white/90"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark [class~="border-white"],
+.dark [class~="border-white/20"],
+.dark [class~="border-white/70"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark [class~="bg-[#f7f8fa]"],
+.dark [class~="bg-[#f5f3ee]"],
+.dark [class~="bg-[#fbfaf7]"],
+.dark [class~="bg-[#f3f6fa]"],
+.dark [class~="bg-[#eef2f6]"],
+.dark [class~="bg-[#f4f7fa]"],
+.dark [class~="bg-[#f1eee7]"],
+.dark [class~="bg-[#fff5db]"],
+.dark [class~="bg-[#faf9f6]"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark [class~="border-[#ddd8ce]"],
+.dark [class~="border-[#d4d9df]"],
+.dark [class~="border-[#dedad1]"],
+.dark [class~="border-[#dfe5ec]"],
+.dark [class~="border-[#e5e9ee]"],
+.dark [class~="border-[#d9d5cd]"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark [class~="text-[#0e2f62]"],
+.dark [class~="text-[#162a2a]"],
+.dark [class~="text-[#35577f]"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark [class~="text-[#60728a]"],
+.dark [class~="text-[#637087]"],
+.dark [class~="text-[#67758a]"],
+.dark [class~="text-[#708198]"],
+.dark [class~="text-[#77766f]"],
+.dark [class~="text-[#8c897f]"],
+.dark [class~="text-[#8b897f]"],
+.dark [class~="text-[#8e8b82]"],
+.dark [class~="text-[#8da0b5]"],
+.dark [class~="text-[#9a978e]"],
+.dark [class~="text-[#aaa69b]"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark [class~="text-[#a17b29]"],
+.dark [class~="text-[#b08625]"] {
+  color: hsl(var(--accent)) !important;
+}
+
+.dark [class~="bg-[#f5b916]"],
+.dark [class~="bg-[#e4c778]"] {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.dark [class~="text-[#e4c778]"],
+.dark [class~="text-[#f5b916]"] {
+  color: hsl(var(--accent)) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-purple-50,
+.dark .bg-gray-50,
+.dark .bg-slate-50,
+.dark .bg-indigo-50 {
+  background-color: hsl(var(--primary) / 0.14) !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-yellow-50,
+.dark .bg-orange-50 {
+  background-color: hsl(var(--accent) / 0.16) !important;
+}
+
+.dark .bg-green-50,
+.dark .bg-emerald-50 {
+  background-color: hsl(142 45% 28% / 0.28) !important;
+}
+
+.dark .bg-red-50 {
+  background-color: hsl(0 55% 28% / 0.28) !important;
+}
+
+.dark .bg-amber-100,
+.dark .bg-yellow-100,
+.dark .bg-orange-100 {
+  background-color: hsl(var(--accent) / 0.22) !important;
+}
+
+.dark .bg-green-100,
+.dark .bg-emerald-100 {
+  background-color: hsl(142 45% 28% / 0.34) !important;
+}
+
+.dark .bg-red-100 {
+  background-color: hsl(0 55% 28% / 0.34) !important;
+}
+
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-purple-200,
+.dark .border-gray-200,
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-yellow-100,
+.dark .border-yellow-200,
+.dark .border-green-100,
+.dark .border-green-200,
+.dark .border-red-100,
+.dark .border-red-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-blue-800,
+.dark .text-purple-600,
+.dark .text-purple-800,
+.dark .text-gray-600,
+.dark .text-green-600,
+.dark .text-green-700,
+.dark .text-emerald-600,
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-yellow-600,
+.dark .text-red-500,
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark img[src="/assets/fazaah-logo.png"] {
+  filter: brightness(1.65) saturate(1.12);
 }
 
 @layer base {

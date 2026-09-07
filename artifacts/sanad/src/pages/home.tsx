@@ -110,7 +110,7 @@ export default function Home() {
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-white via-white/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-l from-card via-card/80 to-transparent" />
           <div className="relative z-10 flex h-full max-w-[62%] flex-col justify-center px-5">
             <p className="text-[11px] font-semibold text-[#60728a]">احتياجك .. نوصلك بالشخص المناسب</p>
             <h1 className="mt-1 text-[25px] font-black leading-[1.25] text-[#0e2f62]">
