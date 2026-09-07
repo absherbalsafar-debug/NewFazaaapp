@@ -197,6 +197,7 @@ router.get("/providers/me", requireAuth, async (req: AuthRequest, res): Promise<
   if (!row) { res.status(404).json({ error: "لم يتم إنشاء ملف مهني بعد" }); return; }
   res.json({
     id: row.p.id,
+    userId: row.u.id,
     name: row.u.name,
     avatarUrl: row.u.avatarUrl ?? null,
     categoryId: row.p.categoryId,
@@ -246,6 +247,7 @@ router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promis
 
   res.json({
     id: row.p.id,
+    userId: row.u.id,
     name: row.u.name,
     avatarUrl: row.u.avatarUrl ?? null,
     categoryId: row.p.categoryId,
