@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 import { ArrowRight, Calendar, MapPin, AlignLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -27,6 +28,7 @@ export default function NewRequest() {
   const providerId = searchParams.get("providerId") ? parseInt(searchParams.get("providerId")!) : 0;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSuccess, setIsSuccess] = useState(false);
 
   const { data: provider } = useGetProvider(providerId, {
@@ -40,7 +42,7 @@ export default function NewRequest() {
     defaultValues: {
       serviceType: "",
       description: "",
-      city: "صنعاء", // Defaulting for MVP
+      city: user?.city ?? "",
       district: "",
       isImmediate: true,
       scheduledAt: "",

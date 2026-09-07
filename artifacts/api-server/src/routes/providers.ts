@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable } from "@workspace/db";
+import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable } from "@workspace/db";
 import { eq, and, gte, ilike, or, desc, asc, count, sql } from "drizzle-orm";
 import { requireAuth, optionalAuth, type AuthRequest } from "../middlewares/auth";
 import {
@@ -416,12 +416,67 @@ router.get("/home-feed", optionalAuth, async (req: AuthRequest, res): Promise<vo
       .map((r) => providerSummary(r.p, r.u, r.c, r.dist));
   }
 
+  let recentRequests: any[] = [];
+  if (req.userId) {
+    const [currentProvider] = await db
+      .select()
+      .from(providersTable)
+      .where(eq(providersTable.userId, req.userId));
+
+    const requestConditions = currentProvider
+      ? or(
+          eq(serviceRequestsTable.clientId, req.userId),
+          eq(serviceRequestsTable.providerId, currentProvider.id),
+        )
+      : eq(serviceRequestsTable.clientId, req.userId);
+
+    const requestRows = await db
+      .select()
+      .from(serviceRequestsTable)
+      .where(requestConditions)
+      .orderBy(desc(serviceRequestsTable.createdAt))
+      .limit(3);
+
+    recentRequests = await Promise.all(requestRows.map(async (request) => {
+      const [client] = await db.select().from(usersTable).where(eq(usersTable.id, request.clientId));
+      const [provider] = await db.select().from(providersTable).where(eq(providersTable.id, request.providerId));
+      const [providerUser] = provider
+        ? await db.select().from(usersTable).where(eq(usersTable.id, provider.userId))
+        : [null];
+      const [category] = provider
+        ? await db.select().from(categoriesTable).where(eq(categoriesTable.id, provider.categoryId))
+        : [null];
+
+      return {
+        id: request.id,
+        clientId: request.clientId,
+        clientName: client?.name ?? "",
+        clientAvatarUrl: client?.avatarUrl ?? null,
+        providerId: request.providerId,
+        providerName: providerUser?.name ?? "",
+        providerAvatarUrl: providerUser?.avatarUrl ?? null,
+        providerCategoryName: category?.name ?? "",
+        status: request.status,
+        serviceType: request.serviceType,
+        description: request.description,
+        city: request.city,
+        district: request.district,
+        lat: request.lat ? parseFloat(request.lat) : null,
+        lng: request.lng ? parseFloat(request.lng) : null,
+        scheduledAt: request.scheduledAt?.toISOString() ?? null,
+        completedAt: request.completedAt?.toISOString() ?? null,
+        isImmediate: request.isImmediate,
+        createdAt: request.createdAt.toISOString(),
+      };
+    }));
+  }
+
   res.json({
     categories: cats.map((cat) => ({ id: cat.id, name: cat.name, icon: cat.icon, providerCount: countMap.get(cat.id) ?? 0 })),
     nearbyProviders,
     topRatedProviders: topRated.map((r) => providerSummary(r.p, r.u, r.c)),
     mostRequestedProviders: mostRequested.map((r) => providerSummary(r.p, r.u, r.c)),
-    recentRequests: [],
+    recentRequests,
   });
 });
 
