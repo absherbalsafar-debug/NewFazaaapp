@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { ArrowRight, Moon, Sun, Bell, Lock, Trash2, LogOut, HelpCircle, Info, Phone, Shield, Globe, ChevronLeft, ShieldCheck, UserRound, Monitor, FileText, ScrollText } from "lucide-react";
+import { ArrowRight, Moon, Sun, Bell, Lock, Trash2, LogOut, HelpCircle, Info, Shield, Globe, ChevronLeft, ShieldCheck, UserRound, Monitor, FileText, ScrollText } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/theme-provider";
@@ -134,7 +134,6 @@ export default function Settings() {
 
         <Section title="الإشعارات">
           <Item icon={Bell} label="إشعارات الطلبات" sub="تلقي تنبيهات عند تحديث الطلبات" right={<input type="checkbox" defaultChecked className="h-5 w-5 accent-primary" />} />
-          <Item icon={Bell} label="إشعارات الرسائل" sub="تنبيه عند وصول رسائل جديدة" right={<input type="checkbox" defaultChecked className="h-5 w-5 accent-primary" />} />
         </Section>
 
         <Section title="الأمان والخصوصية">
@@ -146,7 +145,6 @@ export default function Settings() {
 
         <Section title="الدعم والمساعدة">
           <Item icon={HelpCircle} label="الأسئلة الشائعة" onClick={() => toast({ title: "قريباً" })} />
-          <Item icon={Phone} label="تواصل معنا" onClick={() => toast({ title: "قريباً" })} />
           <Item icon={Info} label="من نحن" onClick={() => toast({ title: "فزعة — منصة الخدمات المهنية في اليمن" })} />
         </Section>
 

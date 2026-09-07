@@ -1,6 +1,6 @@
 import { ProviderSummary } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle2, Briefcase, MessageSquare, Phone } from "lucide-react";
+import { Star, MapPin, CheckCircle2, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -10,8 +10,6 @@ interface ProviderCardProps {
 }
 
 export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
-  const whatsappNumber: string | null = null;
-
   if (compact) {
     return (
       <Link href={`/providers/${provider.id}`}>
@@ -137,24 +135,6 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
             طلب خدمة
           </button>
         </Link>
-        <Link href={`/messages/${provider.id}`} className="flex-none">
-          <button className="px-4 py-2.5 text-xs text-muted-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5" />
-          </button>
-        </Link>
-        {whatsappNumber && (
-          <a
-            href={`https://wa.me/967${whatsappNumber}?text=مرحباً، وجدتك على منصة فزعة`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-none"
-            onClick={e => e.stopPropagation()}
-          >
-            <button className="px-4 py-2.5 text-xs text-green-600 hover:bg-green-50 transition-colors">
-              <Phone className="w-3.5 h-3.5" />
-            </button>
-          </a>
-        )}
       </div>
     </motion.div>
   );

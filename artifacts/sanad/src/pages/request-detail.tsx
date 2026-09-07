@@ -186,16 +186,6 @@ export default function RequestDetail() {
           </div>
         )}
         
-        {/* Messages Shortcut if Accepted/InProgress */}
-        {['accepted', 'in_progress'].includes(request.status) && (
-           <div className="pt-2">
-             <Link href="/messages" className="w-full block">
-                <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-primary/10 text-primary hover:bg-primary/20">
-                  إرسال رسالة
-                </Button>
-             </Link>
-           </div>
-        )}
       </div>
     </div>
   );

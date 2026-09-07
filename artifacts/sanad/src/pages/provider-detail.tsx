@@ -1,16 +1,15 @@
-import { useRoute, Link, useLocation } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useGetProvider, useGetProviderReviews, useGetProviderPortfolio, useAddFavorite, useRemoveFavorite } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, MapPin, CheckCircle2, Phone, MessageCircle, Heart, ArrowRight, ShieldCheck, Briefcase, Clock, CalendarDays } from "lucide-react";
-import { apiRequest, useAuth } from "@/lib/auth";
+import { Star, MapPin, CheckCircle2, Heart, ArrowRight, ShieldCheck, Briefcase, Clock, CalendarDays } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProviderDetail() {
   const [, params] = useRoute("/providers/:id");
-  const [, setLocation] = useLocation();
   const id = parseInt(params?.id || "0");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -148,34 +147,6 @@ export default function ProviderDetail() {
               طلب خدمة
             </Button>
           </Link>
-          <Button variant="outline" className="h-12 w-12 shrink-0 rounded-xl border-primary text-primary hover:bg-primary/5">
-            <MessageCircle className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-12 w-12 shrink-0 rounded-xl border-primary text-primary hover:bg-primary/5"
-            onClick={() => {
-              if (!provider.userId) {
-                toast({ title: "تعذر تحديد حساب المهني", variant: "destructive" });
-                return;
-              }
-              apiRequest("/calls", {
-                method: "POST",
-                body: JSON.stringify({ calleeId: provider.userId }),
-              })
-                .then((call) => setLocation(`/call/${(call as { id: string }).id}`))
-                .catch((error: unknown) => {
-                  toast({
-                    title: "تعذر بدء المكالمة",
-                    description: error instanceof Error ? error.message : "الرجاء المحاولة مرة أخرى",
-                    variant: "destructive",
-                  });
-                });
-            }}
-            aria-label="اتصال"
-          >
-            <Phone className="w-5 h-5" />
-          </Button>
         </div>
 
         <div className="mt-10 space-y-8">

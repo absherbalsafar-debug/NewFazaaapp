@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { CallManager } from "@/components/call-manager";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { PageTransition } from "@/components/layout/page-transition";
 
@@ -24,9 +23,6 @@ import NewRequest from "@/pages/new-request";
 import MyRequests from "@/pages/my-requests";
 import RequestDetail from "@/pages/request-detail";
 import Favorites from "@/pages/favorites";
-import Messages from "@/pages/messages";
-import Chat from "@/pages/chat";
-import Call from "@/pages/call";
 import Notifications from "@/pages/notifications";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
@@ -186,21 +182,6 @@ function Router() {
           <AppShell><Favorites /></AppShell>
         </ProtectedRoute>
       </Route>
-      <Route path="/messages">
-        <ProtectedRoute>
-          <AppShell><Messages /></AppShell>
-        </ProtectedRoute>
-      </Route>
-      <Route path="/messages/:id">
-        <ProtectedRoute>
-          <AppShell showNav={false}><Chat /></AppShell>
-        </ProtectedRoute>
-      </Route>
-      <Route path="/call/:id">
-        <ProtectedRoute>
-          <AppShell showNav={false}><Call /></AppShell>
-        </ProtectedRoute>
-      </Route>
       <Route path="/notifications">
         <ProtectedRoute>
           <AppShell><Notifications /></AppShell>
@@ -252,7 +233,6 @@ function App() {
             <div dir="rtl" className="min-h-[100dvh] bg-background text-foreground font-sans">
               <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
                 <Router />
-                <CallManager />
               </WouterRouter>
             </div>
             <Toaster />
