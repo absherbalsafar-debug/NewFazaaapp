@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Kxf9qirtk2o__FqqI-J29"
+uri = "file://attached_assets/fazaah-logo-clean-alpha.png"
+type = "image"
+title = "شعار فزعة المنظّف"
+description = "نسخة PNG شفافة من الشعار بعد تنظيف الشوائب وتوحيد الحواف، جاهزة للاستخدام داخل التطبيق."
+logical_id = "a5a75449-4c32-4fea-8da0-701fbc7dc3d7"
+content_hash = "sha256:8216654855dccc09fe81bea206abb721f3fcbdcbb93c59541baa0db606ab9039"
+size = 337024
+mtime_ms = 1788753223809
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:bef98891-c146-4241-a65f-f0657a058a5f/a5a75449-4c32-4fea-8da0-701fbc7dc3d7/70c72ab8-fd7d-4620-9b9b-073921a6ceed"
+storage_version_token = "1788753513596942"
+content_type = "image/png"

@@ -3,6 +3,7 @@ import { eq, and, or } from "drizzle-orm";
 import { randomBytes, createHash } from "crypto";
 import { db, usersTable, providersTable, categoriesTable, otpsTable, emailTokensTable } from "@workspace/db";
 import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
+import { normalizeRegistrationRole, shouldCreateProviderProfile } from "../lib/auth-roles";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -94,22 +95,22 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
         name: name.trim(),
         phone: normalizedPhone,
         phoneVerified: true,
-        role: (role === "provider" ? "provider" : "client") as "client" | "provider",
+        role: normalizeRegistrationRole(role),
         city: city ?? null,
         status: "active",
       })
       .returning();
 
-    if (user.role === "provider") {
-        const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
+    if (shouldCreateProviderProfile(user.role)) {
+      const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
       if (defaultCategory) {
         await db.insert(providersTable).values({
           userId: user.id,
-            categoryId: categoryId ? Number(categoryId) : defaultCategory.id,
+          categoryId: categoryId ? Number(categoryId) : defaultCategory.id,
           city: city ?? "صنعاء",
           district: "",
-            bio: bio?.trim() ?? "",
-            yearsExperience: yearsExperience ? Number(yearsExperience) : 1,
+          bio: bio?.trim() ?? "",
+          yearsExperience: yearsExperience ? Number(yearsExperience) : 1,
         });
       }
     }
@@ -165,13 +166,13 @@ router.post("/auth/register/email", async (req, res): Promise<void> => {
       passwordHash: hashPassword(password),
       phoneVerified: !!phone,
       emailVerified: false,
-      role: (role === "provider" ? "provider" : "client") as "client" | "provider",
+      role: normalizeRegistrationRole(role),
       city: city ?? null,
       status: "active",
     })
     .returning();
 
-  if (role === "provider") {
+  if (shouldCreateProviderProfile(user.role)) {
     const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
     await db.insert(providersTable).values({
       userId: user.id,
@@ -288,12 +289,12 @@ router.post("/auth/google", async (req, res): Promise<void> => {
           emailVerified: true,
           phoneVerified: false,
           avatarUrl: avatarUrl ?? null,
-          role: (role === "provider" ? "provider" : "client") as "client" | "provider",
+          role: normalizeRegistrationRole(role),
           status: "active",
         })
         .returning();
 
-      if (user.role === "provider") {
+      if (shouldCreateProviderProfile(user.role)) {
         const [defaultCategory] = await db.select().from(categoriesTable).limit(1);
         if (defaultCategory) {
           await db.insert(providersTable).values({

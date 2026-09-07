@@ -3,25 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
-  ArrowUpLeft,
   BriefcaseBusiness,
   Check,
   ChevronLeft,
+  Code2,
+  Construction,
+  Droplets,
   Mail,
   MapPin,
+  PaintRoller,
   Phone,
   ShieldCheck,
+  Snowflake,
   Sparkles,
   UserRound,
+  Wrench,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { buildGoogleAuthPayload, getPostAuthPath, type RegistrationRole } from "@/lib/registration";
+import { BrandLogo } from "@/components/brand-logo";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
-function GoogleButton({ role }: { role: "client" | "provider" }) {
+function GoogleButton({ role }: { role: RegistrationRole }) {
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -32,16 +40,10 @@ function GoogleButton({ role }: { role: "client" | "provider" }) {
       const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
       const data = await apiRequest('/auth/google', {
         method: 'POST',
-        body: JSON.stringify({
-          googleId: payload.sub,
-          email: payload.email,
-          name: payload.name,
-          avatarUrl: payload.picture,
-          role,
-        }),
+        body: JSON.stringify(buildGoogleAuthPayload(payload, role)),
       });
       login(data.token, data.user);
-      navigate('/');
+      navigate(getPostAuthPath(data.user.role === "provider" ? "provider" : "client"));
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     }
@@ -108,7 +110,7 @@ export default function Welcome() {
   );
 
   return (
-    <main className="min-h-[100dvh] overflow-hidden bg-[#f5f3ee] text-primary" dir="rtl">
+    <main className="min-h-[100dvh] overflow-hidden bg-[#f7f8fa] text-primary" dir="rtl">
       <AnimatePresence mode="wait">
         {step === 'intro' ? (
           <motion.section
@@ -117,35 +119,22 @@ export default function Welcome() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 28 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[100dvh] overflow-hidden bg-primary"
+            className="relative min-h-[100dvh] overflow-hidden bg-[#f7f8fa]"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(202,164,74,0.22),transparent_28%),radial-gradient(circle_at_85%_70%,rgba(54,97,151,0.36),transparent_32%)]" />
-            <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.4)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.4)_1px,transparent_1px)] [background-size:42px_42px]" />
-            <div className="absolute -left-28 top-36 h-72 w-72 rounded-full border border-[#d9b765]/20" />
-            <div className="absolute -left-20 top-44 h-56 w-56 rounded-full border border-[#d9b765]/15" />
+            <div className="absolute inset-x-0 bottom-0 h-[28%] bg-primary" />
+            <div className="absolute -bottom-20 left-1/2 h-56 w-[130%] -translate-x-1/2 rounded-[50%] bg-primary" />
 
-            <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-6 pb-7 pt-7 sm:max-w-lg sm:px-9">
-              <header className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-[#e4c778]/50 bg-[#e4c778] text-primary shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
-                    <ShieldCheck className="h-5 w-5" strokeWidth={2.5} />
-                  </div>
-                  <div className="leading-none">
-                    <p className="text-[17px] font-black tracking-tight text-white">فزعة</p>
-                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#d9b765]">FAZAAH</p>
-                  </div>
-                </div>
-                <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold tracking-wide text-white/70">
-                  ٠١ <span className="mx-1 text-[#d9b765]">/</span> ٠٢
-                </span>
+            <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pb-5 pt-6 sm:max-w-lg sm:px-9">
+              <header className="flex justify-center">
+                <BrandLogo className="h-[142px] w-[176px] object-contain" />
               </header>
 
-              <div className="flex flex-1 flex-col justify-center py-9">
+              <div className="flex flex-1 flex-col items-center pt-1 text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.12, duration: 0.65 }}
-                  className="mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-[#d9b765]/25 bg-[#d9b765]/10 px-3.5 py-2 text-[11px] font-semibold text-[#f2d991]"
+                  className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-[#e4c778]/30 bg-[#e4c778]/10 px-3.5 py-2 text-[11px] font-bold text-[#a17b29]"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>خدمة تستحق الثقة</span>
@@ -155,39 +144,42 @@ export default function Welcome() {
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.7 }}
-                  className="max-w-[16rem] text-[42px] font-black leading-[1.14] tracking-[-0.04em] text-white sm:text-[52px]"
+                  className="mt-4 max-w-[19rem] text-[31px] font-black leading-[1.25] tracking-[-0.04em] text-primary sm:text-[40px]"
                 >
-                  راحتك تبدأ
-                  <span className="block text-[#e4c778]">بفزعة.</span>
+                  أهلاً وسهلاً بك في
+                  <span className="relative mx-auto block w-fit text-[#b08625] after:absolute after:-bottom-1 after:right-0 after:h-1 after:w-20 after:rounded-full after:bg-[#e4c778]">فزعة</span>
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.65 }}
-                  className="mt-5 max-w-[19rem] text-[15px] leading-8 text-white/65"
+                  className="mt-3 max-w-[20rem] text-[14px] leading-7 text-[#637087]"
                 >
-                  منصة يمنية تجمعك بالمهني المناسب، في الوقت المناسب، وبطريقة تشعرك بالاطمئنان.
+                  منصة توصلك بأفضل المهنيين والفنيين لإنجاز احتياجاتك بسهولة وسرعة.
                 </motion.p>
 
                 <motion.div
                   initial={{ opacity: 0, scale: 0.94 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.38, duration: 0.7 }}
-                  className="relative mt-9 h-40 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.07] shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+                  className="relative mt-5 h-[340px] w-full overflow-hidden rounded-[34px] border border-white/70 bg-white shadow-[0_18px_50px_rgba(14,47,98,0.14)]"
                 >
-                  <div className="absolute -left-7 -top-10 h-36 w-36 rounded-full bg-[#d9b765]/20 blur-2xl" />
-                  <div className="absolute -bottom-14 right-5 h-36 w-36 rounded-full bg-[#7695be]/25 blur-2xl" />
-                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0b2348]/70 to-transparent" />
-                  <div className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e4c778] text-primary shadow-[0_10px_28px_rgba(228,199,120,0.25)]">
-                    <MapPin className="h-6 w-6" />
+                  <img src="/assets/fazaah-worker-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/5 to-primary/15" />
+                  <div className="absolute right-5 top-7 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
+                    <Zap className="h-5 w-5 text-[#e4c778]" />
                   </div>
-                  <div className="absolute right-[5.25rem] top-9 h-2 w-2 rounded-full bg-[#e4c778] shadow-[0_0_0_7px_rgba(228,199,120,0.12)]" />
-                  <div className="absolute bottom-5 right-6 left-6 flex items-end justify-between">
-                    <div>
-                      <p className="text-[10px] font-medium text-white/55">خدمات حولك</p>
-                      <p className="mt-1 text-sm font-bold text-white">قريب منك، موثوق لك</p>
-                    </div>
-                    <ArrowUpLeft className="h-5 w-5 text-[#e4c778]" />
+                  <div className="absolute left-5 top-12 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
+                    <Wrench className="h-5 w-5" />
+                  </div>
+                  <div className="absolute left-1/2 top-4 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
+                    <Construction className="h-5 w-5 text-[#b08625]" />
+                  </div>
+                  <div className="absolute right-3 top-28 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
+                    <Droplets className="h-5 w-5" />
+                  </div>
+                  <div className="absolute left-3 top-28 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
+                    <Snowflake className="h-5 w-5" />
                   </div>
                 </motion.div>
               </div>
@@ -196,21 +188,23 @@ export default function Welcome() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
+                className="relative z-10 mt-4 w-full"
               >
                 <button
                   type="button"
                   onClick={() => setStep('start')}
-                  className="group flex h-14 w-full items-center justify-between rounded-2xl bg-[#e4c778] px-5 text-right text-[15px] font-extrabold text-primary shadow-[0_14px_28px_rgba(228,199,120,0.2)] transition-transform hover:bg-[#f0d68e] active:scale-[0.98]"
+                  className="group flex h-14 w-full items-center justify-between rounded-2xl bg-[#f5ba20] px-5 text-right text-[15px] font-extrabold text-primary shadow-[0_14px_28px_rgba(228,199,120,0.25)] transition-transform hover:bg-[#ffca3a] active:scale-[0.98]"
                 >
-                  <span>اكتشف فزعة</span>
+                  <span>لنبدأ</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 transition-transform group-hover:-translate-x-1">
                     <ChevronLeft className="h-5 w-5" />
                   </span>
                 </button>
-                <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-medium text-white/45">
+                <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-medium text-white/65">
                   <ShieldCheck className="h-3.5 w-3.5 text-[#d9b765]" />
                   <span>تجربة آمنة ومصممة لك</span>
                 </div>
+                <button type="button" onClick={() => setStep('start')} className="mt-3 block w-full text-center text-[11px] font-semibold text-white/55 hover:text-white">تخطي</button>
               </motion.div>
             </div>
           </motion.section>
@@ -221,7 +215,7 @@ export default function Welcome() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-[100dvh] bg-[#f5f3ee]"
+            className="min-h-[100dvh] bg-[#f7f8fa]"
           >
             <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pb-7 pt-7 sm:max-w-lg sm:px-9">
               <header className="flex items-center justify-between">
@@ -240,12 +234,13 @@ export default function Welcome() {
                 </div>
               </header>
 
-              <div className="flex flex-1 flex-col pt-11">
+              <div className="flex flex-1 flex-col pt-8">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.55 }}
                 >
+                  <BrandLogo className="mb-2 h-20 w-28 object-contain object-right" />
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a17b29]">مرحباً بك في فزعة</p>
                   <h2 className="mt-3 text-[34px] font-black leading-[1.2] tracking-[-0.04em] text-primary">
                     اختر تجربتك،
