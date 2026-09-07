@@ -1,8 +1,10 @@
 import { ProviderSummary } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, CheckCircle2, Briefcase } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { maskPhone, toTelHref, toWhatsAppHref } from "@/lib/contact";
 
 interface ProviderCardProps {
   provider: ProviderSummary;
@@ -129,12 +131,40 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
       </Link>
 
       {/* Action buttons */}
+      <div className="flex items-center justify-between border-t border-border px-4 py-2 text-[10px] text-muted-foreground">
+        <span dir="ltr">{maskPhone(provider.phone)}</span>
+        {provider.whatsapp && <span dir="ltr">{maskPhone(provider.whatsapp)}</span>}
+      </div>
       <div className="flex border-t border-border divide-x divide-border rtl:divide-x-reverse">
         <Link href={`/request/new?providerId=${provider.id}`} className="flex-1">
           <button className="w-full py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5">
             طلب خدمة
           </button>
         </Link>
+        <a
+          href={toTelHref(provider.phone)}
+          className="flex-1"
+          onClick={event => event.stopPropagation()}
+        >
+          <button className="w-full py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5">
+            <Phone className="h-3.5 w-3.5" />
+            اتصال
+          </button>
+        </a>
+        {provider.whatsapp && (
+          <a
+            href={toWhatsAppHref(provider.whatsapp)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1"
+            onClick={event => event.stopPropagation()}
+          >
+            <button className="w-full py-2.5 text-xs font-bold text-green-600 hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
+              <MessageCircle className="h-3.5 w-3.5" />
+              واتساب
+            </button>
+          </a>
+        )}
       </div>
     </motion.div>
   );

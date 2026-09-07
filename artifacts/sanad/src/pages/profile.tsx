@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useLocation } from "wouter";
 import {
@@ -13,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -22,12 +24,62 @@ export default function Profile() {
   });
 
   const updateProvider = useUpdateProvider();
+  const [contactEditorOpen, setContactEditorOpen] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+
+  useEffect(() => {
+    if (!providerDetails) return;
+    setPhone(providerDetails.phone ?? "");
+    setWhatsapp(providerDetails.whatsapp ?? "");
+  }, [providerDetails]);
 
   const handleAvailabilityToggle = (checked: boolean) => {
     if (!user || !providerDetails) return;
     updateProvider.mutate(
       { id: providerDetails.id, data: { isAvailable: checked } },
       { onSuccess: () => { toast({ title: "✓ تم تحديث حالة التوفر" }); refetch(); } }
+    );
+  };
+
+  const handleContactSave = () => {
+    if (!providerDetails) return;
+    const nextPhone = phone.trim();
+    if (nextPhone.length < 7) {
+      toast({ title: "أدخل رقم جوال صحيح", variant: "destructive" });
+      return;
+    }
+
+    updateProvider.mutate(
+      {
+        id: providerDetails.id,
+        data: {
+          phone: nextPhone,
+          whatsapp: whatsapp.trim() || null,
+        },
+      },
+      {
+        onSuccess: async (updated) => {
+          try {
+            const freshUser = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/auth/me`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem("fazaah_token") ?? ""}` },
+            }).then(response => response.json());
+            updateUser(freshUser);
+          } catch {
+            updateUser({ ...user!, phone: updated.phone ?? user!.phone });
+          }
+          setContactEditorOpen(false);
+          toast({ title: "تم حفظ أرقام التواصل" });
+          refetch();
+        },
+        onError: (error) => {
+          toast({
+            title: "تعذر حفظ الأرقام",
+            description: error instanceof Error ? error.message : "الرجاء المحاولة مرة أخرى",
+            variant: "destructive",
+          });
+        },
+      },
     );
   };
 
@@ -175,6 +227,61 @@ export default function Profile() {
                   <p className="text-[10px] text-muted-foreground leading-tight">{s.label}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="border-t border-border/60 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold">أرقام التواصل</p>
+                  <p className="text-xs text-muted-foreground">يظهر للعميل جزء من الرقم وتعمل الأزرار مباشرة</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setContactEditorOpen(value => !value)}
+                >
+                  {contactEditorOpen ? "إغلاق" : "تعديل"}
+                </Button>
+              </div>
+
+              {contactEditorOpen && (
+                <div className="mt-4 space-y-3">
+                  <div className="space-y-1.5">
+                    <label htmlFor="provider-phone" className="text-xs font-bold">رقم الجوال</label>
+                    <Input
+                      id="provider-phone"
+                      value={phone}
+                      onChange={event => setPhone(event.target.value)}
+                      inputMode="tel"
+                      dir="ltr"
+                      placeholder="777000000"
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="provider-whatsapp" className="text-xs font-bold">رقم واتساب</label>
+                    <Input
+                      id="provider-whatsapp"
+                      value={whatsapp}
+                      onChange={event => setWhatsapp(event.target.value)}
+                      inputMode="tel"
+                      dir="ltr"
+                      placeholder="777000000"
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="h-11 w-full rounded-xl bg-accent text-primary hover:bg-accent/90"
+                    onClick={handleContactSave}
+                    disabled={updateProvider.isPending}
+                  >
+                    {updateProvider.isPending ? "جارٍ الحفظ..." : "حفظ أرقام التواصل"}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Verification banner */}

@@ -4,9 +4,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, MapPin, CheckCircle2, Heart, ArrowRight, ShieldCheck, Briefcase, Clock, CalendarDays } from "lucide-react";
+import { Star, MapPin, CheckCircle2, Heart, ArrowRight, ShieldCheck, Briefcase, Clock, CalendarDays, MessageCircle, Phone } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { maskPhone, toTelHref, toWhatsAppHref } from "@/lib/contact";
 
 export default function ProviderDetail() {
   const [, params] = useRoute("/providers/:id");
@@ -147,7 +148,35 @@ export default function ProviderDetail() {
               طلب خدمة
             </Button>
           </Link>
+          {provider.phone && (
+            <a href={toTelHref(provider.phone)} className="flex-1" aria-label={`الاتصال بالمهني ${maskPhone(provider.phone)}`}>
+              <Button variant="outline" className="w-full h-12 rounded-xl border-primary text-primary hover:bg-primary/5">
+                <Phone className="w-5 h-5 ml-2" />
+                اتصال
+              </Button>
+            </a>
+          )}
+          {provider.whatsapp && (
+            <a
+              href={toWhatsAppHref(provider.whatsapp)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+              aria-label={`التواصل مع المهني عبر واتساب ${maskPhone(provider.whatsapp)}`}
+            >
+              <Button variant="outline" className="w-full h-12 rounded-xl border-green-600 text-green-700 hover:bg-green-50">
+                <MessageCircle className="w-5 h-5 ml-2" />
+                واتساب
+              </Button>
+            </a>
+          )}
         </div>
+        {(provider.phone || provider.whatsapp) && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+            {provider.phone && <span>الهاتف: <b dir="ltr" className="text-foreground">{maskPhone(provider.phone)}</b></span>}
+            {provider.whatsapp && <span>واتساب: <b dir="ltr" className="text-foreground">{maskPhone(provider.whatsapp)}</b></span>}
+          </div>
+        )}
 
         <div className="mt-10 space-y-8">
           {/* Bio */}

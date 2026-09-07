@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable } from "@workspace/db";
-import { eq, and, gte, ilike, or, desc, asc, count, sql } from "drizzle-orm";
+import { eq, and, ne, gte, ilike, or, desc, asc, count, sql } from "drizzle-orm";
 import { requireAuth, optionalAuth, type AuthRequest } from "../middlewares/auth";
 import {
   ListProvidersQueryParams,
@@ -22,6 +22,8 @@ function providerSummary(p: any, user: any, cat: any, distanceKm?: number | null
   return {
     id: p.id,
     name: user.name,
+    phone: user.phone,
+    whatsapp: p.whatsapp ?? null,
     avatarUrl: user.avatarUrl ?? null,
     categoryName: cat?.name ?? "",
     categoryIcon: cat?.icon ?? null,
@@ -288,6 +290,23 @@ router.patch("/providers/:id", requireAuth, async (req: AuthRequest, res): Promi
 
   const updateData: any = {};
   const d = parsed.data;
+  const nextPhone = d.phone?.trim();
+  if (d.phone != null) {
+    if (!nextPhone || !/^[0-9+][0-9\s-]{6,19}$/.test(nextPhone)) {
+      res.status(400).json({ error: "رقم الجوال غير صالح" });
+      return;
+    }
+
+    const [phoneOwner] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(and(eq(usersTable.phone, nextPhone), ne(usersTable.id, provider.userId)));
+    if (phoneOwner) {
+      res.status(409).json({ error: "رقم الجوال مستخدم من حساب آخر" });
+      return;
+    }
+  }
+
   if (d.bio != null) updateData.bio = d.bio;
   if (d.city != null) updateData.city = d.city;
   if (d.district != null) updateData.district = d.district;
@@ -298,7 +317,23 @@ router.patch("/providers/:id", requireAuth, async (req: AuthRequest, res): Promi
   if (d.lat != null) updateData.lat = String(d.lat);
   if (d.lng != null) updateData.lng = String(d.lng);
 
-  const [updated] = await db.update(providersTable).set(updateData).where(eq(providersTable.id, id)).returning();
+  let updated = provider;
+  if (Object.keys(updateData).length > 0) {
+    [updated] = await db.update(providersTable).set(updateData).where(eq(providersTable.id, id)).returning();
+  }
+
+  const [currentUser] = await db
+    .select({ phone: usersTable.phone })
+    .from(usersTable)
+    .where(eq(usersTable.id, provider.userId));
+
+  if (nextPhone && nextPhone !== currentUser?.phone) {
+    await db
+      .update(usersTable)
+      .set({ phone: nextPhone, phoneVerified: false })
+      .where(eq(usersTable.id, provider.userId));
+  }
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, updated.userId));
   const [cat] = await db.select().from(categoriesTable).where(eq(categoriesTable.id, updated.categoryId));
 

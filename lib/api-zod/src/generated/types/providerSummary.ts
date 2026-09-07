@@ -9,6 +9,9 @@
 export interface ProviderSummary {
   id: number;
   name: string;
+  phone: string;
+  /** @nullable */
+  whatsapp?: string | null;
   /** @nullable */
   avatarUrl?: string | null;
   categoryName: string;

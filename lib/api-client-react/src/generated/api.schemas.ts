@@ -94,6 +94,9 @@ export interface CategoryInput {
 export interface ProviderSummary {
   id: number;
   name: string;
+  phone: string;
+  /** @nullable */
+  whatsapp?: string | null;
   /** @nullable */
   avatarUrl?: string | null;
   categoryName: string;
@@ -119,7 +122,6 @@ export interface ProviderSummary {
 
 export interface ProviderDetail {
   id: number;
-  userId: number;
   name: string;
   /** @nullable */
   avatarUrl?: string | null;
@@ -151,6 +153,8 @@ export interface ProviderDetail {
 }
 
 export interface ProviderUpdate {
+  /** @nullable */
+  phone?: string | null;
   /** @nullable */
   bio?: string | null;
   /** @nullable */

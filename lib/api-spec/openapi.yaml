@@ -868,12 +868,16 @@ components:
     # ── PROVIDER ─────────────────────────────────────────────────────────────────
     ProviderSummary:
       type: object
-      required: [id, name, categoryName, city, district, rating, reviewCount, completedJobs, yearsExperience, isVerified, isAvailable]
+      required: [id, name, phone, categoryName, city, district, rating, reviewCount, completedJobs, yearsExperience, isVerified, isAvailable]
       properties:
         id:
           type: integer
         name:
           type: string
+        phone:
+          type: string
+        whatsapp:
+          type: ["string", "null"]
         avatarUrl:
           type: ["string", "null"]
         categoryName:
@@ -957,6 +961,8 @@ components:
     ProviderUpdate:
       type: object
       properties:
+        phone:
+          type: ["string", "null"]
         bio:
           type: ["string", "null"]
         city:

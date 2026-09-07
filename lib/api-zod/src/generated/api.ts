@@ -141,6 +141,8 @@ export const ListProvidersResponse = zod.object({
   "providers": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -204,6 +206,7 @@ export const UpdateProviderParams = zod.object({
 })
 
 export const UpdateProviderBody = zod.object({
+  "phone": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "city": zod.string().nullish(),
   "district": zod.string().nullish(),
@@ -255,6 +258,8 @@ export const GetNearbyProvidersQueryParams = zod.object({
 export const GetNearbyProvidersResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -285,6 +290,8 @@ export const GetTopRatedProvidersQueryParams = zod.object({
 export const GetTopRatedProvidersResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -314,6 +321,8 @@ export const GetMostRequestedProvidersQueryParams = zod.object({
 export const GetMostRequestedProvidersResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -513,6 +522,8 @@ export const GetProviderReviewsResponse = zod.array(GetProviderReviewsResponseIt
 export const ListFavoritesResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -736,6 +747,8 @@ export const GetHomeFeedResponse = zod.object({
   "nearbyProviders": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -755,6 +768,8 @@ export const GetHomeFeedResponse = zod.object({
   "topRatedProviders": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),
@@ -774,6 +789,8 @@ export const GetHomeFeedResponse = zod.object({
   "mostRequestedProviders": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
   "avatarUrl": zod.string().nullish(),
   "categoryName": zod.string(),
   "categoryIcon": zod.string().nullish(),

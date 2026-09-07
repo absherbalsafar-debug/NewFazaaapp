@@ -8,6 +8,8 @@
 
 export interface ProviderUpdate {
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
   bio?: string | null;
   /** @nullable */
   city?: string | null;
