@@ -165,7 +165,7 @@ export default function Welcome() {
                   className="relative mt-5 h-[340px] w-full overflow-hidden rounded-[34px] border border-white/70 bg-white shadow-[0_18px_50px_rgba(14,47,98,0.14)]"
                 >
                   <img src="/assets/fazaah-worker-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/5 to-primary/15" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-transparent to-primary/15" />
                   <div className="absolute right-5 top-7 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-md">
                     <Zap className="h-5 w-5 text-[#e4c778]" />
                   </div>

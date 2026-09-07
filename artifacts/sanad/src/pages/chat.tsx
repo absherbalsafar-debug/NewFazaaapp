@@ -81,8 +81,7 @@ export default function Chat() {
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-        style={{ background: 'linear-gradient(to bottom, hsl(220 25% 96%), hsl(220 20% 98%))' }}
+        className="flex-1 overflow-y-auto bg-background px-4 py-4 space-y-3"
       >
         {messages?.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center gap-3 py-12">
