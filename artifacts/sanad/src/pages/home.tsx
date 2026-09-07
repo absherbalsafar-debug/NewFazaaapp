@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { useGetHomeFeed, useListProviders } from "@workspace/api-client-react";
-import { ProviderCard } from "@/components/provider-card";
+import { useGetHomeFeed } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import {
@@ -31,17 +30,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandLogo } from "@/components/brand-logo";
 
-const FALLBACK_CATEGORIES = [
-  { id: 2, name: "كهربائي", icon: "electrician" },
-  { id: 5, name: "بناء", icon: "builder" },
-  { id: 6, name: "مقاول", icon: "contractor" },
-  { id: 7, name: "مهندس", icon: "engineer" },
-  { id: 1, name: "سباك", icon: "plumber" },
-  { id: 8, name: "تكييف", icon: "ac" },
-  { id: 9, name: "مبرمج", icon: "developer" },
-  { id: 10, name: "صباغ", icon: "painter" },
-] as const;
-
 function CategoryIcon({ name }: { name: string }) {
   const normalized = name.toLowerCase();
   if (normalized.includes("كهرب") || normalized.includes("electric")) return <Zap />;
@@ -62,12 +50,9 @@ export default function Home() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { data: feed, isLoading } = useGetHomeFeed({ lat: undefined, lng: undefined });
-  const { data: recentProviders } = useListProviders(
-    { limit: 4 },
-    { query: { queryKey: ["home-recent"] } },
-  );
 
-  const categories = feed?.categories?.length ? feed.categories.slice(0, 8) : FALLBACK_CATEGORIES;
+  const categories = feed?.categories?.slice(0, 8) ?? [];
+  const recentRequests = feed?.recentRequests ?? [];
 
   function handleSearch() {
     if (searchQuery.trim()) navigate(`/providers?search=${encodeURIComponent(searchQuery)}`);
@@ -157,22 +142,28 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2.5">
-            {categories.map((category) => (
-              <Link key={category.id} href={`/providers?categoryId=${category.id}`}>
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  className="flex h-[94px] flex-col items-center justify-center gap-2 rounded-[16px] border border-[#e5e9ee] bg-white text-[#0e2f62] shadow-[0_4px_12px_rgba(14,47,98,0.04)] transition-colors hover:border-[#f5b916]"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4f7fa] text-[#0e2f62]">
-                    <CategoryIcon name={`${category.name} ${category.icon ?? ""}`} />
-                  </div>
-                  <span className="text-[10px] font-bold">{category.name}</span>
-                  <ChevronLeft className="h-3 w-3 -rotate-90 text-[#8da0b5]" />
-                </motion.div>
-              </Link>
-            ))}
-          </div>
+          {categories.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2.5">
+              {categories.map((category) => (
+                <Link key={category.id} href={`/providers?categoryId=${category.id}`}>
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    className="flex h-[94px] flex-col items-center justify-center gap-2 rounded-[16px] border border-[#e5e9ee] bg-white text-[#0e2f62] shadow-[0_4px_12px_rgba(14,47,98,0.04)] transition-colors hover:border-[#f5b916]"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4f7fa] text-[#0e2f62]">
+                      <CategoryIcon name={`${category.name} ${category.icon ?? ""}`} />
+                    </div>
+                    <span className="text-[10px] font-bold">{category.name}</span>
+                    <ChevronLeft className="h-3 w-3 -rotate-90 text-[#8da0b5]" />
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-[#cbd5e1] bg-white px-4 py-5 text-center text-xs text-[#708198]">
+              {isLoading ? "جاري تحميل أنواع الخدمات..." : "لا توجد أنواع خدمات مضافة حالياً"}
+            </p>
+          )}
           {isLoading && (
             <p className="mt-2 text-center text-[10px] text-[#8da0b5]">نجهز لك خدمات قريبة منك...</p>
           )}
@@ -208,21 +199,39 @@ export default function Home() {
               <h2 className="text-[15px] font-black text-[#0e2f62]">خدماتك الأخيرة</h2>
             </div>
           </div>
-          {recentProviders?.providers?.length ? (
-            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-              {recentProviders.providers.slice(0, 3).map((provider) => (
-                <ProviderCard key={provider.id} provider={provider} compact />
+          {recentRequests.length ? (
+            <div className="space-y-2.5">
+              {recentRequests.map((request) => (
+                <Link key={request.id} href={`/my-requests/${request.id}`}>
+                  <div className="flex items-center gap-3 rounded-[18px] border border-[#e5e9ee] bg-white px-4 py-3 shadow-[0_4px_12px_rgba(14,47,98,0.04)]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f4f7fa] text-xs font-black text-[#0e2f62]">
+                      {request.isImmediate ? "عاجل" : "طلب"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-[#0e2f62]">{request.serviceType}</p>
+                      <p className="mt-1 truncate text-[11px] text-[#708198]">
+                        {user?.role === "provider" ? request.clientName : request.providerName || "بانتظار المهني"}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-[#f5b916]/15 px-2 py-1 text-[10px] font-bold text-[#8c6b00]">
+                      {request.status === "pending" ? "قيد الانتظار" :
+                        request.status === "accepted" ? "مقبول" :
+                        request.status === "completed" ? "مكتمل" :
+                        request.status === "cancelled" ? "ملغي" : "قيد المتابعة"}
+                    </span>
+                  </div>
+                </Link>
               ))}
             </div>
           ) : (
             <button
               type="button"
-              onClick={() => navigate("/new-request")}
+              onClick={() => navigate("/providers")}
               className="flex w-full items-center justify-between rounded-[18px] border border-dashed border-[#cbd5e1] bg-white px-4 py-4 text-right"
             >
               <span>
-                <span className="block text-sm font-black text-[#0e2f62]">ابدأ طلبك الأول</span>
-                <span className="mt-1 block text-[11px] text-[#708198]">صف احتياجك وسنساعدك في الوصول للمناسب.</span>
+                <span className="block text-sm font-black text-[#0e2f62]">لا توجد طلبات محفوظة</span>
+                <span className="mt-1 block text-[11px] text-[#708198]">تصفح المهنيين وأنشئ طلب خدمة حقيقياً.</span>
               </span>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5b916] text-[#0e2f62]">
                 <ChevronLeft className="h-5 w-5" />

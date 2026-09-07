@@ -69,6 +69,16 @@ router.post("/requests", requireAuth, requireRole("client"), async (req: AuthReq
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const d = parsed.data;
 
+  const [providerCheck] = await db
+    .select({ p: providersTable, u: usersTable })
+    .from(providersTable)
+    .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+    .where(eq(providersTable.id, d.providerId));
+  if (!providerCheck || providerCheck.u.status !== "active") {
+    res.status(404).json({ error: "المهني غير متاح حالياً" });
+    return;
+  }
+
   const [newReq] = await db.insert(serviceRequestsTable).values({
     clientId: req.userId!,
     providerId: d.providerId,
