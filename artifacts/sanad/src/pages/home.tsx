@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { useGetHomeFeed } from "@workspace/api-client-react";
+import { useGetHomeFeed, useListFeaturedAdvertisements } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import {
@@ -50,6 +50,7 @@ export default function Home() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { data: feed, isLoading } = useGetHomeFeed({ lat: undefined, lng: undefined });
+  const { data: featuredAds = [] } = useListFeaturedAdvertisements();
 
   const categories = feed?.categories?.slice(0, 8) ?? [];
   const recentRequests = feed?.recentRequests ?? [];
@@ -187,6 +188,31 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        {featuredAds.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="rounded-full bg-[#f5b916]/15 px-2 py-1 text-[10px] font-bold text-[#8c6b00]">إعلانات مدفوعة</span>
+              <h2 className="text-[15px] font-black text-[#0e2f62]">مهنيون مميزون</h2>
+            </div>
+            <div className="space-y-2.5">
+              {featuredAds.slice(0, 3).map((ad) => (
+                <Link key={ad.id} href={`/providers/${ad.providerId}`}>
+                  <div className="rounded-[18px] border border-[#eadba7] bg-[#fffdf4] px-4 py-3 shadow-[0_4px_12px_rgba(14,47,98,0.04)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-[#0e2f62]">{ad.title}</p>
+                        <p className="mt-1 truncate text-[11px] text-[#708198]">{ad.providerName || "مهني موصى به"} · {ad.city}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#f5b916] px-2 py-1 text-[9px] font-black text-[#0e2f62]">إعلان</span>
+                    </div>
+                    {ad.description && <p className="mt-2 line-clamp-1 text-[11px] text-[#60728a]">{ad.description}</p>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section>
           <div className="mb-3 flex items-center justify-between">

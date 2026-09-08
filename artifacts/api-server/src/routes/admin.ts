@@ -1,8 +1,27 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, providersTable, categoriesTable, serviceRequestsTable, reviewsTable } from "@workspace/db";
+import {
+  db,
+  usersTable,
+  providersTable,
+  categoriesTable,
+  serviceRequestsTable,
+  reviewsTable,
+  subscriptionPaymentsTable,
+  providerSubscriptionsTable,
+  advertisementsTable,
+} from "@workspace/db";
 import { eq, and, count, ilike, desc, or, gte } from "drizzle-orm";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
-import { ListAdminUsersQueryParams, UpdateUserStatusBody, UpdateUserStatusParams, VerifyProviderBody, VerifyProviderParams } from "@workspace/api-zod";
+import {
+  ListAdminUsersQueryParams,
+  UpdateUserStatusBody,
+  UpdateUserStatusParams,
+  VerifyProviderBody,
+  VerifyProviderParams,
+  ReviewSubscriptionPaymentBody,
+  ReviewAdvertisementBody,
+} from "@workspace/api-zod";
+import { serializePayment } from "./subscriptions";
 
 const router: IRouter = Router();
 
@@ -142,6 +161,91 @@ router.get("/admin/service-stats", requireAuth, requireAdmin, async (req: AuthRe
     };
   }));
   res.json(result);
+});
+
+router.get("/admin/subscription-payments", requireAuth, requireAdmin, async (_req: AuthRequest, res): Promise<void> => {
+  const payments = await db
+    .select()
+    .from(subscriptionPaymentsTable)
+    .orderBy(desc(subscriptionPaymentsTable.createdAt));
+  res.json(payments.map(serializePayment));
+});
+
+router.patch("/admin/subscription-payments/:id/review", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const parsed = ReviewSubscriptionPaymentBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [payment] = await db.select().from(subscriptionPaymentsTable).where(eq(subscriptionPaymentsTable.id, id));
+  if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
+  if (payment.status !== "pending") { res.status(409).json({ error: "تمت مراجعة هذه العملية مسبقاً" }); return; }
+
+  const now = new Date();
+  await db.update(subscriptionPaymentsTable).set({
+    status: parsed.data.status,
+    adminNote: parsed.data.adminNote ?? null,
+    reviewedBy: req.userId!,
+    reviewedAt: now,
+  }).where(eq(subscriptionPaymentsTable.id, id));
+
+  if (payment.subscriptionId) {
+    if (parsed.data.status === "approved") {
+      const ends = new Date(now);
+      ends.setMonth(ends.getMonth() + (payment.plan === "yearly" ? 12 : 1));
+      await db.update(providerSubscriptionsTable).set({
+        status: "active",
+        startsAt: now,
+        endsAt: ends.toISOString().slice(0, 10),
+      }).where(eq(providerSubscriptionsTable.id, payment.subscriptionId));
+    } else {
+      await db.update(providerSubscriptionsTable).set({ status: "cancelled" }).where(eq(providerSubscriptionsTable.id, payment.subscriptionId));
+    }
+  }
+
+  const [updated] = await db.select().from(subscriptionPaymentsTable).where(eq(subscriptionPaymentsTable.id, id));
+  res.json(serializePayment(updated));
+});
+
+router.patch("/admin/advertisements/:id/review", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const parsed = ReviewAdvertisementBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [ad] = await db.select().from(advertisementsTable).where(eq(advertisementsTable.id, id));
+  if (!ad) { res.status(404).json({ error: "Advertisement not found" }); return; }
+  const now = new Date();
+  const ends = new Date(now);
+  ends.setDate(ends.getDate() + ad.durationDays);
+  await db.update(advertisementsTable).set({
+    status: parsed.data.status,
+    reviewNote: parsed.data.reviewNote ?? null,
+    startsAt: parsed.data.status === "active" ? now : null,
+    endsAt: parsed.data.status === "active" ? ends : null,
+  }).where(eq(advertisementsTable.id, id));
+
+  const [updated] = await db.select().from(advertisementsTable).where(eq(advertisementsTable.id, id));
+  res.json({
+    id: updated.id,
+    providerId: updated.providerId,
+    title: updated.title,
+    description: updated.description,
+    city: updated.city,
+    district: updated.district,
+    targetAudience: updated.targetAudience ?? null,
+    plan: updated.plan,
+    durationDays: updated.durationDays,
+    budget: Number(updated.budget),
+    imageUrl: updated.imageUrl ?? null,
+    status: updated.status,
+    reviewNote: updated.reviewNote ?? null,
+    startsAt: updated.startsAt?.toISOString() ?? null,
+    endsAt: updated.endsAt?.toISOString() ?? null,
+    createdAt: updated.createdAt.toISOString(),
+    providerName: null,
+    categoryName: null,
+  });
 });
 
 export default router;

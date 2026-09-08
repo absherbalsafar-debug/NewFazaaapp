@@ -14,6 +14,7 @@ export const providersTable = pgTable("providers", {
   yearsExperience: integer("years_experience").notNull().default(1),
   hourlyRate: numeric("hourly_rate", { precision: 10, scale: 2 }),
   whatsapp: text("whatsapp"),
+  freeSlotNumber: integer("free_slot_number"),
   isVerified: boolean("is_verified").notNull().default(false),
   isAvailable: boolean("is_available").notNull().default(true),
   lat: numeric("lat", { precision: 10, scale: 7 }),

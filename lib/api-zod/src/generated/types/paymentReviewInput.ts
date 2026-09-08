@@ -5,11 +5,10 @@
  * فزعة FAZAAH – منصة الخدمات والمهنيين في اليمن
  * OpenAPI spec version: 0.1.0
  */
+import type { PaymentReviewInputStatus } from './paymentReviewInputStatus';
 
-export interface ReviewInput {
-  providerId: number;
-  requestId: number;
-  rating: number;
+export interface PaymentReviewInput {
+  status: PaymentReviewInputStatus;
   /** @nullable */
-  comment?: string | null;
+  adminNote?: string | null;
 }

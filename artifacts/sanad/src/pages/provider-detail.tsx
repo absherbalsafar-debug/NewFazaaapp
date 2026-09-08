@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { useGetProvider, useGetProviderReviews, useGetProviderPortfolio, useAddFavorite, useRemoveFavorite } from "@workspace/api-client-react";
+import { useGetProvider, useGetProviderReviews, useGetProviderPortfolio, useAddFavorite, useRemoveFavorite, useTrackProviderContactClick } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export default function ProviderDetail() {
 
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
+  const trackContactClick = useTrackProviderContactClick();
 
   const toggleFavorite = () => {
     if (!user) {
@@ -149,7 +150,7 @@ export default function ProviderDetail() {
             </Button>
           </Link>
           {provider.phone && (
-            <a href={toTelHref(provider.phone)} className="flex-1" aria-label={`الاتصال بالمهني ${maskPhone(provider.phone)}`}>
+            <a href={toTelHref(provider.phone)} onClick={() => trackContactClick.mutate({ id, data: { kind: "call" } })} className="flex-1" aria-label={`الاتصال بالمهني ${maskPhone(provider.phone)}`}>
               <Button variant="outline" className="w-full h-12 rounded-xl border-primary text-primary hover:bg-primary/5">
                 <Phone className="w-5 h-5 ml-2" />
                 اتصال
@@ -159,6 +160,7 @@ export default function ProviderDetail() {
           {provider.whatsapp && (
             <a
               href={toWhatsAppHref(provider.whatsapp)}
+              onClick={() => trackContactClick.mutate({ id, data: { kind: "whatsapp" } })}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1"

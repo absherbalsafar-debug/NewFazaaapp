@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable } from "@workspace/db";
+import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable, providerMetricsTable } from "@workspace/db";
 import { eq, and, ne, gte, ilike, or, desc, asc, count, sql } from "drizzle-orm";
 import { requireAuth, optionalAuth, type AuthRequest } from "../middlewares/auth";
 import {
@@ -14,6 +14,7 @@ import {
   AddPortfolioItemParams,
   AddPortfolioItemBody,
   GetHomeFeedQueryParams,
+  TrackProviderContactClickBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -50,6 +51,24 @@ function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): n
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function incrementProviderMetric(providerId: number, kind: "profileViews" | "callClicks" | "whatsappClicks") {
+  const [metrics] = await db.select().from(providerMetricsTable).where(eq(providerMetricsTable.providerId, providerId));
+  if (!metrics) {
+    await db.insert(providerMetricsTable).values({
+      providerId,
+      profileViews: kind === "profileViews" ? 1 : 0,
+      callClicks: kind === "callClicks" ? 1 : 0,
+      whatsappClicks: kind === "whatsappClicks" ? 1 : 0,
+    });
+    return;
+  }
+  await db.update(providerMetricsTable).set({
+    profileViews: metrics.profileViews + (kind === "profileViews" ? 1 : 0),
+    callClicks: metrics.callClicks + (kind === "callClicks" ? 1 : 0),
+    whatsappClicks: metrics.whatsappClicks + (kind === "whatsappClicks" ? 1 : 0),
+  }).where(eq(providerMetricsTable.providerId, providerId));
 }
 
 router.get("/providers/nearby", async (req, res): Promise<void> => {
@@ -238,6 +257,8 @@ router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promis
 
   if (!row) { res.status(404).json({ error: "Provider not found" }); return; }
 
+  await incrementProviderMetric(id, "profileViews");
+
   let isFavorited = false;
   if (req.userId) {
     const [fav] = await db
@@ -272,6 +293,18 @@ router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promis
     isFavorited,
     createdAt: row.p.createdAt.toISOString(),
   });
+});
+
+router.post("/providers/:id/contact-click", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const parsed = TrackProviderContactClickBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [provider] = await db.select({ id: providersTable.id }).from(providersTable).where(eq(providersTable.id, id));
+  if (!provider) { res.status(404).json({ error: "Provider not found" }); return; }
+  await incrementProviderMetric(id, parsed.data.kind === "call" ? "callClicks" : "whatsappClicks");
+  res.json({ success: true, message: null });
 });
 
 router.patch("/providers/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {

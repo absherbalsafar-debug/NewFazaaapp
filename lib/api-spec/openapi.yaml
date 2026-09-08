@@ -29,6 +29,10 @@ tags:
     description: Notifications
   - name: admin
     description: Admin operations
+  - name: subscriptions
+    description: Provider subscriptions and manual wallet payments
+  - name: advertisements
+    description: Paid provider advertisements
 
 paths:
   /healthz:
@@ -492,6 +496,144 @@ paths:
                 items:
                   $ref: "#/components/schemas/Review"
 
+  /providers/{id}/contact-click:
+    post:
+      operationId: trackProviderContactClick
+      tags: [providers]
+      summary: Track a provider phone or WhatsApp click
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactClickInput"
+      responses:
+        "200":
+          description: Tracked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResult"
+
+  # ─── SUBSCRIPTIONS & PAYMENTS ─────────────────────────────────────────────────
+  /subscription-plans:
+    get:
+      operationId: listSubscriptionPlans
+      tags: [subscriptions]
+      summary: List available provider subscription plans
+      responses:
+        "200":
+          description: Plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlan"
+
+  /providers/me/business:
+    get:
+      operationId: getProviderBusiness
+      tags: [subscriptions]
+      summary: Get provider subscription and performance summary
+      responses:
+        "200":
+          description: Business summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderBusiness"
+
+  /providers/me/payments:
+    get:
+      operationId: listProviderPayments
+      tags: [subscriptions]
+      summary: List my subscription payment requests
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPayment"
+
+  /subscriptions/checkout:
+    post:
+      operationId: createSubscriptionPayment
+      tags: [subscriptions]
+      summary: Submit a manual wallet payment for a subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionPaymentInput"
+      responses:
+        "201":
+          description: Payment submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPayment"
+
+  # ─── ADVERTISEMENTS ───────────────────────────────────────────────────────────
+  /ads:
+    post:
+      operationId: createAdvertisement
+      tags: [advertisements]
+      summary: Submit a paid advertisement for review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvertisementInput"
+      responses:
+        "201":
+          description: Advertisement submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Advertisement"
+
+  /ads/mine:
+    get:
+      operationId: listMyAdvertisements
+      tags: [advertisements]
+      summary: List my advertisements
+      responses:
+        "200":
+          description: Advertisements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Advertisement"
+
+  /ads/featured:
+    get:
+      operationId: listFeaturedAdvertisements
+      tags: [advertisements]
+      summary: List active advertisements for clients
+      responses:
+        "200":
+          description: Active advertisements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Advertisement"
+
   # ─── FAVORITES ───────────────────────────────────────────────────────────────
   /favorites:
     get:
@@ -740,6 +882,71 @@ paths:
                 items:
                   $ref: "#/components/schemas/ServiceStat"
 
+  /admin/subscription-payments:
+    get:
+      operationId: listAdminSubscriptionPayments
+      tags: [admin]
+      summary: List provider subscription payments for review
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPayment"
+
+  /admin/subscription-payments/{id}/review:
+    patch:
+      operationId: reviewSubscriptionPayment
+      tags: [admin]
+      summary: Approve or reject a subscription payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentReviewInput"
+      responses:
+        "200":
+          description: Reviewed payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPayment"
+
+  /admin/advertisements/{id}/review:
+    patch:
+      operationId: reviewAdvertisement
+      tags: [admin]
+      summary: Approve or reject an advertisement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvertisementReviewInput"
+      responses:
+        "200":
+          description: Reviewed advertisement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Advertisement"
+
   # ─── WOW: HOME FEED ──────────────────────────────────────────────────────────
   /home-feed:
     get:
@@ -771,6 +978,214 @@ components:
       properties:
         status:
           type: string
+
+    ContactClickInput:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [call, whatsapp]
+
+    SubscriptionPlan:
+      type: object
+      required: [id, name, monthlyPrice, yearlyPrice, description, benefits]
+      properties:
+        id:
+          type: string
+          enum: [free, monthly, yearly]
+        name:
+          type: string
+        monthlyPrice:
+          type: number
+        yearlyPrice:
+          type: number
+        description:
+          type: string
+        benefits:
+          type: array
+          items:
+            type: string
+
+    ProviderSubscription:
+      type: object
+      required: [id, plan, status, freeSlotNumber, startsAt, endsAt, createdAt]
+      properties:
+        id:
+          type: integer
+        plan:
+          type: string
+          enum: [free, monthly, yearly]
+        status:
+          type: string
+          enum: [active, pending, expired, cancelled]
+        freeSlotNumber:
+          type: ["integer", "null"]
+        startsAt:
+          type: ["string", "null"]
+        endsAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SubscriptionPayment:
+      type: object
+      required: [id, providerId, plan, wallet, transactionReference, status, createdAt]
+      properties:
+        id:
+          type: integer
+        providerId:
+          type: integer
+        plan:
+          type: string
+          enum: [monthly, yearly]
+        wallet:
+          type: string
+          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
+        transactionReference:
+          type: string
+        receiptUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected, expired, refunded]
+        adminNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        reviewedAt:
+          type: ["string", "null"]
+
+    SubscriptionPaymentInput:
+      type: object
+      required: [plan, wallet, transactionReference]
+      properties:
+        plan:
+          type: string
+          enum: [monthly, yearly]
+        wallet:
+          type: string
+          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
+        transactionReference:
+          type: string
+          minLength: 3
+        receiptUrl:
+          type: ["string", "null"]
+
+    PaymentReviewInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected]
+        adminNote:
+          type: ["string", "null"]
+
+    ProviderMetrics:
+      type: object
+      required: [profileViews, callClicks, whatsappClicks, serviceRequests]
+      properties:
+        profileViews:
+          type: integer
+        callClicks:
+          type: integer
+        whatsappClicks:
+          type: integer
+        serviceRequests:
+          type: integer
+
+    ProviderBusiness:
+      type: object
+      required: [subscription, metrics, freeSlotsRemaining]
+      properties:
+        subscription:
+          $ref: "#/components/schemas/ProviderSubscription"
+        metrics:
+          $ref: "#/components/schemas/ProviderMetrics"
+        freeSlotsRemaining:
+          type: integer
+
+    Advertisement:
+      type: object
+      required: [id, providerId, title, description, city, district, plan, durationDays, budget, status, createdAt]
+      properties:
+        id:
+          type: integer
+        providerId:
+          type: integer
+        providerName:
+          type: ["string", "null"]
+        categoryName:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        targetAudience:
+          type: ["string", "null"]
+        plan:
+          type: string
+          enum: [standard, featured, homepage]
+        durationDays:
+          type: integer
+        budget:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, active, rejected, expired]
+        reviewNote:
+          type: ["string", "null"]
+        startsAt:
+          type: ["string", "null"]
+        endsAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdvertisementInput:
+      type: object
+      required: [title, city, plan, durationDays, budget]
+      properties:
+        title:
+          type: string
+          minLength: 4
+        description:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        targetAudience:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        plan:
+          type: string
+          enum: [standard, featured, homepage]
+        durationDays:
+          type: integer
+          enum: [7, 14, 30]
+        budget:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+
+    AdvertisementReviewInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [active, rejected]
+        reviewNote:
+          type: ["string", "null"]
 
     # ── AUTH ────────────────────────────────────────────────────────────────────
     RegisterInput:
@@ -1122,12 +1537,12 @@ components:
 
     ReviewInput:
       type: object
-      required: [providerId, rating]
+      required: [providerId, requestId, rating]
       properties:
         providerId:
           type: integer
         requestId:
-          type: ["integer", "null"]
+          type: integer
         rating:
           type: integer
         comment:

@@ -1,4 +1,4 @@
-import { ProviderSummary } from "@workspace/api-client-react";
+import { ProviderSummary, useTrackProviderContactClick } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, CheckCircle2, Briefcase } from "lucide-react";
 import { MessageCircle, Phone } from "lucide-react";
@@ -12,6 +12,7 @@ interface ProviderCardProps {
 }
 
 export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
+  const trackContactClick = useTrackProviderContactClick();
   if (compact) {
     return (
       <Link href={`/providers/${provider.id}`}>
@@ -145,6 +146,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
           href={toTelHref(provider.phone)}
           className="flex-1"
           onClick={event => event.stopPropagation()}
+          onMouseDown={() => trackContactClick.mutate({ id: provider.id, data: { kind: "call" } })}
         >
           <button className="w-full py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5">
             <Phone className="h-3.5 w-3.5" />
@@ -158,6 +160,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
             rel="noopener noreferrer"
             className="flex-1"
             onClick={event => event.stopPropagation()}
+            onMouseDown={() => trackContactClick.mutate({ id: provider.id, data: { kind: "whatsapp" } })}
           >
             <button className="w-full py-2.5 text-xs font-bold text-green-600 hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
               <MessageCircle className="h-3.5 w-3.5" />

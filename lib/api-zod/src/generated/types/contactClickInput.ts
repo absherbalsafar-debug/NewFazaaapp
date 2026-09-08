@@ -5,11 +5,8 @@
  * فزعة FAZAAH – منصة الخدمات والمهنيين في اليمن
  * OpenAPI spec version: 0.1.0
  */
+import type { ContactClickInputKind } from './contactClickInputKind';
 
-export interface ReviewInput {
-  providerId: number;
-  requestId: number;
-  rating: number;
-  /** @nullable */
-  comment?: string | null;
+export interface ContactClickInput {
+  kind: ContactClickInputKind;
 }

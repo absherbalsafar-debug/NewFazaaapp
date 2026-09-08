@@ -22,9 +22,13 @@ import type {
 import type {
   AdminStats,
   AdminUsersPage,
+  Advertisement,
+  AdvertisementInput,
+  AdvertisementReviewInput,
   AuthResponse,
   Category,
   CategoryInput,
+  ContactClickInput,
   Conversation,
   FavoriteResult,
   GetHomeFeedParams,
@@ -40,8 +44,10 @@ import type {
   Message,
   MessageInput,
   Notification,
+  PaymentReviewInput,
   PortfolioInput,
   PortfolioItem,
+  ProviderBusiness,
   ProviderDetail,
   ProviderSummary,
   ProviderUpdate,
@@ -54,6 +60,9 @@ import type {
   ServiceRequestInput,
   ServiceRequestUpdate,
   ServiceStat,
+  SubscriptionPayment,
+  SubscriptionPaymentInput,
+  SubscriptionPlan,
   SuccessResult,
   User,
   UserStatusUpdate
@@ -1678,6 +1687,605 @@ export function useGetProviderReviews<TData = Awaited<ReturnType<typeof getProvi
 
 
 
+export const getTrackProviderContactClickUrl = (id: number,) => {
+
+
+
+
+  return `/api/providers/${id}/contact-click`
+}
+
+/**
+ * @summary Track a provider phone or WhatsApp click
+ */
+export const trackProviderContactClick = async (id: number,
+    contactClickInput: ContactClickInput, options?: RequestInit): Promise<SuccessResult> => {
+
+  return customFetch<SuccessResult>(getTrackProviderContactClickUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      contactClickInput,)
+  }
+);}
+
+
+
+
+export const getTrackProviderContactClickMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackProviderContactClick>>, TError,{id: number;data: BodyType<ContactClickInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof trackProviderContactClick>>, TError,{id: number;data: BodyType<ContactClickInput>}, TContext> => {
+
+const mutationKey = ['trackProviderContactClick'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trackProviderContactClick>>, {id: number;data: BodyType<ContactClickInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  trackProviderContactClick(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrackProviderContactClickMutationResult = NonNullable<Awaited<ReturnType<typeof trackProviderContactClick>>>
+    export type TrackProviderContactClickMutationBody = BodyType<ContactClickInput>
+    export type TrackProviderContactClickMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Track a provider phone or WhatsApp click
+ */
+export const useTrackProviderContactClick = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackProviderContactClick>>, TError,{id: number;data: BodyType<ContactClickInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof trackProviderContactClick>>,
+        TError,
+        {id: number;data: BodyType<ContactClickInput>},
+        TContext
+      > => {
+      return useMutation(getTrackProviderContactClickMutationOptions(options));
+    }
+
+export const getListSubscriptionPlansUrl = () => {
+
+
+
+
+  return `/api/subscription-plans`
+}
+
+/**
+ * @summary List available provider subscription plans
+ */
+export const listSubscriptionPlans = async ( options?: RequestInit): Promise<SubscriptionPlan[]> => {
+
+  return customFetch<SubscriptionPlan[]>(getListSubscriptionPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSubscriptionPlansQueryKey = () => {
+    return [
+    `/api/subscription-plans`
+    ] as const;
+    }
+
+
+export const getListSubscriptionPlansQueryOptions = <TData = Awaited<ReturnType<typeof listSubscriptionPlans>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSubscriptionPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSubscriptionPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSubscriptionPlans>>> = ({ signal }) => listSubscriptionPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSubscriptionPlans>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSubscriptionPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listSubscriptionPlans>>>
+export type ListSubscriptionPlansQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List available provider subscription plans
+ */
+
+export function useListSubscriptionPlans<TData = Awaited<ReturnType<typeof listSubscriptionPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSubscriptionPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSubscriptionPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetProviderBusinessUrl = () => {
+
+
+
+
+  return `/api/providers/me/business`
+}
+
+/**
+ * @summary Get provider subscription and performance summary
+ */
+export const getProviderBusiness = async ( options?: RequestInit): Promise<ProviderBusiness> => {
+
+  return customFetch<ProviderBusiness>(getGetProviderBusinessUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProviderBusinessQueryKey = () => {
+    return [
+    `/api/providers/me/business`
+    ] as const;
+    }
+
+
+export const getGetProviderBusinessQueryOptions = <TData = Awaited<ReturnType<typeof getProviderBusiness>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProviderBusiness>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProviderBusinessQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProviderBusiness>>> = ({ signal }) => getProviderBusiness({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProviderBusiness>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProviderBusinessQueryResult = NonNullable<Awaited<ReturnType<typeof getProviderBusiness>>>
+export type GetProviderBusinessQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get provider subscription and performance summary
+ */
+
+export function useGetProviderBusiness<TData = Awaited<ReturnType<typeof getProviderBusiness>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProviderBusiness>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProviderBusinessQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListProviderPaymentsUrl = () => {
+
+
+
+
+  return `/api/providers/me/payments`
+}
+
+/**
+ * @summary List my subscription payment requests
+ */
+export const listProviderPayments = async ( options?: RequestInit): Promise<SubscriptionPayment[]> => {
+
+  return customFetch<SubscriptionPayment[]>(getListProviderPaymentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProviderPaymentsQueryKey = () => {
+    return [
+    `/api/providers/me/payments`
+    ] as const;
+    }
+
+
+export const getListProviderPaymentsQueryOptions = <TData = Awaited<ReturnType<typeof listProviderPayments>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProviderPayments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProviderPaymentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProviderPayments>>> = ({ signal }) => listProviderPayments({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProviderPayments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProviderPaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof listProviderPayments>>>
+export type ListProviderPaymentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List my subscription payment requests
+ */
+
+export function useListProviderPayments<TData = Awaited<ReturnType<typeof listProviderPayments>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProviderPayments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProviderPaymentsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateSubscriptionPaymentUrl = () => {
+
+
+
+
+  return `/api/subscriptions/checkout`
+}
+
+/**
+ * @summary Submit a manual wallet payment for a subscription
+ */
+export const createSubscriptionPayment = async (subscriptionPaymentInput: SubscriptionPaymentInput, options?: RequestInit): Promise<SubscriptionPayment> => {
+
+  return customFetch<SubscriptionPayment>(getCreateSubscriptionPaymentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      subscriptionPaymentInput,)
+  }
+);}
+
+
+
+
+export const getCreateSubscriptionPaymentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionPayment>>, TError,{data: BodyType<SubscriptionPaymentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionPayment>>, TError,{data: BodyType<SubscriptionPaymentInput>}, TContext> => {
+
+const mutationKey = ['createSubscriptionPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSubscriptionPayment>>, {data: BodyType<SubscriptionPaymentInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSubscriptionPayment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSubscriptionPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof createSubscriptionPayment>>>
+    export type CreateSubscriptionPaymentMutationBody = BodyType<SubscriptionPaymentInput>
+    export type CreateSubscriptionPaymentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a manual wallet payment for a subscription
+ */
+export const useCreateSubscriptionPayment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionPayment>>, TError,{data: BodyType<SubscriptionPaymentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSubscriptionPayment>>,
+        TError,
+        {data: BodyType<SubscriptionPaymentInput>},
+        TContext
+      > => {
+      return useMutation(getCreateSubscriptionPaymentMutationOptions(options));
+    }
+
+export const getCreateAdvertisementUrl = () => {
+
+
+
+
+  return `/api/ads`
+}
+
+/**
+ * @summary Submit a paid advertisement for review
+ */
+export const createAdvertisement = async (advertisementInput: AdvertisementInput, options?: RequestInit): Promise<Advertisement> => {
+
+  return customFetch<Advertisement>(getCreateAdvertisementUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      advertisementInput,)
+  }
+);}
+
+
+
+
+export const getCreateAdvertisementMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdvertisement>>, TError,{data: BodyType<AdvertisementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdvertisement>>, TError,{data: BodyType<AdvertisementInput>}, TContext> => {
+
+const mutationKey = ['createAdvertisement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdvertisement>>, {data: BodyType<AdvertisementInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdvertisement(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdvertisementMutationResult = NonNullable<Awaited<ReturnType<typeof createAdvertisement>>>
+    export type CreateAdvertisementMutationBody = BodyType<AdvertisementInput>
+    export type CreateAdvertisementMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a paid advertisement for review
+ */
+export const useCreateAdvertisement = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdvertisement>>, TError,{data: BodyType<AdvertisementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdvertisement>>,
+        TError,
+        {data: BodyType<AdvertisementInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAdvertisementMutationOptions(options));
+    }
+
+export const getListMyAdvertisementsUrl = () => {
+
+
+
+
+  return `/api/ads/mine`
+}
+
+/**
+ * @summary List my advertisements
+ */
+export const listMyAdvertisements = async ( options?: RequestInit): Promise<Advertisement[]> => {
+
+  return customFetch<Advertisement[]>(getListMyAdvertisementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyAdvertisementsQueryKey = () => {
+    return [
+    `/api/ads/mine`
+    ] as const;
+    }
+
+
+export const getListMyAdvertisementsQueryOptions = <TData = Awaited<ReturnType<typeof listMyAdvertisements>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyAdvertisements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyAdvertisementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyAdvertisements>>> = ({ signal }) => listMyAdvertisements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyAdvertisements>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMyAdvertisementsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyAdvertisements>>>
+export type ListMyAdvertisementsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List my advertisements
+ */
+
+export function useListMyAdvertisements<TData = Awaited<ReturnType<typeof listMyAdvertisements>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyAdvertisements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMyAdvertisementsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListFeaturedAdvertisementsUrl = () => {
+
+
+
+
+  return `/api/ads/featured`
+}
+
+/**
+ * @summary List active advertisements for clients
+ */
+export const listFeaturedAdvertisements = async ( options?: RequestInit): Promise<Advertisement[]> => {
+
+  return customFetch<Advertisement[]>(getListFeaturedAdvertisementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListFeaturedAdvertisementsQueryKey = () => {
+    return [
+    `/api/ads/featured`
+    ] as const;
+    }
+
+
+export const getListFeaturedAdvertisementsQueryOptions = <TData = Awaited<ReturnType<typeof listFeaturedAdvertisements>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFeaturedAdvertisements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFeaturedAdvertisementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFeaturedAdvertisements>>> = ({ signal }) => listFeaturedAdvertisements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFeaturedAdvertisements>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFeaturedAdvertisementsQueryResult = NonNullable<Awaited<ReturnType<typeof listFeaturedAdvertisements>>>
+export type ListFeaturedAdvertisementsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List active advertisements for clients
+ */
+
+export function useListFeaturedAdvertisements<TData = Awaited<ReturnType<typeof listFeaturedAdvertisements>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFeaturedAdvertisements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFeaturedAdvertisementsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
 export const getListFavoritesUrl = () => {
 
 
@@ -2649,6 +3257,227 @@ export function useGetServiceStats<TData = Awaited<ReturnType<typeof getServiceS
 
 
 
+
+export const getListAdminSubscriptionPaymentsUrl = () => {
+
+
+
+
+  return `/api/admin/subscription-payments`
+}
+
+/**
+ * @summary List provider subscription payments for review
+ */
+export const listAdminSubscriptionPayments = async ( options?: RequestInit): Promise<SubscriptionPayment[]> => {
+
+  return customFetch<SubscriptionPayment[]>(getListAdminSubscriptionPaymentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminSubscriptionPaymentsQueryKey = () => {
+    return [
+    `/api/admin/subscription-payments`
+    ] as const;
+    }
+
+
+export const getListAdminSubscriptionPaymentsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminSubscriptionPayments>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminSubscriptionPayments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminSubscriptionPaymentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminSubscriptionPayments>>> = ({ signal }) => listAdminSubscriptionPayments({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminSubscriptionPayments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminSubscriptionPaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminSubscriptionPayments>>>
+export type ListAdminSubscriptionPaymentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List provider subscription payments for review
+ */
+
+export function useListAdminSubscriptionPayments<TData = Awaited<ReturnType<typeof listAdminSubscriptionPayments>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminSubscriptionPayments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminSubscriptionPaymentsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getReviewSubscriptionPaymentUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/subscription-payments/${id}/review`
+}
+
+/**
+ * @summary Approve or reject a subscription payment
+ */
+export const reviewSubscriptionPayment = async (id: number,
+    paymentReviewInput: PaymentReviewInput, options?: RequestInit): Promise<SubscriptionPayment> => {
+
+  return customFetch<SubscriptionPayment>(getReviewSubscriptionPaymentUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      paymentReviewInput,)
+  }
+);}
+
+
+
+
+export const getReviewSubscriptionPaymentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewSubscriptionPayment>>, TError,{id: number;data: BodyType<PaymentReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewSubscriptionPayment>>, TError,{id: number;data: BodyType<PaymentReviewInput>}, TContext> => {
+
+const mutationKey = ['reviewSubscriptionPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewSubscriptionPayment>>, {id: number;data: BodyType<PaymentReviewInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewSubscriptionPayment(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewSubscriptionPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof reviewSubscriptionPayment>>>
+    export type ReviewSubscriptionPaymentMutationBody = BodyType<PaymentReviewInput>
+    export type ReviewSubscriptionPaymentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or reject a subscription payment
+ */
+export const useReviewSubscriptionPayment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewSubscriptionPayment>>, TError,{id: number;data: BodyType<PaymentReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewSubscriptionPayment>>,
+        TError,
+        {id: number;data: BodyType<PaymentReviewInput>},
+        TContext
+      > => {
+      return useMutation(getReviewSubscriptionPaymentMutationOptions(options));
+    }
+
+export const getReviewAdvertisementUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/advertisements/${id}/review`
+}
+
+/**
+ * @summary Approve or reject an advertisement
+ */
+export const reviewAdvertisement = async (id: number,
+    advertisementReviewInput: AdvertisementReviewInput, options?: RequestInit): Promise<Advertisement> => {
+
+  return customFetch<Advertisement>(getReviewAdvertisementUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      advertisementReviewInput,)
+  }
+);}
+
+
+
+
+export const getReviewAdvertisementMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdvertisement>>, TError,{id: number;data: BodyType<AdvertisementReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewAdvertisement>>, TError,{id: number;data: BodyType<AdvertisementReviewInput>}, TContext> => {
+
+const mutationKey = ['reviewAdvertisement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewAdvertisement>>, {id: number;data: BodyType<AdvertisementReviewInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewAdvertisement(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewAdvertisementMutationResult = NonNullable<Awaited<ReturnType<typeof reviewAdvertisement>>>
+    export type ReviewAdvertisementMutationBody = BodyType<AdvertisementReviewInput>
+    export type ReviewAdvertisementMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or reject an advertisement
+ */
+export const useReviewAdvertisement = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdvertisement>>, TError,{id: number;data: BodyType<AdvertisementReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewAdvertisement>>,
+        TError,
+        {id: number;data: BodyType<AdvertisementReviewInput>},
+        TContext
+      > => {
+      return useMutation(getReviewAdvertisementMutationOptions(options));
+    }
 
 export const getGetHomeFeedUrl = (params?: GetHomeFeedParams,) => {
   const normalizedParams = new URLSearchParams();

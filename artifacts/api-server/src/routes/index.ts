@@ -10,6 +10,8 @@ import messagesRouter from "./messages";
 import callsRouter from "./calls";
 import notificationsRouter from "./notifications";
 import adminRouter from "./admin";
+import subscriptionsRouter from "./subscriptions";
+import advertisementsRouter from "./advertisements";
 
 const router: IRouter = Router();
 
@@ -24,5 +26,7 @@ router.use(messagesRouter);
 router.use(callsRouter);
 router.use(notificationsRouter);
 router.use(adminRouter);
+router.use(subscriptionsRouter);
+router.use(advertisementsRouter);
 
 export default router;

@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ReviewInput {
-  providerId: number;
-  requestId: number;
-  rating: number;
-  /** @nullable */
-  comment?: string | null;
+export interface ProviderMetrics {
+  profileViews: number;
+  callClicks: number;
+  whatsappClicks: number;
+  serviceRequests: number;
 }

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, reviewsTable, usersTable, providersTable } from "@workspace/db";
-import { eq, avg, count, desc } from "drizzle-orm";
+import { db, reviewsTable, usersTable, providersTable, serviceRequestsTable } from "@workspace/db";
+import { eq, avg, count, desc, and } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
 import { CreateReviewBody, GetProviderReviewsParams } from "@workspace/api-zod";
 
@@ -34,6 +34,28 @@ router.get("/providers/:id/reviews", async (req, res): Promise<void> => {
 router.post("/reviews", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const parsed = CreateReviewBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [request] = await db
+    .select()
+    .from(serviceRequestsTable)
+    .where(and(
+      eq(serviceRequestsTable.id, parsed.data.requestId),
+      eq(serviceRequestsTable.clientId, req.userId!),
+      eq(serviceRequestsTable.providerId, parsed.data.providerId),
+      eq(serviceRequestsTable.status, "completed"),
+    ));
+  if (!request) {
+    res.status(400).json({ error: "يمكن التقييم بعد اكتمال طلب خدمة تابع لك فقط" });
+    return;
+  }
+  const [existingReview] = await db
+    .select({ id: reviewsTable.id })
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.requestId, parsed.data.requestId), eq(reviewsTable.clientId, req.userId!)));
+  if (existingReview) {
+    res.status(409).json({ error: "تم تقييم هذا الطلب مسبقاً" });
+    return;
+  }
 
   const [review] = await db.insert(reviewsTable).values({
     clientId: req.userId!,

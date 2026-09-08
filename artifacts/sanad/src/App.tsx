@@ -34,7 +34,9 @@ import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminProviders from "@/pages/admin/providers";
+import AdminBusiness from "@/pages/admin/business";
 import ProviderDashboard from "@/pages/provider-dashboard";
+import ProviderBusiness from "@/pages/provider-business";
 import Earnings from "@/pages/earnings";
 import Wallet from "@/pages/wallet";
 import Privacy from "@/pages/privacy";
@@ -62,6 +64,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => (
         <a href="/admin" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">لوحة التحكم</a>
         <a href="/admin/users" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">المستخدمين</a>
         <a href="/admin/providers" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">المهنيين</a>
+        <a href="/admin/business" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">الاشتراكات والإعلانات</a>
       </nav>
       <a href="/" className="mt-auto block rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-primary">← العودة للتطبيق</a>
     </aside>
@@ -130,6 +133,11 @@ function Router() {
           <AdminLayout><AdminProviders /></AdminLayout>
         </ProtectedRoute>
       </Route>
+      <Route path="/admin/business">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout><AdminBusiness /></AdminLayout>
+        </ProtectedRoute>
+      </Route>
 
       {/* ── Protected App Routes ── */}
       <Route path="/">
@@ -142,6 +150,11 @@ function Router() {
           <AppShell><ProviderDashboard /></AppShell>
         </ProtectedRoute>
       </Route>
+       <Route path="/provider-business">
+         <ProtectedRoute allowedRoles={['provider']}>
+           <AppShell><ProviderBusiness /></AppShell>
+         </ProtectedRoute>
+       </Route>
       <Route path="/discover">
         <ProtectedRoute>
           <AppShell><Discover /></AppShell>

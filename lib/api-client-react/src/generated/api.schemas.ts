@@ -9,6 +9,269 @@ export interface HealthStatus {
   status: string;
 }
 
+export type ContactClickInputKind = typeof ContactClickInputKind[keyof typeof ContactClickInputKind];
+
+
+export const ContactClickInputKind = {
+  call: 'call',
+  whatsapp: 'whatsapp',
+} as const;
+
+export interface ContactClickInput {
+  kind: ContactClickInputKind;
+}
+
+export type SubscriptionPlanId = typeof SubscriptionPlanId[keyof typeof SubscriptionPlanId];
+
+
+export const SubscriptionPlanId = {
+  free: 'free',
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export interface SubscriptionPlan {
+  id: SubscriptionPlanId;
+  name: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  description: string;
+  benefits: string[];
+}
+
+export type ProviderSubscriptionPlan = typeof ProviderSubscriptionPlan[keyof typeof ProviderSubscriptionPlan];
+
+
+export const ProviderSubscriptionPlan = {
+  free: 'free',
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type ProviderSubscriptionStatus = typeof ProviderSubscriptionStatus[keyof typeof ProviderSubscriptionStatus];
+
+
+export const ProviderSubscriptionStatus = {
+  active: 'active',
+  pending: 'pending',
+  expired: 'expired',
+  cancelled: 'cancelled',
+} as const;
+
+export interface ProviderSubscription {
+  id: number;
+  plan: ProviderSubscriptionPlan;
+  status: ProviderSubscriptionStatus;
+  /** @nullable */
+  freeSlotNumber: number | null;
+  /** @nullable */
+  startsAt: string | null;
+  /** @nullable */
+  endsAt: string | null;
+  createdAt: string;
+}
+
+export type SubscriptionPaymentPlan = typeof SubscriptionPaymentPlan[keyof typeof SubscriptionPaymentPlan];
+
+
+export const SubscriptionPaymentPlan = {
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type SubscriptionPaymentWallet = typeof SubscriptionPaymentWallet[keyof typeof SubscriptionPaymentWallet];
+
+
+export const SubscriptionPaymentWallet = {
+  jeeb: 'jeeb',
+  floosk: 'floosk',
+  jawali: 'jawali',
+  cash: 'cash',
+  one_cash: 'one_cash',
+  hasib: 'hasib',
+  easy: 'easy',
+} as const;
+
+export type SubscriptionPaymentStatus = typeof SubscriptionPaymentStatus[keyof typeof SubscriptionPaymentStatus];
+
+
+export const SubscriptionPaymentStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+  expired: 'expired',
+  refunded: 'refunded',
+} as const;
+
+export interface SubscriptionPayment {
+  id: number;
+  providerId: number;
+  plan: SubscriptionPaymentPlan;
+  wallet: SubscriptionPaymentWallet;
+  transactionReference: string;
+  /** @nullable */
+  receiptUrl?: string | null;
+  status: SubscriptionPaymentStatus;
+  /** @nullable */
+  adminNote?: string | null;
+  createdAt: string;
+  /** @nullable */
+  reviewedAt?: string | null;
+}
+
+export type SubscriptionPaymentInputPlan = typeof SubscriptionPaymentInputPlan[keyof typeof SubscriptionPaymentInputPlan];
+
+
+export const SubscriptionPaymentInputPlan = {
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type SubscriptionPaymentInputWallet = typeof SubscriptionPaymentInputWallet[keyof typeof SubscriptionPaymentInputWallet];
+
+
+export const SubscriptionPaymentInputWallet = {
+  jeeb: 'jeeb',
+  floosk: 'floosk',
+  jawali: 'jawali',
+  cash: 'cash',
+  one_cash: 'one_cash',
+  hasib: 'hasib',
+  easy: 'easy',
+} as const;
+
+export interface SubscriptionPaymentInput {
+  plan: SubscriptionPaymentInputPlan;
+  wallet: SubscriptionPaymentInputWallet;
+  /** @minLength 3 */
+  transactionReference: string;
+  /** @nullable */
+  receiptUrl?: string | null;
+}
+
+export type PaymentReviewInputStatus = typeof PaymentReviewInputStatus[keyof typeof PaymentReviewInputStatus];
+
+
+export const PaymentReviewInputStatus = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface PaymentReviewInput {
+  status: PaymentReviewInputStatus;
+  /** @nullable */
+  adminNote?: string | null;
+}
+
+export interface ProviderMetrics {
+  profileViews: number;
+  callClicks: number;
+  whatsappClicks: number;
+  serviceRequests: number;
+}
+
+export interface ProviderBusiness {
+  subscription: ProviderSubscription;
+  metrics: ProviderMetrics;
+  freeSlotsRemaining: number;
+}
+
+export type AdvertisementPlan = typeof AdvertisementPlan[keyof typeof AdvertisementPlan];
+
+
+export const AdvertisementPlan = {
+  standard: 'standard',
+  featured: 'featured',
+  homepage: 'homepage',
+} as const;
+
+export type AdvertisementStatus = typeof AdvertisementStatus[keyof typeof AdvertisementStatus];
+
+
+export const AdvertisementStatus = {
+  pending: 'pending',
+  active: 'active',
+  rejected: 'rejected',
+  expired: 'expired',
+} as const;
+
+export interface Advertisement {
+  id: number;
+  providerId: number;
+  /** @nullable */
+  providerName?: string | null;
+  /** @nullable */
+  categoryName?: string | null;
+  title: string;
+  description: string;
+  city: string;
+  district: string;
+  /** @nullable */
+  targetAudience?: string | null;
+  plan: AdvertisementPlan;
+  durationDays: number;
+  budget: number;
+  /** @nullable */
+  imageUrl?: string | null;
+  status: AdvertisementStatus;
+  /** @nullable */
+  reviewNote?: string | null;
+  /** @nullable */
+  startsAt?: string | null;
+  /** @nullable */
+  endsAt?: string | null;
+  createdAt: string;
+}
+
+export type AdvertisementInputPlan = typeof AdvertisementInputPlan[keyof typeof AdvertisementInputPlan];
+
+
+export const AdvertisementInputPlan = {
+  standard: 'standard',
+  featured: 'featured',
+  homepage: 'homepage',
+} as const;
+
+export type AdvertisementInputDurationDays = typeof AdvertisementInputDurationDays[keyof typeof AdvertisementInputDurationDays];
+
+
+export const AdvertisementInputDurationDays = {
+  NUMBER_7: 7,
+  NUMBER_14: 14,
+  NUMBER_30: 30,
+} as const;
+
+export interface AdvertisementInput {
+  /** @minLength 4 */
+  title: string;
+  description?: string;
+  city: string;
+  district?: string;
+  /** @nullable */
+  targetAudience?: string | null;
+  /** @nullable */
+  categoryId?: number | null;
+  plan: AdvertisementInputPlan;
+  durationDays: AdvertisementInputDurationDays;
+  budget: number;
+  /** @nullable */
+  imageUrl?: string | null;
+}
+
+export type AdvertisementReviewInputStatus = typeof AdvertisementReviewInputStatus[keyof typeof AdvertisementReviewInputStatus];
+
+
+export const AdvertisementReviewInputStatus = {
+  active: 'active',
+  rejected: 'rejected',
+} as const;
+
+export interface AdvertisementReviewInput {
+  status: AdvertisementReviewInputStatus;
+  /** @nullable */
+  reviewNote?: string | null;
+}
+
 export type RegisterInputRole = typeof RegisterInputRole[keyof typeof RegisterInputRole];
 
 
@@ -288,8 +551,7 @@ export interface Review {
 
 export interface ReviewInput {
   providerId: number;
-  /** @nullable */
-  requestId?: number | null;
+  requestId: number;
   rating: number;
   /** @nullable */
   comment?: string | null;

@@ -489,7 +489,7 @@ export const UpdateRequestResponse = zod.object({
  */
 export const CreateReviewBody = zod.object({
   "providerId": zod.number(),
-  "requestId": zod.number().nullish(),
+  "requestId": zod.number(),
   "rating": zod.number(),
   "comment": zod.string().nullish()
 })
@@ -514,6 +514,166 @@ export const GetProviderReviewsResponseItem = zod.object({
   "createdAt": zod.string()
 })
 export const GetProviderReviewsResponse = zod.array(GetProviderReviewsResponseItem)
+
+
+/**
+ * @summary Track a provider phone or WhatsApp click
+ */
+export const TrackProviderContactClickParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const TrackProviderContactClickBody = zod.object({
+  "kind": zod.enum(['call', 'whatsapp'])
+})
+
+export const TrackProviderContactClickResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary List available provider subscription plans
+ */
+export const ListSubscriptionPlansResponseItem = zod.object({
+  "id": zod.enum(['free', 'monthly', 'yearly']),
+  "name": zod.string(),
+  "monthlyPrice": zod.number(),
+  "yearlyPrice": zod.number(),
+  "description": zod.string(),
+  "benefits": zod.array(zod.string())
+})
+export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResponseItem)
+
+
+/**
+ * @summary Get provider subscription and performance summary
+ */
+export const GetProviderBusinessResponse = zod.object({
+  "subscription": zod.object({
+  "id": zod.number(),
+  "plan": zod.enum(['free', 'monthly', 'yearly']),
+  "status": zod.enum(['active', 'pending', 'expired', 'cancelled']),
+  "freeSlotNumber": zod.number().nullable(),
+  "startsAt": zod.string().nullable(),
+  "endsAt": zod.string().nullable(),
+  "createdAt": zod.string()
+}),
+  "metrics": zod.object({
+  "profileViews": zod.number(),
+  "callClicks": zod.number(),
+  "whatsappClicks": zod.number(),
+  "serviceRequests": zod.number()
+}),
+  "freeSlotsRemaining": zod.number()
+})
+
+
+/**
+ * @summary List my subscription payment requests
+ */
+export const ListProviderPaymentsResponseItem = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "plan": zod.enum(['monthly', 'yearly']),
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "transactionReference": zod.string(),
+  "receiptUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "reviewedAt": zod.string().nullish()
+})
+export const ListProviderPaymentsResponse = zod.array(ListProviderPaymentsResponseItem)
+
+
+/**
+ * @summary Submit a manual wallet payment for a subscription
+ */
+export const createSubscriptionPaymentBodyTransactionReferenceMin = 3;
+
+
+
+export const CreateSubscriptionPaymentBody = zod.object({
+  "plan": zod.enum(['monthly', 'yearly']),
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "transactionReference": zod.string().min(createSubscriptionPaymentBodyTransactionReferenceMin),
+  "receiptUrl": zod.string().nullish()
+})
+
+
+/**
+ * @summary Submit a paid advertisement for review
+ */
+export const createAdvertisementBodyTitleMin = 4;
+
+
+
+export const CreateAdvertisementBody = zod.object({
+  "title": zod.string().min(createAdvertisementBodyTitleMin),
+  "description": zod.string().optional(),
+  "city": zod.string(),
+  "district": zod.string().optional(),
+  "targetAudience": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "plan": zod.enum(['standard', 'featured', 'homepage']),
+  "durationDays": zod.union([zod.literal(7),zod.literal(14),zod.literal(30)]),
+  "budget": zod.number(),
+  "imageUrl": zod.string().nullish()
+})
+
+
+/**
+ * @summary List my advertisements
+ */
+export const ListMyAdvertisementsResponseItem = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "providerName": zod.string().nullish(),
+  "categoryName": zod.string().nullish(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "city": zod.string(),
+  "district": zod.string(),
+  "targetAudience": zod.string().nullish(),
+  "plan": zod.enum(['standard', 'featured', 'homepage']),
+  "durationDays": zod.number(),
+  "budget": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
+  "reviewNote": zod.string().nullish(),
+  "startsAt": zod.string().nullish(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListMyAdvertisementsResponse = zod.array(ListMyAdvertisementsResponseItem)
+
+
+/**
+ * @summary List active advertisements for clients
+ */
+export const ListFeaturedAdvertisementsResponseItem = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "providerName": zod.string().nullish(),
+  "categoryName": zod.string().nullish(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "city": zod.string(),
+  "district": zod.string(),
+  "targetAudience": zod.string().nullish(),
+  "plan": zod.enum(['standard', 'featured', 'homepage']),
+  "durationDays": zod.number(),
+  "budget": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
+  "reviewNote": zod.string().nullish(),
+  "startsAt": zod.string().nullish(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListFeaturedAdvertisementsResponse = zod.array(ListFeaturedAdvertisementsResponseItem)
 
 
 /**
@@ -727,6 +887,84 @@ export const GetServiceStatsResponseItem = zod.object({
   "requestCount": zod.number()
 })
 export const GetServiceStatsResponse = zod.array(GetServiceStatsResponseItem)
+
+
+/**
+ * @summary List provider subscription payments for review
+ */
+export const ListAdminSubscriptionPaymentsResponseItem = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "plan": zod.enum(['monthly', 'yearly']),
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "transactionReference": zod.string(),
+  "receiptUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "reviewedAt": zod.string().nullish()
+})
+export const ListAdminSubscriptionPaymentsResponse = zod.array(ListAdminSubscriptionPaymentsResponseItem)
+
+
+/**
+ * @summary Approve or reject a subscription payment
+ */
+export const ReviewSubscriptionPaymentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReviewSubscriptionPaymentBody = zod.object({
+  "status": zod.enum(['approved', 'rejected']),
+  "adminNote": zod.string().nullish()
+})
+
+export const ReviewSubscriptionPaymentResponse = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "plan": zod.enum(['monthly', 'yearly']),
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "transactionReference": zod.string(),
+  "receiptUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
+  "adminNote": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "reviewedAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Approve or reject an advertisement
+ */
+export const ReviewAdvertisementParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReviewAdvertisementBody = zod.object({
+  "status": zod.enum(['active', 'rejected']),
+  "reviewNote": zod.string().nullish()
+})
+
+export const ReviewAdvertisementResponse = zod.object({
+  "id": zod.number(),
+  "providerId": zod.number(),
+  "providerName": zod.string().nullish(),
+  "categoryName": zod.string().nullish(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "city": zod.string(),
+  "district": zod.string(),
+  "targetAudience": zod.string().nullish(),
+  "plan": zod.enum(['standard', 'featured', 'homepage']),
+  "durationDays": zod.number(),
+  "budget": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
+  "reviewNote": zod.string().nullish(),
+  "startsAt": zod.string().nullish(),
+  "endsAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
 
 
 /**
