@@ -13,6 +13,12 @@ import { ensureProviderSubscription } from "./subscriptions";
 
 const router: IRouter = Router();
 
+const packageDurations = {
+  standard: 7,
+  featured: 14,
+  homepage: 30,
+} as const;
+
 function serializeAd(row: { a: typeof advertisementsTable.$inferSelect; p?: typeof providersTable.$inferSelect; u?: typeof usersTable.$inferSelect; c?: typeof categoriesTable.$inferSelect | null }) {
   return {
     id: row.a.id,
@@ -98,6 +104,14 @@ router.post("/ads", requireAuth, async (req: AuthRequest, res): Promise<void> =>
   }
 
   const data = parsed.data;
+  if (data.budget <= 0) {
+    res.status(400).json({ error: "يجب أن يكون مبلغ الإعلان أكبر من صفر" });
+    return;
+  }
+  if (data.durationDays !== packageDurations[data.plan]) {
+    res.status(400).json({ error: "مدة الإعلان لا تطابق الباقة المختارة" });
+    return;
+  }
   const [ad] = await db
     .insert(advertisementsTable)
     .values({

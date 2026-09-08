@@ -210,6 +210,7 @@ export interface Advertisement {
   targetAudience?: string | null;
   plan: AdvertisementPlan;
   durationDays: number;
+  /** @minimum 1 */
   budget: number;
   /** @nullable */
   imageUrl?: string | null;

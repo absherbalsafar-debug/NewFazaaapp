@@ -1135,6 +1135,7 @@ components:
           type: integer
         budget:
           type: number
+          minimum: 1
         imageUrl:
           type: ["string", "null"]
         status:

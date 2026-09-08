@@ -627,6 +627,9 @@ export const CreateAdvertisementBody = zod.object({
 /**
  * @summary List my advertisements
  */
+
+
+
 export const ListMyAdvertisementsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
@@ -639,7 +642,7 @@ export const ListMyAdvertisementsResponseItem = zod.object({
   "targetAudience": zod.string().nullish(),
   "plan": zod.enum(['standard', 'featured', 'homepage']),
   "durationDays": zod.number(),
-  "budget": zod.number(),
+  "budget": zod.number().min(1),
   "imageUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
   "reviewNote": zod.string().nullish(),
@@ -653,6 +656,9 @@ export const ListMyAdvertisementsResponse = zod.array(ListMyAdvertisementsRespon
 /**
  * @summary List active advertisements for clients
  */
+
+
+
 export const ListFeaturedAdvertisementsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
@@ -665,7 +671,7 @@ export const ListFeaturedAdvertisementsResponseItem = zod.object({
   "targetAudience": zod.string().nullish(),
   "plan": zod.enum(['standard', 'featured', 'homepage']),
   "durationDays": zod.number(),
-  "budget": zod.number(),
+  "budget": zod.number().min(1),
   "imageUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
   "reviewNote": zod.string().nullish(),
@@ -945,6 +951,9 @@ export const ReviewAdvertisementBody = zod.object({
   "reviewNote": zod.string().nullish()
 })
 
+
+
+
 export const ReviewAdvertisementResponse = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
@@ -957,7 +966,7 @@ export const ReviewAdvertisementResponse = zod.object({
   "targetAudience": zod.string().nullish(),
   "plan": zod.enum(['standard', 'featured', 'homepage']),
   "durationDays": zod.number(),
-  "budget": zod.number(),
+  "budget": zod.number().min(1),
   "imageUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'active', 'rejected', 'expired']),
   "reviewNote": zod.string().nullish(),

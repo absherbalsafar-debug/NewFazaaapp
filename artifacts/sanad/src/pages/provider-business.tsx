@@ -54,6 +54,12 @@ const adStatus: Record<string, string> = {
   expired: "منتهي",
 };
 
+const advertisementPackages = [
+  { id: "standard", title: "إعلان عادي", days: 7, placement: "داخل نتائج الفئة", description: "حل مناسب للظهور الأساسي" },
+  { id: "featured", title: "إعلان مميز", days: 14, placement: "ترتيب أعلى وشارة مميز", description: "ظهور أقوى لمدة أسبوعين" },
+  { id: "homepage", title: "إعلان رئيسي", days: 30, placement: "الصفحة الرئيسية والفئة", description: "أوسع ظهور داخل فزعة" },
+] as const;
+
 export default function ProviderBusiness() {
   const { toast } = useToast();
   const { data: business, isLoading: businessLoading } = useGetProviderBusiness();
@@ -77,6 +83,7 @@ export default function ProviderBusiness() {
   });
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
+  const selectedAdPackage = advertisementPackages.find((item) => item.id === adForm.plan) ?? advertisementPackages[0];
 
   const submitPayment = (event: React.FormEvent) => {
     event.preventDefault();
@@ -221,14 +228,32 @@ export default function ProviderBusiness() {
             <Input value={adForm.title} onChange={(event) => setAdForm({ ...adForm, title: event.target.value })} placeholder="عنوان الإعلان" className="h-11 rounded-xl" />
             <Textarea value={adForm.description} onChange={(event) => setAdForm({ ...adForm, description: event.target.value })} placeholder="وصف مختصر للخدمة" className="rounded-xl" />
             <div className="grid grid-cols-2 gap-2"><Input value={adForm.city} onChange={(event) => setAdForm({ ...adForm, city: event.target.value })} placeholder="المدينة" className="h-11 rounded-xl" /><Input value={adForm.district} onChange={(event) => setAdForm({ ...adForm, district: event.target.value })} placeholder="المنطقة" className="h-11 rounded-xl" /></div>
-            <div className="grid grid-cols-3 gap-2">
-              <select value={adForm.plan} onChange={(event) => setAdForm({ ...adForm, plan: event.target.value as AdvertisementInput["plan"] })} className="h-11 rounded-xl border border-input bg-background px-2 text-xs"><option value="standard">عادي</option><option value="featured">مميز</option><option value="homepage">رئيسي</option></select>
-              <select value={adForm.durationDays} onChange={(event) => setAdForm({ ...adForm, durationDays: Number(event.target.value) as AdvertisementInput["durationDays"] })} className="h-11 rounded-xl border border-input bg-background px-2 text-xs"><option value={7}>7 أيام</option><option value={14}>14 يوماً</option><option value={30}>30 يوماً</option></select>
-              <Input type="number" min="1" value={adForm.budget} onChange={(event) => setAdForm({ ...adForm, budget: event.target.value })} placeholder="الميزانية" className="h-11 rounded-xl" />
+            <div>
+              <p className="mb-2 text-xs font-black text-foreground">اختر باقة الإعلان</p>
+              <div className="grid gap-2">
+                {advertisementPackages.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setAdForm({ ...adForm, plan: item.id as AdvertisementInput["plan"], durationDays: item.days as AdvertisementInput["durationDays"] })}
+                    className={`flex items-center justify-between rounded-xl border p-3 text-right transition-colors ${adForm.plan === item.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                  >
+                    <span>
+                      <span className="block text-sm font-black">{item.title}</span>
+                      <span className="mt-1 block text-[11px] text-muted-foreground">{item.description} · {item.placement}</span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[10px] font-bold">{item.days} يوماً</span>
+                  </button>
+                ))}
+              </div>
             </div>
+            <div className="rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
+              الباقة المختارة: <b className="text-foreground">{selectedAdPackage.title}</b> · مدة الظهور <b className="text-foreground">{selectedAdPackage.days} يوماً</b>
+            </div>
+            <Input type="number" min="1" step="1" value={adForm.budget} onChange={(event) => setAdForm({ ...adForm, budget: event.target.value })} placeholder="مبلغ الإعلان بالريال اليمني" className="h-11 rounded-xl" />
             <Button type="submit" variant="outline" className="h-11 w-full rounded-xl" disabled={createAd.isPending}><Megaphone className="ml-2 h-4 w-4" />إرسال الإعلان للمراجعة</Button>
           </form>
-          <div className="mt-5 space-y-2">{ads.length === 0 ? <p className="text-center text-xs text-muted-foreground">ستظهر إعلاناتك هنا.</p> : ads.map((ad) => <div key={ad.id} className="flex items-center justify-between rounded-xl border border-border px-3 py-3 text-xs"><span className="font-bold">{ad.title}</span><span className="text-muted-foreground">{adStatus[ad.status] ?? ad.status}</span></div>)}</div>
+          <div className="mt-5 space-y-2">{ads.length === 0 ? <p className="text-center text-xs text-muted-foreground">ستظهر إعلاناتك هنا.</p> : ads.map((ad) => <div key={ad.id} className="rounded-xl border border-border px-3 py-3 text-xs"><div className="flex items-center justify-between gap-3"><span className="font-bold">{ad.title}</span><span className="text-muted-foreground">{adStatus[ad.status] ?? ad.status}</span></div><p className="mt-2 text-muted-foreground">#{ad.id} · {ad.plan === "standard" ? "عادي" : ad.plan === "featured" ? "مميز" : "رئيسي"} · {ad.durationDays} يوماً · <b className="text-foreground">{ad.budget.toLocaleString("ar-YE")} ريال</b></p></div>)}</div>
         </section>
 
         <div className="flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
