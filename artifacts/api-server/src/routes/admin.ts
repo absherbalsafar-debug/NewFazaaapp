@@ -9,6 +9,7 @@ import {
   subscriptionPaymentsTable,
   providerSubscriptionsTable,
   advertisementsTable,
+  paymentWalletSettingsTable,
 } from "@workspace/db";
 import { eq, and, count, ilike, desc, or, gte } from "drizzle-orm";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
@@ -19,9 +20,10 @@ import {
   VerifyProviderBody,
   VerifyProviderParams,
   ReviewSubscriptionPaymentBody,
+  UpdatePaymentWalletBody,
   ReviewAdvertisementBody,
 } from "@workspace/api-zod";
-import { serializePayment } from "./subscriptions";
+import { listWalletSettings, serializePayment, walletNames } from "./subscriptions";
 
 const router: IRouter = Router();
 
@@ -169,6 +171,50 @@ router.get("/admin/subscription-payments", requireAuth, requireAdmin, async (_re
     .from(subscriptionPaymentsTable)
     .orderBy(desc(subscriptionPaymentsTable.createdAt));
   res.json(payments.map(serializePayment));
+});
+
+router.get("/admin/payment-wallets", requireAuth, requireAdmin, async (_req: AuthRequest, res): Promise<void> => {
+  res.json(await listWalletSettings());
+});
+
+router.patch("/admin/payment-wallets/:wallet", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+  const wallet = Array.isArray(req.params.wallet) ? req.params.wallet[0] : req.params.wallet;
+  if (!Object.prototype.hasOwnProperty.call(walletNames, wallet)) {
+    res.status(400).json({ error: "المحفظة غير صالحة" });
+    return;
+  }
+  const parsed = UpdatePaymentWalletBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [setting] = await db
+    .insert(paymentWalletSettingsTable)
+    .values({
+      wallet: wallet as keyof typeof walletNames,
+      merchantName: parsed.data.merchantName.trim(),
+      merchantAccount: parsed.data.merchantAccount.trim(),
+      instructions: parsed.data.instructions.trim(),
+      isActive: parsed.data.isActive,
+    })
+    .onConflictDoUpdate({
+      target: paymentWalletSettingsTable.wallet,
+      set: {
+        merchantName: parsed.data.merchantName.trim(),
+        merchantAccount: parsed.data.merchantAccount.trim(),
+        instructions: parsed.data.instructions.trim(),
+        isActive: parsed.data.isActive,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  res.json({
+    wallet: setting.wallet,
+    merchantName: setting.merchantName,
+    merchantAccount: setting.merchantAccount,
+    instructions: setting.instructions,
+    isActive: setting.isActive,
+  });
 });
 
 router.patch("/admin/subscription-payments/:id/review", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {

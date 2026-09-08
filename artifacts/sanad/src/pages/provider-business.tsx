@@ -6,21 +6,25 @@ import {
   CheckCircle2,
   Clock3,
   Eye,
+  FileUp,
   Megaphone,
   Phone,
   Receipt,
   Send,
   Smartphone,
   Sparkles,
+  Upload,
   WalletCards,
 } from "lucide-react";
 import {
   type AdvertisementInput,
   type SubscriptionPaymentInput,
+  requestUploadUrl,
   useCreateAdvertisement,
   useCreateSubscriptionPayment,
   useGetProviderBusiness,
   useListMyAdvertisements,
+  useListPaymentWallets,
   useListProviderPayments,
   useListSubscriptionPlans,
 } from "@workspace/api-client-react";
@@ -64,6 +68,7 @@ export default function ProviderBusiness() {
   const { toast } = useToast();
   const { data: business, isLoading: businessLoading } = useGetProviderBusiness();
   const { data: plans = [] } = useListSubscriptionPlans();
+  const { data: paymentWallets = [] } = useListPaymentWallets();
   const { data: payments = [], refetch: refetchPayments } = useListProviderPayments();
   const { data: ads = [], refetch: refetchAds } = useListMyAdvertisements();
   const createPayment = useCreateSubscriptionPayment();
@@ -72,6 +77,8 @@ export default function ProviderBusiness() {
   const [paymentPlan, setPaymentPlan] = useState<"monthly" | "yearly">("monthly");
   const [wallet, setWallet] = useState<SubscriptionPaymentInput["wallet"]>("jeeb");
   const [transactionReference, setTransactionReference] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [adForm, setAdForm] = useState({
     title: "",
     description: "",
@@ -83,25 +90,49 @@ export default function ProviderBusiness() {
   });
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
+  const selectedWallet = useMemo(() => paymentWallets.find((item) => item.wallet === wallet), [paymentWallets, wallet]);
   const selectedAdPackage = advertisementPackages.find((item) => item.id === adForm.plan) ?? advertisementPackages[0];
 
-  const submitPayment = (event: React.FormEvent) => {
+  const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!transactionReference.trim()) {
       toast({ title: "أدخل رقم العملية", description: "نحتاج رقم التحويل حتى تراجع الإدارة طلبك.", variant: "destructive" });
       return;
     }
-    createPayment.mutate(
-      { data: { plan: paymentPlan, wallet, transactionReference: transactionReference.trim(), receiptUrl: null } },
-      {
-        onSuccess: () => {
-          setTransactionReference("");
-          refetchPayments();
-          toast({ title: "تم إرسال طلب الاشتراك", description: "سيتم تفعيله بعد مراجعة التحويل من الإدارة." });
+    if (!receiptFile) {
+      toast({ title: "أرفق إيصال التحويل", description: "يساعد الإيصال الإدارة على مطابقة العملية قبل اعتمادها.", variant: "destructive" });
+      return;
+    }
+    setIsUploadingReceipt(true);
+    try {
+      const upload = await requestUploadUrl({
+        name: receiptFile.name,
+        size: receiptFile.size,
+        contentType: receiptFile.type || "application/octet-stream",
+      });
+      const uploadResponse = await fetch(upload.uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": receiptFile.type || "application/octet-stream" },
+        body: receiptFile,
+      });
+      if (!uploadResponse.ok) throw new Error("تعذر رفع الإيصال");
+      createPayment.mutate(
+        { data: { plan: paymentPlan, wallet, transactionReference: transactionReference.trim(), receiptUrl: upload.objectPath } },
+        {
+          onSuccess: () => {
+            setTransactionReference("");
+            setReceiptFile(null);
+            refetchPayments();
+            toast({ title: "تم إرسال طلب الاشتراك", description: "سيتم تفعيله بعد مراجعة التحويل والإيصال من الإدارة." });
+          },
+          onError: (error) => toast({ title: "تعذر إرسال الطلب", description: error.message, variant: "destructive" }),
         },
-        onError: (error) => toast({ title: "تعذر إرسال الطلب", description: error.message, variant: "destructive" }),
-      },
-    );
+      );
+    } catch (error) {
+      toast({ title: "تعذر رفع الإيصال", description: error instanceof Error ? error.message : "حاول مرة أخرى.", variant: "destructive" });
+    } finally {
+      setIsUploadingReceipt(false);
+    }
   };
 
   const submitAd = (event: React.FormEvent) => {
@@ -204,22 +235,54 @@ export default function ProviderBusiness() {
                 </button>
               ))}
             </div>
-            <p className="mt-3 rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">
-              {selectedPlan?.description ?? "بعد التحويل أرسل رقم العملية."} أرقام التجار تحددها الإدارة لكل محفظة.
-            </p>
+            <div className="mt-3 rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">
+              <p>{selectedPlan?.description ?? "بعد التحويل أرسل رقم العملية."}</p>
+              {selectedWallet?.isActive && selectedWallet.merchantAccount ? (
+                <div className="mt-3 rounded-lg border border-primary/15 bg-background/70 p-3">
+                  <p className="font-bold text-foreground">حوّل إلى {selectedWallet.merchantName || wallets.find((item) => item.value === wallet)?.label}</p>
+                  <p className="mt-1 text-base font-black tracking-wide text-primary" dir="ltr">{selectedWallet.merchantAccount}</p>
+                  {selectedWallet.instructions && <p className="mt-1 whitespace-pre-line">{selectedWallet.instructions}</p>}
+                </div>
+              ) : (
+                <p className="mt-2 font-semibold text-amber-700 dark:text-amber-300">لم تضبط الإدارة حساب هذه المحفظة بعد.</p>
+              )}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">أكمل التحويل ثم أرفق صورة الإيصال أو ملف PDF مع رقم العملية.</p>
             <form onSubmit={submitPayment} className="mt-4 space-y-3">
               <select value={wallet} onChange={(event) => setWallet(event.target.value as SubscriptionPaymentInput["wallet"])} className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm">
                 {wallets.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
               </select>
               <Input value={transactionReference} onChange={(event) => setTransactionReference(event.target.value)} placeholder="رقم عملية التحويل" className="h-11 rounded-xl" />
-              <Button type="submit" className="h-11 w-full rounded-xl" disabled={createPayment.isPending}><Send className="ml-2 h-4 w-4" />{createPayment.isPending ? "جاري الإرسال..." : "إرسال للمراجعة"}</Button>
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-3 text-sm">
+                <FileUp className="h-5 w-5 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold">{receiptFile ? receiptFile.name : "إرفاق إيصال التحويل"}</span>
+                  <span className="block text-xs text-muted-foreground">JPG أو PNG أو WEBP أو PDF — حتى 10 ميجابايت</span>
+                </span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file && (file.size > 10 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type))) {
+                      toast({ title: "صيغة الإيصال غير صالحة", description: "اختر صورة مناسبة أو PDF بحجم لا يتجاوز 10 ميجابايت.", variant: "destructive" });
+                      event.target.value = "";
+                      return;
+                    }
+                    setReceiptFile(file);
+                  }}
+                />
+                <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </label>
+              <Button type="submit" className="h-11 w-full rounded-xl" disabled={createPayment.isPending || isUploadingReceipt}><Send className="ml-2 h-4 w-4" />{isUploadingReceipt ? "جاري رفع الإيصال..." : createPayment.isPending ? "جاري الإرسال..." : "إرسال للمراجعة"}</Button>
             </form>
           </section>
         )}
 
         <section className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3"><Receipt className="h-5 w-5 text-primary" /><div><h2 className="font-black">طلبات الدفع السابقة</h2><p className="mt-1 text-xs text-muted-foreground">لا يتم تفعيل أي اشتراك قبل الاعتماد.</p></div></div>
-          {payments.length === 0 ? <p className="mt-5 text-center text-sm text-muted-foreground">لا توجد عمليات دفع حتى الآن.</p> : <div className="mt-4 space-y-2">{payments.slice(0, 5).map((payment) => <div key={payment.id} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-3 text-xs"><span>{payment.transactionReference} · {payment.plan === "yearly" ? "سنوي" : "شهري"}</span><span className="font-bold text-muted-foreground">{paymentStatus[payment.status] ?? payment.status}</span></div>)}</div>}
+          {payments.length === 0 ? <p className="mt-5 text-center text-sm text-muted-foreground">لا توجد عمليات دفع حتى الآن.</p> : <div className="mt-4 space-y-2">{payments.slice(0, 5).map((payment) => <div key={payment.id} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-3 text-xs"><span>{payment.transactionReference} · {payment.plan === "yearly" ? "سنوي" : "شهري"}{payment.receiptUrl && <a className="mr-2 font-bold text-primary underline" href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/storage${payment.receiptUrl}`} target="_blank" rel="noreferrer">الإيصال</a>}</span><span className="shrink-0 font-bold text-muted-foreground">{paymentStatus[payment.status] ?? payment.status}</span></div>)}</div>}
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-5">

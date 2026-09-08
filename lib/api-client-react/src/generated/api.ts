@@ -45,6 +45,8 @@ import type {
   MessageInput,
   Notification,
   PaymentReviewInput,
+  PaymentWalletSetting,
+  PaymentWalletSettingInput,
   PortfolioInput,
   PortfolioItem,
   ProviderBusiness,
@@ -64,6 +66,8 @@ import type {
   SubscriptionPaymentInput,
   SubscriptionPlan,
   SuccessResult,
+  UploadUrlRequest,
+  UploadUrlResponse,
   User,
   UserStatusUpdate
 } from './api.schemas';
@@ -1836,6 +1840,154 @@ export function useListSubscriptionPlans<TData = Awaited<ReturnType<typeof listS
 
 
 
+export const getListPaymentWalletsUrl = () => {
+
+
+
+
+  return `/api/payment-wallets`
+}
+
+/**
+ * @summary List merchant payment accounts
+ */
+export const listPaymentWallets = async ( options?: RequestInit): Promise<PaymentWalletSetting[]> => {
+
+  return customFetch<PaymentWalletSetting[]>(getListPaymentWalletsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPaymentWalletsQueryKey = () => {
+    return [
+    `/api/payment-wallets`
+    ] as const;
+    }
+
+
+export const getListPaymentWalletsQueryOptions = <TData = Awaited<ReturnType<typeof listPaymentWallets>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentWallets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPaymentWalletsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPaymentWallets>>> = ({ signal }) => listPaymentWallets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPaymentWallets>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPaymentWalletsQueryResult = NonNullable<Awaited<ReturnType<typeof listPaymentWallets>>>
+export type ListPaymentWalletsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List merchant payment accounts
+ */
+
+export function useListPaymentWallets<TData = Awaited<ReturnType<typeof listPaymentWallets>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentWallets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPaymentWalletsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getRequestUploadUrlUrl = () => {
+
+
+
+
+  return `/api/storage/uploads/request-url`
+}
+
+/**
+ * @summary Request a protected receipt upload URL
+ */
+export const requestUploadUrl = async (uploadUrlRequest: UploadUrlRequest, options?: RequestInit): Promise<UploadUrlResponse> => {
+
+  return customFetch<UploadUrlResponse>(getRequestUploadUrlUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      uploadUrlRequest,)
+  }
+);}
+
+
+
+
+export const getRequestUploadUrlMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext> => {
+
+const mutationKey = ['requestUploadUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestUploadUrl>>, {data: BodyType<UploadUrlRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestUploadUrl(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof requestUploadUrl>>>
+    export type RequestUploadUrlMutationBody = BodyType<UploadUrlRequest>
+    export type RequestUploadUrlMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Request a protected receipt upload URL
+ */
+export const useRequestUploadUrl = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestUploadUrl>>, TError,{data: BodyType<UploadUrlRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestUploadUrl>>,
+        TError,
+        {data: BodyType<UploadUrlRequest>},
+        TContext
+      > => {
+      return useMutation(getRequestUploadUrlMutationOptions(options));
+    }
+
 export const getGetProviderBusinessUrl = () => {
 
 
@@ -3334,6 +3486,155 @@ export function useListAdminSubscriptionPayments<TData = Awaited<ReturnType<type
 
 
 
+
+export const getListAdminPaymentWalletsUrl = () => {
+
+
+
+
+  return `/api/admin/payment-wallets`
+}
+
+/**
+ * @summary List merchant payment accounts for administration
+ */
+export const listAdminPaymentWallets = async ( options?: RequestInit): Promise<PaymentWalletSetting[]> => {
+
+  return customFetch<PaymentWalletSetting[]>(getListAdminPaymentWalletsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminPaymentWalletsQueryKey = () => {
+    return [
+    `/api/admin/payment-wallets`
+    ] as const;
+    }
+
+
+export const getListAdminPaymentWalletsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminPaymentWallets>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminPaymentWallets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminPaymentWalletsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminPaymentWallets>>> = ({ signal }) => listAdminPaymentWallets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminPaymentWallets>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminPaymentWalletsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminPaymentWallets>>>
+export type ListAdminPaymentWalletsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List merchant payment accounts for administration
+ */
+
+export function useListAdminPaymentWallets<TData = Awaited<ReturnType<typeof listAdminPaymentWallets>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminPaymentWallets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminPaymentWalletsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdatePaymentWalletUrl = (wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy',) => {
+
+
+
+
+  return `/api/admin/payment-wallets/${wallet}`
+}
+
+/**
+ * @summary Update a merchant payment account
+ */
+export const updatePaymentWallet = async (wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy',
+    paymentWalletSettingInput: PaymentWalletSettingInput, options?: RequestInit): Promise<PaymentWalletSetting> => {
+
+  return customFetch<PaymentWalletSetting>(getUpdatePaymentWalletUrl(wallet),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      paymentWalletSettingInput,)
+  }
+);}
+
+
+
+
+export const getUpdatePaymentWalletMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext> => {
+
+const mutationKey = ['updatePaymentWallet'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePaymentWallet>>, {wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}> = (props) => {
+          const {wallet,data} = props ?? {};
+
+          return  updatePaymentWallet(wallet,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePaymentWalletMutationResult = NonNullable<Awaited<ReturnType<typeof updatePaymentWallet>>>
+    export type UpdatePaymentWalletMutationBody = BodyType<PaymentWalletSettingInput>
+    export type UpdatePaymentWalletMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a merchant payment account
+ */
+export const useUpdatePaymentWallet = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePaymentWallet>>,
+        TError,
+        {wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>},
+        TContext
+      > => {
+      return useMutation(getUpdatePaymentWalletMutationOptions(options));
+    }
 
 export const getReviewSubscriptionPaymentUrl = (id: number,) => {
 

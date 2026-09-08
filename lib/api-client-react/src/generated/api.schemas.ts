@@ -119,6 +119,7 @@ export interface SubscriptionPayment {
   reviewedAt?: string | null;
 }
 
+export type PaymentWalletSettingWallet = typeof PaymentWalletSettingWallet[keyof typeof PaymentWalletSettingWallet];
 export type SubscriptionPaymentInputPlan = typeof SubscriptionPaymentInputPlan[keyof typeof SubscriptionPaymentInputPlan];
 
 
@@ -844,3 +845,47 @@ lat?: number | null;
 lng?: number | null;
 };
 
+
+export const PaymentWalletSettingWallet = {
+  jeeb: 'jeeb',
+  floosk: 'floosk',
+  jawali: 'jawali',
+  cash: 'cash',
+  one_cash: 'one_cash',
+  hasib: 'hasib',
+  easy: 'easy',
+} as const;
+
+export interface UploadUrlRequest {
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  contentType: string;
+}
+
+export interface PaymentWalletSettingInput {
+  merchantName: string;
+  merchantAccount: string;
+  instructions: string;
+  isActive: boolean;
+}
+
+export interface PaymentWalletSetting {
+  wallet: PaymentWalletSettingWallet;
+  merchantName: string;
+  merchantAccount: string;
+  instructions: string;
+  isActive: boolean;
+}
+
+export type UploadUrlResponseMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: UploadUrlResponseMetadata;
+}

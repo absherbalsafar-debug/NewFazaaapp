@@ -33,6 +33,8 @@ tags:
     description: Provider subscriptions and manual wallet payments
   - name: advertisements
     description: Paid provider advertisements
+  - name: storage
+    description: Protected receipt file storage
 
 paths:
   /healthz:
@@ -537,6 +539,40 @@ paths:
                 items:
                   $ref: "#/components/schemas/SubscriptionPlan"
 
+  /payment-wallets:
+    get:
+      operationId: listPaymentWallets
+      tags: [subscriptions]
+      summary: List merchant payment accounts
+      responses:
+        "200":
+          description: Merchant payment accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentWalletSetting"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a protected receipt upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+
   /providers/me/business:
     get:
       operationId: getProviderBusiness
@@ -897,6 +933,47 @@ paths:
                 items:
                   $ref: "#/components/schemas/SubscriptionPayment"
 
+  /admin/payment-wallets:
+    get:
+      operationId: listAdminPaymentWallets
+      tags: [admin]
+      summary: List merchant payment accounts for administration
+      responses:
+        "200":
+          description: Merchant payment accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentWalletSetting"
+
+  /admin/payment-wallets/{wallet}:
+    patch:
+      operationId: updatePaymentWallet
+      tags: [admin]
+      summary: Update a merchant payment account
+      parameters:
+        - name: wallet
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentWalletSettingInput"
+      responses:
+        "200":
+          description: Updated merchant payment account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentWalletSetting"
+
   /admin/subscription-payments/{id}/review:
     patch:
       operationId: reviewSubscriptionPayment
@@ -1055,6 +1132,67 @@ components:
           type: string
         reviewedAt:
           type: ["string", "null"]
+
+    PaymentWalletSetting:
+      type: object
+      required: [wallet, merchantName, merchantAccount, instructions, isActive]
+      properties:
+        wallet:
+          type: string
+          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
+        merchantName:
+          type: string
+        merchantAccount:
+          type: string
+        instructions:
+          type: string
+        isActive:
+          type: boolean
+
+    PaymentWalletSettingInput:
+      type: object
+      required: [merchantName, merchantAccount, instructions, isActive]
+      properties:
+        merchantName:
+          type: string
+        merchantAccount:
+          type: string
+        instructions:
+          type: string
+        isActive:
+          type: boolean
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath, metadata]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          required: [name, size, contentType]
+          properties:
+            name:
+              type: string
+            size:
+              type: integer
+            contentType:
+              type: string
 
     SubscriptionPaymentInput:
       type: object

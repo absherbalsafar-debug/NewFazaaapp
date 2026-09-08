@@ -5,6 +5,7 @@ import {
   providersTable,
   providerSubscriptionsTable,
   subscriptionPaymentsTable,
+  paymentWalletSettingsTable,
   providerMetricsTable,
   serviceRequestsTable,
 } from "@workspace/db";
@@ -42,7 +43,7 @@ export const subscriptionPlans = [
   },
 ] as const;
 
-const walletNames = {
+export const walletNames = {
   jeeb: "جيب",
   floosk: "فلوسك",
   jawali: "جوالي",
@@ -51,6 +52,39 @@ const walletNames = {
   hasib: "حاسب",
   easy: "إيزي",
 } as const;
+
+type Wallet = keyof typeof walletNames;
+
+function serializeWalletSetting(setting: {
+  wallet: Wallet;
+  merchantName: string;
+  merchantAccount: string;
+  instructions: string;
+  isActive: boolean;
+}) {
+  return {
+    wallet: setting.wallet,
+    merchantName: setting.merchantName,
+    merchantAccount: setting.merchantAccount,
+    instructions: setting.instructions,
+    isActive: setting.isActive,
+  };
+}
+
+export async function listWalletSettings() {
+  const rows = await db.select().from(paymentWalletSettingsTable);
+  const byWallet = new Map(rows.map((row) => [row.wallet, row]));
+  return (Object.keys(walletNames) as Wallet[]).map((wallet) => {
+    const setting = byWallet.get(wallet);
+    return serializeWalletSetting({
+      wallet,
+      merchantName: setting?.merchantName ?? "",
+      merchantAccount: setting?.merchantAccount ?? "",
+      instructions: setting?.instructions ?? "",
+      isActive: setting?.isActive ?? true,
+    });
+  });
+}
 
 function dateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -132,6 +166,10 @@ router.get("/subscription-plans", (_req, res) => {
   res.json(subscriptionPlans);
 });
 
+router.get("/payment-wallets", requireAuth, async (_req: AuthRequest, res): Promise<void> => {
+  res.json(await listWalletSettings());
+});
+
 router.get("/providers/me/business", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   if (req.userRole !== "provider") {
     res.status(403).json({ error: "هذا المسار للمهنيين فقط" });
@@ -200,6 +238,10 @@ router.post("/subscriptions/checkout", requireAuth, async (req: AuthRequest, res
   }
 
   const data = parsed.data;
+  if (data.receiptUrl && !data.receiptUrl.startsWith("/objects/uploads/")) {
+    res.status(400).json({ error: "مسار الإيصال غير صالح" });
+    return;
+  }
   const [subscription] = await db
     .insert(providerSubscriptionsTable)
     .values({ providerId: provider.id, plan: data.plan, status: "pending" })
@@ -220,5 +262,4 @@ router.post("/subscriptions/checkout", requireAuth, async (req: AuthRequest, res
   res.status(201).json(serializePayment(payment));
 });
 
-export { walletNames };
 export default router;
