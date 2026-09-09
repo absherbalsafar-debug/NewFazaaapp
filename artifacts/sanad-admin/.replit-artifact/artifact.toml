@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/sanad-admin/"
+title = "فزعة – لوحة التحكم"
+description = "لوحة تحكم مستقلة لإدارة منصة فزعة، تشمل الإحصائيات والمهنيين وطلبات الدفع والإعلانات المدفوعة وأرقام المحافظ وإيصالات التحويل."
+version = "1.0.0"
+id = "artifacts/sanad-admin"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/sanad-admin/" ]
+localPort = 21058
+
+[services.development]
+run = "pnpm --filter @workspace/sanad-admin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sanad-admin", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sanad-admin/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21058"
+BASE_PATH = "/sanad-admin/"
