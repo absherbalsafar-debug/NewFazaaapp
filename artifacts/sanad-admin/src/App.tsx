@@ -60,8 +60,10 @@ import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient();
 
+type PaymentWallet = 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';
+
 type PaymentWalletSetting = {
-  wallet: string;
+  wallet: PaymentWallet;
   merchantName: string;
   merchantAccount: string;
   instructions: string;
