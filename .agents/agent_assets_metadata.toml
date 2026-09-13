@@ -14,3 +14,17 @@ mtime_ms = 1788753223809
 storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:bef98891-c146-4241-a65f-f0657a058a5f/a5a75449-4c32-4fea-8da0-701fbc7dc3d7/70c72ab8-fd7d-4620-9b9b-073921a6ceed"
 storage_version_token = "1788753513596942"
 content_type = "image/png"
+
+[[outputs]]
+id = "AxKI5oKsyAX3krqnfIgxO"
+uri = "file://exports/fazzah-project-source.zip"
+type = "unspecified"
+title = "مشروع فزعة – المصدر الكامل"
+description = "أرشيف ZIP كامل لمصدر المشروع، يتضمن التطبيق ولوحة التحكم والخادم والمكتبات المشتركة والأصول وملفات الإعداد والتشغيل. تم استبعاد مجلدات الاعتمادات المؤقتة وGit والملفات المولدة فقط."
+logical_id = "d2fa20de-e90d-4da0-9f2c-5784e5771a74"
+content_hash = "sha256:9d25124b9376d856f57cb5858fe0c60497fd3fb18f5806eba3c5934d53046bd9"
+size = 8874253
+mtime_ms = 1789262161971
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:471978f8-def3-4721-b631-c4b7bc271ef8/d2fa20de-e90d-4da0-9f2c-5784e5771a74/4f0acf6f-a937-44f2-ae69-7d297e4fd150"
+storage_version_token = "1789262170493278"
+content_type = "application/octet-stream"
