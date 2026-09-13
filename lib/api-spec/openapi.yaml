@@ -823,6 +823,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/AdminStats"
 
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Get the operations and business analytics dashboard
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+      responses:
+        "200":
+          description: Analytics dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalytics"
+
   /admin/users:
     get:
       operationId: listAdminUsers
@@ -1800,6 +1820,154 @@ components:
           type: integer
         requestsThisMonth:
           type: integer
+
+    AdminAnalytics:
+      type: object
+      required: [range, overview, series, topProviders, paymentSummary, recentPayments]
+      properties:
+        range:
+          type: string
+          enum: [7d, 30d, 90d]
+        overview:
+          $ref: "#/components/schemas/AdminAnalyticsOverview"
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAnalyticsSeriesPoint"
+        topProviders:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAnalyticsProvider"
+        paymentSummary:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAnalyticsPaymentSummary"
+        recentPayments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAnalyticsRecentPayment"
+
+    AdminAnalyticsOverview:
+      type: object
+      required: [totalUsers, totalClients, totalProviders, activeProviders, verifiedProviders, pendingProviders, totalRequests, pendingRequests, completedRequests, profileViews, callClicks, whatsappClicks, messageCount, conversationCount, pendingPayments, approvedPayments, rejectedPayments, approvedPaymentAmount, pendingPaymentAmount]
+      properties:
+        totalUsers:
+          type: integer
+        totalClients:
+          type: integer
+        totalProviders:
+          type: integer
+        activeProviders:
+          type: integer
+        verifiedProviders:
+          type: integer
+        pendingProviders:
+          type: integer
+        totalRequests:
+          type: integer
+        pendingRequests:
+          type: integer
+        completedRequests:
+          type: integer
+        profileViews:
+          type: integer
+        callClicks:
+          type: integer
+        whatsappClicks:
+          type: integer
+        messageCount:
+          type: integer
+        conversationCount:
+          type: integer
+        pendingPayments:
+          type: integer
+        approvedPayments:
+          type: integer
+        rejectedPayments:
+          type: integer
+        approvedPaymentAmount:
+          type: number
+        pendingPaymentAmount:
+          type: number
+
+    AdminAnalyticsSeriesPoint:
+      type: object
+      required: [date, requests, messages, payments, approvedPayments]
+      properties:
+        date:
+          type: string
+        requests:
+          type: integer
+        messages:
+          type: integer
+        payments:
+          type: integer
+        approvedPayments:
+          type: number
+
+    AdminAnalyticsProvider:
+      type: object
+      required: [providerId, name, categoryName, city, rating, completedJobs, isVerified, isAvailable, profileViews, callClicks, whatsappClicks, messages, requests]
+      properties:
+        providerId:
+          type: integer
+        name:
+          type: string
+        categoryName:
+          type: string
+        city:
+          type: string
+        rating:
+          type: number
+        completedJobs:
+          type: integer
+        isVerified:
+          type: boolean
+        isAvailable:
+          type: boolean
+        profileViews:
+          type: integer
+        callClicks:
+          type: integer
+        whatsappClicks:
+          type: integer
+        messages:
+          type: integer
+        requests:
+          type: integer
+
+    AdminAnalyticsPaymentSummary:
+      type: object
+      required: [status, count, amount]
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected, expired, refunded]
+        count:
+          type: integer
+        amount:
+          type: number
+
+    AdminAnalyticsRecentPayment:
+      type: object
+      required: [id, providerName, plan, wallet, status, amount, transactionReference, createdAt]
+      properties:
+        id:
+          type: integer
+        providerName:
+          type: string
+        plan:
+          type: string
+        wallet:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+        transactionReference:
+          type: string
+        createdAt:
+          type: string
 
     AdminUsersPage:
       type: object

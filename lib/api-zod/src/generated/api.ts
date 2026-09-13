@@ -14,8 +14,6 @@ import * as zod from 'zod';
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
-
-
 /**
  * @summary Register new user
  */
@@ -546,6 +544,7 @@ export const ListSubscriptionPlansResponseItem = zod.object({
 })
 export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResponseItem)
 
+
 /**
  * @summary List merchant payment accounts
  */
@@ -556,6 +555,32 @@ export const ListPaymentWalletsResponseItem = zod.object({
   "instructions": zod.string(),
   "isActive": zod.boolean()
 })
+export const ListPaymentWalletsResponse = zod.array(ListPaymentWalletsResponseItem)
+
+
+/**
+ * @summary Request a protected receipt upload URL
+ */
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string(),
+  "size": zod.number().min(1),
+  "contentType": zod.string()
+})
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string(),
+  "size": zod.number(),
+  "contentType": zod.string()
+})
+})
+
+
 /**
  * @summary Get provider subscription and performance summary
  */
@@ -603,6 +628,7 @@ export const ListProviderPaymentsResponse = zod.array(ListProviderPaymentsRespon
 export const createSubscriptionPaymentBodyTransactionReferenceMin = 3;
 
 
+
 export const CreateSubscriptionPaymentBody = zod.object({
   "plan": zod.enum(['monthly', 'yearly']),
   "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
@@ -615,6 +641,7 @@ export const CreateSubscriptionPaymentBody = zod.object({
  * @summary Submit a paid advertisement for review
  */
 export const createAdvertisementBodyTitleMin = 4;
+
 
 
 export const CreateAdvertisementBody = zod.object({
@@ -634,6 +661,7 @@ export const CreateAdvertisementBody = zod.object({
 /**
  * @summary List my advertisements
  */
+
 
 
 export const ListMyAdvertisementsResponseItem = zod.object({
@@ -662,6 +690,7 @@ export const ListMyAdvertisementsResponse = zod.array(ListMyAdvertisementsRespon
 /**
  * @summary List active advertisements for clients
  */
+
 
 
 export const ListFeaturedAdvertisementsResponseItem = zod.object({
@@ -824,6 +853,78 @@ export const GetAdminStatsResponse = zod.object({
 
 
 /**
+ * @summary Get the operations and business analytics dashboard
+ */
+export const getAdminAnalyticsQueryRangeDefault = `30d`;
+
+export const GetAdminAnalyticsQueryParams = zod.object({
+  "range": zod.enum(['7d', '30d', '90d']).default(getAdminAnalyticsQueryRangeDefault)
+})
+
+export const GetAdminAnalyticsResponse = zod.object({
+  "range": zod.enum(['7d', '30d', '90d']),
+  "overview": zod.object({
+  "totalUsers": zod.number(),
+  "totalClients": zod.number(),
+  "totalProviders": zod.number(),
+  "activeProviders": zod.number(),
+  "verifiedProviders": zod.number(),
+  "pendingProviders": zod.number(),
+  "totalRequests": zod.number(),
+  "pendingRequests": zod.number(),
+  "completedRequests": zod.number(),
+  "profileViews": zod.number(),
+  "callClicks": zod.number(),
+  "whatsappClicks": zod.number(),
+  "messageCount": zod.number(),
+  "conversationCount": zod.number(),
+  "pendingPayments": zod.number(),
+  "approvedPayments": zod.number(),
+  "rejectedPayments": zod.number(),
+  "approvedPaymentAmount": zod.number(),
+  "pendingPaymentAmount": zod.number()
+}),
+  "series": zod.array(zod.object({
+  "date": zod.string(),
+  "requests": zod.number(),
+  "messages": zod.number(),
+  "payments": zod.number(),
+  "approvedPayments": zod.number()
+})),
+  "topProviders": zod.array(zod.object({
+  "providerId": zod.number(),
+  "name": zod.string(),
+  "categoryName": zod.string(),
+  "city": zod.string(),
+  "rating": zod.number(),
+  "completedJobs": zod.number(),
+  "isVerified": zod.boolean(),
+  "isAvailable": zod.boolean(),
+  "profileViews": zod.number(),
+  "callClicks": zod.number(),
+  "whatsappClicks": zod.number(),
+  "messages": zod.number(),
+  "requests": zod.number()
+})),
+  "paymentSummary": zod.array(zod.object({
+  "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
+  "count": zod.number(),
+  "amount": zod.number()
+})),
+  "recentPayments": zod.array(zod.object({
+  "id": zod.number(),
+  "providerName": zod.string(),
+  "plan": zod.string(),
+  "wallet": zod.string(),
+  "status": zod.string(),
+  "amount": zod.number(),
+  "transactionReference": zod.string(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
  * @summary List all users (admin)
  */
 export const ListAdminUsersQueryParams = zod.object({
@@ -917,6 +1018,7 @@ export const ListAdminSubscriptionPaymentsResponseItem = zod.object({
 })
 export const ListAdminSubscriptionPaymentsResponse = zod.array(ListAdminSubscriptionPaymentsResponseItem)
 
+
 /**
  * @summary List merchant payment accounts for administration
  */
@@ -927,6 +1029,32 @@ export const ListAdminPaymentWalletsResponseItem = zod.object({
   "instructions": zod.string(),
   "isActive": zod.boolean()
 })
+export const ListAdminPaymentWalletsResponse = zod.array(ListAdminPaymentWalletsResponseItem)
+
+
+/**
+ * @summary Update a merchant payment account
+ */
+export const UpdatePaymentWalletParams = zod.object({
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy'])
+})
+
+export const UpdatePaymentWalletBody = zod.object({
+  "merchantName": zod.string(),
+  "merchantAccount": zod.string(),
+  "instructions": zod.string(),
+  "isActive": zod.boolean()
+})
+
+export const UpdatePaymentWalletResponse = zod.object({
+  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "merchantName": zod.string(),
+  "merchantAccount": zod.string(),
+  "instructions": zod.string(),
+  "isActive": zod.boolean()
+})
+
+
 /**
  * @summary Approve or reject a subscription payment
  */
@@ -964,6 +1092,8 @@ export const ReviewAdvertisementBody = zod.object({
   "status": zod.enum(['active', 'rejected']),
   "reviewNote": zod.string().nullish()
 })
+
+
 
 
 export const ReviewAdvertisementResponse = zod.object({
@@ -1090,44 +1220,3 @@ export const GetHomeFeedResponse = zod.object({
 })
 
 
-export const UpdatePaymentWalletBody = zod.object({
-  "merchantName": zod.string(),
-  "merchantAccount": zod.string(),
-  "instructions": zod.string(),
-  "isActive": zod.boolean()
-})
-
-export const ListAdminPaymentWalletsResponse = zod.array(ListAdminPaymentWalletsResponseItem)
-
-export const UpdatePaymentWalletResponse = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
-  "merchantName": zod.string(),
-  "merchantAccount": zod.string(),
-  "instructions": zod.string(),
-  "isActive": zod.boolean()
-})
-
-export const RequestUploadUrlBody = zod.object({
-  "name": zod.string(),
-  "size": zod.number().min(1),
-  "contentType": zod.string()
-})
-
-export const ListPaymentWalletsResponse = zod.array(ListPaymentWalletsResponseItem)
-
-export const RequestUploadUrlResponse = zod.object({
-  "uploadURL": zod.string().url(),
-  "objectPath": zod.string(),
-  "metadata": zod.object({
-  "name": zod.string(),
-  "size": zod.number(),
-  "contentType": zod.string()
-})
-})
-
-/**
- * @summary Update a merchant payment account
- */
-export const UpdatePaymentWalletParams = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy'])
-})

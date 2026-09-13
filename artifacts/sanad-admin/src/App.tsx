@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   Activity,
   AlertTriangle,
-  ArrowUpLeft,
   BarChart3,
   BadgeCheck,
   Ban,
@@ -11,15 +10,17 @@ import {
   Check,
   CheckCircle2,
   ChevronLeft,
-  CircleDollarSign,
   Clock3,
   ExternalLink,
+  Eye,
   Filter,
   LayoutDashboard,
   LoaderCircle,
   MapPin,
   Menu,
   Megaphone,
+  MessageCircle,
+  MousePointerClick,
   Phone,
   ReceiptText,
   RefreshCw,
@@ -29,14 +30,13 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Star,
-  UserCheck,
+  TrendingUp,
   UsersRound,
   WalletCards,
   X,
 } from 'lucide-react';
 import {
-  useGetAdminStats,
-  useGetServiceStats,
+  useGetAdminAnalytics,
   useListAdminSubscriptionPayments,
   useListAdminUsers,
   useReviewAdvertisement,
@@ -292,63 +292,137 @@ function AccessRequired() {
   );
 }
 
-function Overview() {
-  const statsQuery = useGetAdminStats({ query: { queryKey: ['sanad-admin', 'stats'], refetchOnWindowFocus: false } });
-  const servicesQuery = useGetServiceStats({ query: { queryKey: ['sanad-admin', 'services'], refetchOnWindowFocus: false } });
-  const stats = statsQuery.data;
-  const services = servicesQuery.data ?? [];
-  const cards = stats ? [
-    { label: 'إجمالي المستخدمين', value: stats.totalUsers, note: `${formatNumber(stats.activeToday)} نشطون اليوم`, icon: UsersRound, tone: 'teal' },
-    { label: 'المهنيون المسجلون', value: stats.totalProviders, note: `${formatNumber(stats.pendingProviders)} بانتظار التوثيق`, icon: BriefcaseBusiness, tone: 'gold' },
-    { label: 'طلبات الخدمة', value: stats.totalRequests, note: `${formatNumber(stats.requestsThisWeek)} هذا الأسبوع`, icon: BarChart3, tone: 'blue' },
-    { label: 'طلبات مكتملة', value: stats.completedRequests, note: `${stats.totalRequests ? Math.round((stats.completedRequests / stats.totalRequests) * 100) : 0}% من الإجمالي`, icon: CheckCircle2, tone: 'green' },
-  ] : [];
-  const maxRequests = Math.max(...services.map((service) => service.requestCount), 1);
+type AnalyticsRange = '7d' | '30d' | '90d';
+
+const analyticsRangeLabels: Record<AnalyticsRange, string> = {
+  '7d': 'آخر 7 أيام',
+  '30d': 'آخر 30 يوماً',
+  '90d': 'آخر 90 يوماً',
+};
+
+function formatCurrency(value?: number | null) {
+  return `${new Intl.NumberFormat('ar-YE', { maximumFractionDigits: 0 }).format(value ?? 0)} ريال`;
+}
+
+function formatChartDate(value: string) {
+  return new Intl.DateTimeFormat('ar-YE', { day: 'numeric', month: 'short' }).format(new Date(value));
+}
+
+function RangeSwitcher({ value, onChange, testIdPrefix }: { value: AnalyticsRange; onChange: (value: AnalyticsRange) => void; testIdPrefix: string }) {
   return (
-    <>
-      <PageHeader eyebrow="ملخص اليوم" title="نظرة عامة على فزعة" description="صورة تشغيلية سريعة تساعدك على اتخاذ القرار في الوقت المناسب." action={<Button variant="secondary" onClick={() => { void statsQuery.refetch(); void servicesQuery.refetch(); }} disabled={statsQuery.isFetching || servicesQuery.isFetching} testId="button-refresh-overview"><RefreshCw className={`h-4 w-4 ${statsQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث البيانات</Button>} />
-      <QueryState loading={statsQuery.isLoading || servicesQuery.isLoading} error={statsQuery.error || servicesQuery.error} onRetry={() => { void statsQuery.refetch(); void servicesQuery.refetch(); }}>
-        {stats && (
-          <div className="animate-rise space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {cards.map((card) => {
-                const Icon = card.icon;
-                const iconClass = card.tone === 'gold' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : card.tone === 'green' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : card.tone === 'blue' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : 'bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))]';
-                return <div className="panel rounded-2xl p-5" key={card.label} data-testid={`card-stat-${card.label}`}>
-                  <div className="flex items-start justify-between"><div><p className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{card.label}</p><p className="mt-3 font-[var(--font-display)] text-3xl font-bold tracking-tight">{formatNumber(card.value)}</p></div><div className={`rounded-xl p-3 ${iconClass}`}><Icon className="h-5 w-5" /></div></div>
-                  <div className="mt-4 flex items-center gap-1.5 text-[11px] text-[hsl(var(--muted-foreground))]"><span className="status-dot bg-emerald-500" />{card.note}</div>
-                </div>;
-              })}
-            </div>
-            <div className="grid gap-6 xl:grid-cols-[1.4fr_.8fr]">
-              <Panel title="حركة الخدمات" subtitle="مقارنة الطلبات مع قاعدة المهنيين حسب التصنيف" icon={BarChart3} action={<Badge tone="teal">{formatNumber(services.reduce((sum, item) => sum + item.requestCount, 0))} طلب</Badge>}>
-                <QueryState loading={servicesQuery.isLoading} error={servicesQuery.error} onRetry={() => { void servicesQuery.refetch(); }}>
-                  {services.length === 0 ? <div className="flex min-h-[300px] items-center justify-center p-6 text-sm text-[hsl(var(--muted-foreground))]">لا توجد إحصائيات خدمات متاحة بعد.</div> : <div className="space-y-5 p-5 md:p-6">
-                    {services.map((service, index) => <div key={service.categoryName} className="animate-rise" style={{ animationDelay: `${index * 45}ms` }} data-testid={`row-service-${index}`}>
-                      <div className="mb-2 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-7 w-7 place-items-center rounded-lg bg-[hsl(var(--muted))] text-xs font-bold text-[hsl(var(--primary))]">{String(index + 1).padStart(2, '0')}</span><span className="text-sm font-semibold">{service.categoryName}</span></div><div className="flex items-center gap-4 text-[11px] text-[hsl(var(--muted-foreground))]"><span>{formatNumber(service.providerCount)} مهني</span><b className="text-[hsl(var(--foreground))]">{formatNumber(service.requestCount)} طلب</b></div></div>
-                      <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--muted))]"><div className="h-full rounded-full bg-[hsl(var(--primary))] transition-all duration-700" style={{ width: `${Math.max((service.requestCount / maxRequests) * 100, 4)}%` }} /></div>
-                    </div>)}
-                  </div>}
-                </QueryState>
-              </Panel>
-              <Panel title="مؤشرات المنصة" subtitle="قراءة مختصرة لأهم نقاط المتابعة" icon={Activity}>
-                <div className="divide-y divide-[hsl(var(--border))]">
-                  <div className="flex items-center justify-between gap-3 p-5"><div className="flex items-center gap-3"><div className="rounded-lg bg-amber-50 p-2 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"><ShieldAlert className="h-4 w-4" /></div><div><p className="text-sm font-semibold">توثيق المهنيين</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">طلبات تحتاج مراجعة</p></div></div><span className="font-[var(--font-display)] text-xl font-bold">{formatNumber(stats.pendingProviders)}</span></div>
-                  <div className="flex items-center justify-between gap-3 p-5"><div className="flex items-center gap-3"><div className="rounded-lg bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"><UserCheck className="h-4 w-4" /></div><div><p className="text-sm font-semibold">نشاط اليوم</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">مستخدمون تفاعلوا اليوم</p></div></div><span className="font-[var(--font-display)] text-xl font-bold">{formatNumber(stats.activeToday)}</span></div>
-                  <div className="flex items-center justify-between gap-3 p-5"><div className="flex items-center gap-3"><div className="rounded-lg bg-sky-50 p-2 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"><TrendingUpIcon /></div><div><p className="text-sm font-semibold">طلبات الشهر</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">إجمالي الشهر الحالي</p></div></div><span className="font-[var(--font-display)] text-xl font-bold">{formatNumber(stats.requestsThisMonth)}</span></div>
-                </div>
-                <div className="m-5 rounded-xl bg-[hsl(var(--primary)/.06)] p-4 text-xs leading-6 text-[hsl(var(--primary))]">تذكير: راجع طلبات التوثيق والمدفوعات اليدوية يومياً لضمان تجربة موثوقة للعملاء.</div>
-              </Panel>
-            </div>
-          </div>
-        )}
-      </QueryState>
-    </>
+    <div className="flex rounded-xl bg-[hsl(var(--muted))] p-1" role="tablist" aria-label="الفترة الزمنية">
+      {(Object.keys(analyticsRangeLabels) as AnalyticsRange[]).map((range) => (
+        <button key={range} onClick={() => onChange(range)} role="tab" aria-selected={value === range} data-testid={`${testIdPrefix}-${range}`} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${value === range ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}>
+          {analyticsRangeLabels[range]}
+        </button>
+      ))}
+    </div>
   );
 }
 
-function TrendingUpIcon() {
-  return <ArrowUpLeft className="h-4 w-4" />;
+function MetricCard({ label, value, icon: Icon, tone = 'teal', detail }: { label: string; value: number; icon: typeof Activity; tone?: 'teal' | 'gold' | 'blue' | 'green'; detail?: string }) {
+  const iconClass = tone === 'gold' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : tone === 'green' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : tone === 'blue' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : 'bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))]';
+  return (
+    <div className="panel rounded-2xl p-5 transition duration-200 hover:-translate-y-0.5" data-testid={`card-analytics-${label}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div><p className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{label}</p><p className="mt-3 font-[var(--font-display)] text-2xl font-bold tracking-tight">{formatNumber(value)}</p></div>
+        <div className={`rounded-xl p-3 ${iconClass}`}><Icon className="h-5 w-5" /></div>
+      </div>
+      {detail && <p className="mt-4 text-[11px] text-[hsl(var(--muted-foreground))]">{detail}</p>}
+    </div>
+  );
+}
+
+function AnalyticsChart({ series }: { series: Array<{ date: string; requests: number; messages: number; payments: number; approvedPayments: number }> }) {
+  if (series.length === 0) return <EmptyState icon={BarChart3} title="لا توجد حركة زمنية" description="سيظهر المخطط عند توفر أحداث خلال الفترة المحددة." />;
+  const width = 760;
+  const height = 230;
+  const padding = { top: 18, right: 20, bottom: 40, left: 30 };
+  const max = Math.max(...series.flatMap((point) => [point.requests, point.messages, point.payments]), 1);
+  const pointAt = (value: number, index: number) => {
+    const x = padding.left + (index / Math.max(series.length - 1, 1)) * (width - padding.left - padding.right);
+    const y = padding.top + (1 - value / max) * (height - padding.top - padding.bottom);
+    return `${x},${y}`;
+  };
+  const line = (key: 'requests' | 'messages' | 'payments') => series.map((point, index) => pointAt(point[key], index)).join(' ');
+  const labels = series.length > 6 ? [0, Math.floor(series.length / 2), series.length - 1] : series.map((_, index) => index);
+  return (
+    <div className="p-5 md:p-6" dir="ltr" data-testid="chart-analytics-timeline">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3" dir="rtl">
+        <div className="flex flex-wrap gap-4 text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
+          <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-[hsl(var(--primary))]" />طلبات</span>
+          <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-[hsl(var(--accent))]" />رسائل</span>
+          <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-sky-500" />مدفوعات</span>
+        </div>
+        <span className="text-[11px] text-[hsl(var(--muted-foreground))]">النشاط اليومي</span>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full overflow-visible" role="img" aria-label="مخطط الطلبات والرسائل والمدفوعات">
+        {[0, 1, 2, 3].map((step) => {
+          const y = padding.top + (step / 3) * (height - padding.top - padding.bottom);
+          return <line key={step} x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="hsl(var(--border))" strokeDasharray="3 5" />;
+        })}
+        <polyline points={line('requests')} fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={line('messages')} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={line('payments')} fill="none" stroke="#3b82b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {labels.map((index) => {
+          const point = series[index];
+          const x = padding.left + (index / Math.max(series.length - 1, 1)) * (width - padding.left - padding.right);
+          return <text key={point.date} x={x} y={height - 12} textAnchor="middle" fontSize="10" fill="hsl(var(--muted-foreground))">{formatChartDate(point.date)}</text>;
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function Overview() {
+  const [range, setRange] = useState<AnalyticsRange>('30d');
+  const analyticsQuery = useGetAdminAnalytics({ range }, { query: { queryKey: ['sanad-admin', 'analytics', range], refetchOnWindowFocus: false } });
+  const analytics = analyticsQuery.data;
+  const overview = analytics?.overview;
+  return (
+    <>
+       <PageHeader eyebrow="مركز القرار" title="لوحة أداء فزعة" description="قراءة تشغيلية موحدة للحركة التراكمية، مع مخطط يومي قابل للتبديل حسب الفترة." action={<div className="flex flex-wrap items-center gap-2"><RangeSwitcher value={range} onChange={setRange} testIdPrefix="button-range-overview" /><Button variant="secondary" onClick={() => { void analyticsQuery.refetch(); }} disabled={analyticsQuery.isFetching} testId="button-refresh-overview"><RefreshCw className={`h-4 w-4 ${analyticsQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث</Button></div>} />
+      <QueryState loading={analyticsQuery.isLoading} error={analyticsQuery.error} onRetry={() => { void analyticsQuery.refetch(); }}>
+        {analytics && overview ? (
+          <div className="animate-rise space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard label="إجمالي المستخدمين" value={overview.totalUsers} icon={UsersRound} detail={`${formatNumber(overview.totalClients)} عميل · ${formatNumber(overview.totalProviders)} مهني`} />
+              <MetricCard label="المهنيون النشطون" value={overview.activeProviders} icon={BriefcaseBusiness} tone="gold" detail={`${formatNumber(overview.verifiedProviders)} موثق · ${formatNumber(overview.pendingProviders)} بانتظار المراجعة`} />
+              <MetricCard label="طلبات الخدمة" value={overview.totalRequests} icon={BarChart3} tone="blue" detail={`${formatNumber(overview.completedRequests)} مكتملة · ${formatNumber(overview.pendingRequests)} قيد المتابعة`} />
+               <MetricCard label="مشاهدات الملفات" value={overview.profileViews} icon={Eye} tone="green" detail="إجمالي منذ بدء القياس" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard label="ضغطات الاتصال" value={overview.callClicks} icon={Phone} />
+              <MetricCard label="ضغطات واتساب" value={overview.whatsappClicks} icon={MessageCircle} tone="green" />
+              <MetricCard label="الرسائل" value={overview.messageCount} icon={MessageCircle} tone="gold" detail={`${formatNumber(overview.conversationCount)} محادثة`} />
+              <MetricCard label="المدفوعات المعتمدة" value={overview.approvedPayments} icon={CheckCircle2} tone="teal" detail={formatCurrency(overview.approvedPaymentAmount)} />
+            </div>
+            <div className="grid gap-6 xl:grid-cols-[1.45fr_.8fr]">
+              <Panel title="نبض المنصة" subtitle={`الطلبات والرسائل والمدفوعات · ${analyticsRangeLabels[range]}`} icon={TrendingUp} action={<Badge tone="teal">{formatNumber(analytics.series.reduce((sum, point) => sum + point.requests, 0))} طلب زمني</Badge>}>
+                <AnalyticsChart series={analytics.series} />
+              </Panel>
+              <Panel title="ملخص المدفوعات" subtitle="توزيع العمليات وقيمتها حسب الحالة" icon={WalletCards}>
+                 {analytics.paymentSummary.length === 0 ? <EmptyState icon={WalletCards} title="لا توجد مدفوعات" description="لم تسجل المنصة مدفوعات حتى الآن." /> : <div className="divide-y divide-[hsl(var(--border))]">{analytics.paymentSummary.map((item) => {
+                  const label = item.status === 'approved' ? 'معتمدة' : item.status === 'pending' ? 'قيد المراجعة' : item.status === 'rejected' ? 'مرفوضة' : item.status === 'refunded' ? 'مستردة' : 'منتهية';
+                  const tone = item.status === 'approved' ? 'good' : item.status === 'pending' ? 'warn' : item.status === 'rejected' ? 'bad' : 'neutral';
+                  return <div key={item.status} className="flex items-center justify-between gap-3 p-4" data-testid={`row-payment-summary-${item.status}`}><div><Badge tone={tone}>{label}</Badge><p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">{formatNumber(item.count)} عملية</p></div><p className="font-[var(--font-display)] text-sm font-bold">{formatCurrency(item.amount)}</p></div>;
+                })}</div>}
+                <div className="m-4 rounded-xl bg-[hsl(var(--primary)/.06)] p-4"><p className="text-xs font-semibold text-[hsl(var(--primary))]">المبالغ قيد المراجعة</p><p className="mt-2 font-[var(--font-display)] text-xl font-bold text-[hsl(var(--primary))]">{formatCurrency(overview.pendingPaymentAmount)}</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">{formatNumber(overview.pendingPayments)} عملية تحتاج قراراً</p></div>
+              </Panel>
+            </div>
+            <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+              <Panel title="أفضل المهنيين أداءً" subtitle="ترتيب مركب من التفاعل والطلبات خلال الفترة" icon={BadgeCheck} action={<Link href="/providers" className="text-xs font-bold text-[hsl(var(--primary))]" data-testid="link-analytics-providers">عرض الدليل</Link>}>
+                {analytics.topProviders.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="لا توجد بيانات مهنيين" description="ستظهر المؤشرات بعد تسجيل نشاط للمهنيين." /> : <div className="divide-y divide-[hsl(var(--border))]">{analytics.topProviders.slice(0, 5).map((provider, index) => <div key={provider.providerId} className="flex items-center gap-3 p-4" data-testid={`row-top-provider-${provider.providerId}`}><span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[hsl(var(--muted))] text-xs font-bold text-[hsl(var(--primary))]">{String(index + 1).padStart(2, '0')}</span><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{provider.name}</p>{provider.isVerified && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}</div><p className="mt-1 truncate text-[11px] text-[hsl(var(--muted-foreground))]">{provider.categoryName} · {provider.city}</p></div><div className="text-left"><p className="text-sm font-bold">{formatNumber(provider.requests)} طلب</p><p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{formatNumber(provider.profileViews)} مشاهدة</p></div></div>)}</div>}
+              </Panel>
+              <Panel title="أحدث المدفوعات" subtitle="آخر العمليات الواردة من النظام" icon={ReceiptText}>
+                {analytics.recentPayments.length === 0 ? <EmptyState icon={ReceiptText} title="لا توجد عمليات حديثة" description="لا توجد مدفوعات ضمن الفترة المحددة." /> : <div className="divide-y divide-[hsl(var(--border))]">{analytics.recentPayments.slice(0, 5).map((payment) => <div key={payment.id} className="flex items-center justify-between gap-3 p-4" data-testid={`row-recent-payment-${payment.id}`}><div className="min-w-0"><p className="truncate text-sm font-semibold">{payment.providerName}</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">{payment.plan === 'yearly' ? 'اشتراك سنوي' : 'اشتراك شهري'} · {walletNames[payment.wallet] || payment.wallet}</p></div><div className="text-left"><p className="text-sm font-bold">{formatCurrency(payment.amount)}</p><p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{formatDate(payment.createdAt)}</p></div></div>)}</div>}
+              </Panel>
+            </div>
+          </div>
+        ) : <EmptyState icon={Activity} title="لا توجد بيانات تحليلية" description="لم يعثر الخادم على بيانات تشغيلية ضمن الفترة المحددة." />}
+      </QueryState>
+    </>
+  );
 }
 
 function UsersPage() {
@@ -391,8 +465,10 @@ function UserRow({ user, index, onStatus, pending }: { user: AdminUser; index: n
 
 function ProvidersPage() {
   const [filter, setFilter] = useState('all');
+  const [range, setRange] = useState<AnalyticsRange>('30d');
   const toast = useToast();
   const providersQuery = useListAdminUsers({ role: 'provider' }, { query: { queryKey: ['sanad-admin', 'providers'], refetchOnWindowFocus: false } });
+  const analyticsQuery = useGetAdminAnalytics({ range }, { query: { queryKey: ['sanad-admin', 'provider-analytics', range], refetchOnWindowFocus: false } });
   const verifyProvider = useVerifyProvider();
   const providers = useMemo(() => (providersQuery.data?.users ?? []).filter((provider) => filter === 'all' || (filter === 'verified' ? provider.isVerified : !provider.isVerified)), [providersQuery.data?.users, filter]);
   const verify = (id: number, isVerified: boolean) => {
@@ -402,10 +478,20 @@ function ProvidersPage() {
     });
   };
   return <>
-    <PageHeader eyebrow="الثقة والجودة" title="توثيق المهنيين" description="راجع بيانات المهنيين وحافظ على أن يكون الدليل موثوقاً لكل عميل." action={<Button variant="secondary" onClick={() => { void providersQuery.refetch(); }} disabled={providersQuery.isFetching} testId="button-refresh-providers"><RefreshCw className={`h-4 w-4 ${providersQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث</Button>} />
+     <PageHeader eyebrow="الثقة والجودة" title="المهنيون" description="راجع التوثيق واقرأ أداء المهنيين قبل اتخاذ قرارات التشغيل." action={<div className="flex flex-wrap items-center gap-2"><RangeSwitcher value={range} onChange={setRange} testIdPrefix="button-range-providers" /><Button variant="secondary" onClick={() => { void providersQuery.refetch(); void analyticsQuery.refetch(); }} disabled={providersQuery.isFetching || analyticsQuery.isFetching} testId="button-refresh-providers"><RefreshCw className={`h-4 w-4 ${providersQuery.isFetching || analyticsQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث</Button></div>} />
+     <Panel className="mb-6 animate-rise" title="مؤشرات أداء المهنيين" subtitle="المؤشرات التراكمية للزيارات والتفاعل والطلبات" icon={TrendingUp}>
+      <QueryState loading={analyticsQuery.isLoading} error={analyticsQuery.error} onRetry={() => { void analyticsQuery.refetch(); }}>
+        {analyticsQuery.data ? <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="المهنيون النشطون" value={analyticsQuery.data.overview.activeProviders} icon={BriefcaseBusiness} tone="gold" />
+          <MetricCard label="المهنيون الموثقون" value={analyticsQuery.data.overview.verifiedProviders} icon={ShieldCheck} tone="green" />
+          <MetricCard label="مشاهدات الملفات" value={analyticsQuery.data.overview.profileViews} icon={Eye} tone="blue" />
+          <MetricCard label="طلبات الخدمة" value={analyticsQuery.data.overview.totalRequests} icon={BarChart3} />
+        </div> : <EmptyState icon={TrendingUp} title="لا توجد مؤشرات" description="ستظهر مؤشرات الأداء عند توفر بيانات من الخادم." />}
+      </QueryState>
+    </Panel>
     <Panel className="animate-rise" title="قائمة المهنيين" subtitle={providersQuery.data ? `${formatNumber(providersQuery.data.total)} مهني مسجل` : 'مراجعة حالات التوثيق'} icon={BadgeCheck} action={<div className="flex rounded-xl bg-[hsl(var(--muted))] p-1"><button onClick={() => setFilter('all')} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${filter === 'all' ? 'bg-[hsl(var(--card))] shadow-sm' : 'text-[hsl(var(--muted-foreground))]'}`} data-testid="button-filter-providers-all">الكل</button><button onClick={() => setFilter('pending')} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${filter === 'pending' ? 'bg-[hsl(var(--card))] shadow-sm' : 'text-[hsl(var(--muted-foreground))]'}`} data-testid="button-filter-providers-pending">بانتظار التوثيق</button><button onClick={() => setFilter('verified')} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${filter === 'verified' ? 'bg-[hsl(var(--card))] shadow-sm' : 'text-[hsl(var(--muted-foreground))]'}`} data-testid="button-filter-providers-verified">موثق</button></div>}>
       <QueryState loading={providersQuery.isLoading} error={providersQuery.error} onRetry={() => { void providersQuery.refetch(); }}>
-        {providers.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="لا يوجد مهنيون في هذا العرض" description="ستظهر طلبات المهنيين الجدد هنا عند التسجيل." /> : <div className="scrollbar-thin overflow-x-auto"><table className="w-full min-w-[800px] text-right text-sm"><thead className="bg-[hsl(var(--muted)/.55)] text-xs text-[hsl(var(--muted-foreground))]"><tr><th className="px-5 py-3 font-semibold">المهني</th><th className="px-5 py-3 font-semibold">الخدمة والمدينة</th><th className="px-5 py-3 font-semibold">الأداء</th><th className="px-5 py-3 font-semibold">التوثيق</th><th className="px-5 py-3 font-semibold">الإجراء</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))]">{providers.map((provider) => <tr key={provider.id} className="transition hover:bg-[hsl(var(--muted)/.35)]" data-testid={`row-provider-${provider.id}`}><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[hsl(var(--primary)/.1)] font-bold text-[hsl(var(--primary))]">{provider.name.slice(0, 1)}</div><div><p className="font-semibold">{provider.name}</p><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]" dir="ltr">{provider.phone}</p></div></div></td><td className="px-5 py-4"><p className="font-medium">{provider.categoryName || '—'}</p><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{provider.city || '—'}</p></td><td className="px-5 py-4"><div className="flex items-center gap-1 text-sm font-semibold text-amber-600"><Star className="h-4 w-4 fill-current" />{provider.rating?.toFixed(1) || '—'}</div><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{formatNumber(provider.completedJobs)} أعمال مكتملة</p></td><td className="px-5 py-4">{provider.isVerified ? <Badge tone="good"><ShieldCheck className="h-3.5 w-3.5" />موثق</Badge> : <Badge tone="warn"><ShieldAlert className="h-3.5 w-3.5" />بانتظار التوثيق</Badge>}</td><td className="px-5 py-4"><Button variant={provider.isVerified ? 'danger' : 'secondary'} className="h-9 px-3 text-xs" onClick={() => verify(provider.id, !provider.isVerified)} disabled={verifyProvider.isPending} testId={`${provider.isVerified ? 'button-unverify' : 'button-verify'}-provider-${provider.id}`}>{verifyProvider.isPending ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : provider.isVerified ? <ShieldAlert className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{provider.isVerified ? 'إلغاء التوثيق' : 'توثيق المهني'}</Button></td></tr>)}</tbody></table></div>}
+        {providers.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="لا يوجد مهنيون في هذا العرض" description="ستظهر طلبات المهنيين الجدد هنا عند التسجيل." /> : <div className="scrollbar-thin overflow-x-auto"><table className="w-full min-w-[1080px] text-right text-sm"><thead className="bg-[hsl(var(--muted)/.55)] text-xs text-[hsl(var(--muted-foreground))]"><tr><th className="px-5 py-3 font-semibold">المهني</th><th className="px-5 py-3 font-semibold">الخدمة والمدينة</th><th className="px-5 py-3 font-semibold">التفاعل</th><th className="px-5 py-3 font-semibold">الطلبات</th><th className="px-5 py-3 font-semibold">التوثيق</th><th className="px-5 py-3 font-semibold">الإجراء</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))]">{providers.map((provider) => { const metrics = analyticsQuery.data?.topProviders.find((item) => item.providerId === provider.id); return <tr key={provider.id} className="transition hover:bg-[hsl(var(--muted)/.35)]" data-testid={`row-provider-${provider.id}`}><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[hsl(var(--primary)/.1)] font-bold text-[hsl(var(--primary))]">{provider.name.slice(0, 1)}</div><div><p className="font-semibold">{provider.name}</p><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]" dir="ltr">{provider.phone}</p></div></div></td><td className="px-5 py-4"><p className="font-medium">{provider.categoryName || '—'}</p><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{provider.city || '—'}</p></td><td className="px-5 py-4"><div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold"><span className="inline-flex items-center gap-1 text-[hsl(var(--primary))]"><Eye className="h-3.5 w-3.5" />{formatNumber(metrics?.profileViews)} </span><span className="inline-flex items-center gap-1 text-[hsl(var(--muted-foreground))]"><MousePointerClick className="h-3.5 w-3.5" />{formatNumber((metrics?.callClicks ?? 0) + (metrics?.whatsappClicks ?? 0))}</span></div><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">{formatNumber(metrics?.messages)} رسالة</p></td><td className="px-5 py-4"><div className="flex items-center gap-1 text-sm font-semibold text-[hsl(var(--primary))]"><BarChart3 className="h-4 w-4" />{formatNumber(metrics?.requests)}</div><p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{formatNumber(provider.completedJobs)} أعمال مكتملة</p></td><td className="px-5 py-4">{provider.isVerified ? <Badge tone="good"><ShieldCheck className="h-3.5 w-3.5" />موثق</Badge> : <Badge tone="warn"><ShieldAlert className="h-3.5 w-3.5" />بانتظار التوثيق</Badge>}</td><td className="px-5 py-4"><Button variant={provider.isVerified ? 'danger' : 'secondary'} className="h-9 px-3 text-xs" onClick={() => verify(provider.id, !provider.isVerified)} disabled={verifyProvider.isPending} testId={`${provider.isVerified ? 'button-unverify' : 'button-verify'}-provider-${provider.id}`}>{verifyProvider.isPending ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : provider.isVerified ? <ShieldAlert className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}{provider.isVerified ? 'إلغاء التوثيق' : 'توثيق المهني'}</Button></td></tr>; })}</tbody></table></div>}
       </QueryState>
     </Panel>
   </>;

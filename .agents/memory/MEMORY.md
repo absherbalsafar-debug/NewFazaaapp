@@ -1,1 +1,2 @@
 - [Non-destructive schema sync](database-schema-sync.md) — Drizzle push may stop on unrelated destructive prompts; preserve existing data and apply only verified additive DDL.
+- [Admin analytics aggregation](admin-analytics-aggregation.md) — provider interaction counters are cumulative; only timestamped events can support accurate date-range trends.

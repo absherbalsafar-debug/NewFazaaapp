@@ -10,8 +10,11 @@ import {
   providerSubscriptionsTable,
   advertisementsTable,
   paymentWalletSettingsTable,
+  providerMetricsTable,
+  conversationsTable,
+  messagesTable,
 } from "@workspace/db";
-import { eq, and, count, ilike, desc, or, gte } from "drizzle-orm";
+import { eq, and, count, ilike, desc, or, gte, sql, inArray } from "drizzle-orm";
 import { requireAuth, requireAdmin, type AuthRequest } from "../middlewares/auth";
 import {
   ListAdminUsersQueryParams,
@@ -23,7 +26,7 @@ import {
   UpdatePaymentWalletBody,
   ReviewAdvertisementBody,
 } from "@workspace/api-zod";
-import { listWalletSettings, serializePayment, walletNames } from "./subscriptions";
+import { listWalletSettings, serializePayment, walletNames, subscriptionPlans } from "./subscriptions";
 
 const router: IRouter = Router();
 
@@ -53,6 +56,233 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req: AuthRequest, r
     activeToday: Number(activeToday?.cnt ?? 0),
     requestsThisWeek: Number(weekRequests?.cnt ?? 0),
     requestsThisMonth: Number(monthRequests?.cnt ?? 0),
+  });
+});
+
+const analyticsRanges = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+} as const;
+
+type AnalyticsRange = keyof typeof analyticsRanges;
+
+function paymentAmount(plan: string): number {
+  const selectedPlan = subscriptionPlans.find((item) => item.id === plan);
+  if (!selectedPlan) return 0;
+  return selectedPlan.id === "yearly" ? selectedPlan.yearlyPrice : selectedPlan.monthlyPrice;
+}
+
+function analyticsDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+router.get("/admin/analytics", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+  const requestedRange = typeof req.query.range === "string" ? req.query.range : "30d";
+  const range: AnalyticsRange = requestedRange in analyticsRanges ? requestedRange as AnalyticsRange : "30d";
+  const cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - analyticsRanges[range] + 1);
+
+  const [
+    totalUsers,
+    totalClients,
+    totalProviders,
+    activeProviders,
+    verifiedProviders,
+    pendingProviders,
+    totalRequests,
+    pendingRequests,
+    completedRequests,
+    metricTotals,
+    paymentSummaryRows,
+    paymentPlanRows,
+    requestSeriesRows,
+    messageSeriesRows,
+    paymentSeriesRows,
+    providerRows,
+    recentPaymentRows,
+  ] = await Promise.all([
+    db.select({ cnt: count(usersTable.id) }).from(usersTable),
+    db.select({ cnt: count(usersTable.id) }).from(usersTable).where(eq(usersTable.role, "client")),
+    db.select({ cnt: count(providersTable.id) }).from(providersTable),
+    db.select({ cnt: count(providersTable.id) }).from(providersTable).where(eq(providersTable.isAvailable, true)),
+    db.select({ cnt: count(providersTable.id) }).from(providersTable).where(eq(providersTable.isVerified, true)),
+    db.select({ cnt: count(providersTable.id) }).from(providersTable).where(eq(providersTable.isVerified, false)),
+    db.select({ cnt: count(serviceRequestsTable.id) }).from(serviceRequestsTable),
+    db.select({ cnt: count(serviceRequestsTable.id) }).from(serviceRequestsTable).where(eq(serviceRequestsTable.status, "pending")),
+    db.select({ cnt: count(serviceRequestsTable.id) }).from(serviceRequestsTable).where(eq(serviceRequestsTable.status, "completed")),
+    db.select({
+      profileViews: sql<string>`coalesce(sum(${providerMetricsTable.profileViews}), 0)`,
+      callClicks: sql<string>`coalesce(sum(${providerMetricsTable.callClicks}), 0)`,
+      whatsappClicks: sql<string>`coalesce(sum(${providerMetricsTable.whatsappClicks}), 0)`,
+    }).from(providerMetricsTable),
+    db.select({ status: subscriptionPaymentsTable.status, cnt: count(subscriptionPaymentsTable.id) })
+      .from(subscriptionPaymentsTable)
+      .groupBy(subscriptionPaymentsTable.status),
+    db.select({ status: subscriptionPaymentsTable.status, plan: subscriptionPaymentsTable.plan, cnt: count(subscriptionPaymentsTable.id) })
+      .from(subscriptionPaymentsTable)
+      .groupBy(subscriptionPaymentsTable.status, subscriptionPaymentsTable.plan),
+    db.select({
+      date: sql<string>`to_char(${serviceRequestsTable.createdAt}, 'YYYY-MM-DD')`,
+      cnt: count(serviceRequestsTable.id),
+    })
+      .from(serviceRequestsTable)
+      .where(gte(serviceRequestsTable.createdAt, cutoff))
+      .groupBy(sql`to_char(${serviceRequestsTable.createdAt}, 'YYYY-MM-DD')`)
+      .orderBy(sql`to_char(${serviceRequestsTable.createdAt}, 'YYYY-MM-DD')`),
+    db.select({
+      date: sql<string>`to_char(${messagesTable.createdAt}, 'YYYY-MM-DD')`,
+      cnt: count(messagesTable.id),
+    })
+      .from(messagesTable)
+      .where(gte(messagesTable.createdAt, cutoff))
+      .groupBy(sql`to_char(${messagesTable.createdAt}, 'YYYY-MM-DD')`)
+      .orderBy(sql`to_char(${messagesTable.createdAt}, 'YYYY-MM-DD')`),
+    db.select({
+      date: sql<string>`to_char(${subscriptionPaymentsTable.createdAt}, 'YYYY-MM-DD')`,
+      status: subscriptionPaymentsTable.status,
+      plan: subscriptionPaymentsTable.plan,
+      cnt: count(subscriptionPaymentsTable.id),
+    })
+      .from(subscriptionPaymentsTable)
+      .where(gte(subscriptionPaymentsTable.createdAt, cutoff))
+      .groupBy(sql`to_char(${subscriptionPaymentsTable.createdAt}, 'YYYY-MM-DD')`, subscriptionPaymentsTable.status, subscriptionPaymentsTable.plan)
+      .orderBy(sql`to_char(${subscriptionPaymentsTable.createdAt}, 'YYYY-MM-DD')`),
+    db.select({ p: providersTable, u: usersTable, c: categoriesTable, m: providerMetricsTable })
+      .from(providersTable)
+      .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+      .innerJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
+      .leftJoin(providerMetricsTable, eq(providersTable.id, providerMetricsTable.providerId)),
+    db.select({ payment: subscriptionPaymentsTable, provider: providersTable, user: usersTable })
+      .from(subscriptionPaymentsTable)
+      .innerJoin(providersTable, eq(subscriptionPaymentsTable.providerId, providersTable.id))
+      .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+      .orderBy(desc(subscriptionPaymentsTable.createdAt))
+      .limit(6),
+  ]);
+
+  const [allUsers] = totalUsers;
+  const [clients] = totalClients;
+  const [providers] = totalProviders;
+  const [available] = activeProviders;
+  const [verified] = verifiedProviders;
+  const [pending] = pendingProviders;
+  const [requests] = totalRequests;
+  const [pendingRequestCount] = pendingRequests;
+  const [completed] = completedRequests;
+  const [metrics] = metricTotals;
+  const providerUserRows = await db.select({ userId: providersTable.userId }).from(providersTable);
+  const providerUserIds = providerUserRows.map((row) => row.userId);
+  const [professionalMessages] = providerUserIds.length
+    ? await db
+      .select({ cnt: count(messagesTable.id) })
+      .from(messagesTable)
+      .innerJoin(conversationsTable, eq(messagesTable.conversationId, conversationsTable.id))
+      .where(or(inArray(conversationsTable.userAId, providerUserIds), inArray(conversationsTable.userBId, providerUserIds)))
+    : [{ cnt: 0 }];
+  const [professionalConversations] = providerUserIds.length
+    ? await db
+      .select({ cnt: count(conversationsTable.id) })
+      .from(conversationsTable)
+      .where(or(inArray(conversationsTable.userAId, providerUserIds), inArray(conversationsTable.userBId, providerUserIds)))
+    : [{ cnt: 0 }];
+  const paymentSummary = paymentSummaryRows.map((row) => ({
+    status: row.status,
+    count: Number(row.cnt),
+    amount: paymentPlanRows
+      .filter((item) => item.status === row.status)
+      .reduce((total, item) => total + Number(item.cnt) * paymentAmount(item.plan), 0),
+  }));
+  const paymentCount = (status: string) => paymentSummary.find((item) => item.status === status)?.count ?? 0;
+  const paymentAmountForStatus = (status: string) => paymentSummary.find((item) => item.status === status)?.amount ?? 0;
+
+  const seriesMap = new Map<string, { requests: number; messages: number; payments: number; approvedPayments: number }>();
+  for (let index = 0; index < analyticsRanges[range]; index += 1) {
+    const date = new Date(cutoff);
+    date.setDate(cutoff.getDate() + index);
+    seriesMap.set(analyticsDate(date), { requests: 0, messages: 0, payments: 0, approvedPayments: 0 });
+  }
+  requestSeriesRows.forEach((row) => {
+    const point = seriesMap.get(row.date);
+    if (point) point.requests = Number(row.cnt);
+  });
+  messageSeriesRows.forEach((row) => {
+    const point = seriesMap.get(row.date);
+    if (point) point.messages = Number(row.cnt);
+  });
+  paymentSeriesRows.forEach((row) => {
+    const point = seriesMap.get(row.date);
+    if (!point) return;
+    point.payments += Number(row.cnt);
+    if (row.status === "approved") point.approvedPayments += Number(row.cnt) * paymentAmount(row.plan);
+  });
+
+  const topProviders = await Promise.all(providerRows.map(async ({ p, u, c, m }) => {
+    const [providerRequests] = await db
+      .select({ cnt: count(serviceRequestsTable.id) })
+      .from(serviceRequestsTable)
+      .where(eq(serviceRequestsTable.providerId, p.id));
+    const [providerMessages] = await db
+      .select({ cnt: count(messagesTable.id) })
+      .from(messagesTable)
+      .innerJoin(conversationsTable, eq(messagesTable.conversationId, conversationsTable.id))
+      .where(or(eq(conversationsTable.userAId, u.id), eq(conversationsTable.userBId, u.id)));
+    return {
+      providerId: p.id,
+      name: u.name,
+      categoryName: c.name,
+      city: p.city,
+      rating: Number(p.rating ?? 0),
+      completedJobs: p.completedJobs,
+      isVerified: p.isVerified,
+      isAvailable: p.isAvailable,
+      profileViews: m?.profileViews ?? 0,
+      callClicks: m?.callClicks ?? 0,
+      whatsappClicks: m?.whatsappClicks ?? 0,
+      messages: Number(providerMessages?.cnt ?? 0),
+      requests: Number(providerRequests?.cnt ?? 0),
+    };
+  }));
+
+  topProviders.sort((a, b) => (b.profileViews + b.callClicks + b.messages) - (a.profileViews + a.callClicks + a.messages));
+
+  res.json({
+    range,
+    overview: {
+      totalUsers: Number(allUsers?.cnt ?? 0),
+      totalClients: Number(clients?.cnt ?? 0),
+      totalProviders: Number(providers?.cnt ?? 0),
+      activeProviders: Number(available?.cnt ?? 0),
+      verifiedProviders: Number(verified?.cnt ?? 0),
+      pendingProviders: Number(pending?.cnt ?? 0),
+      totalRequests: Number(requests?.cnt ?? 0),
+      pendingRequests: Number(pendingRequestCount?.cnt ?? 0),
+      completedRequests: Number(completed?.cnt ?? 0),
+      profileViews: Number(metrics?.profileViews ?? 0),
+      callClicks: Number(metrics?.callClicks ?? 0),
+      whatsappClicks: Number(metrics?.whatsappClicks ?? 0),
+      messageCount: Number(professionalMessages?.cnt ?? 0),
+      conversationCount: Number(professionalConversations?.cnt ?? 0),
+      pendingPayments: paymentCount("pending"),
+      approvedPayments: paymentCount("approved"),
+      rejectedPayments: paymentCount("rejected"),
+      approvedPaymentAmount: paymentAmountForStatus("approved"),
+      pendingPaymentAmount: paymentAmountForStatus("pending"),
+    },
+    series: [...seriesMap.entries()].map(([date, values]) => ({ date, ...values })),
+    topProviders: topProviders.slice(0, 8),
+    paymentSummary,
+    recentPayments: recentPaymentRows.map(({ payment, user }) => ({
+      id: payment.id,
+      providerName: user.name,
+      plan: payment.plan,
+      wallet: payment.wallet,
+      status: payment.status,
+      amount: paymentAmount(payment.plan),
+      transactionReference: payment.transactionReference,
+      createdAt: payment.createdAt.toISOString(),
+    })),
   });
 });
 

@@ -120,6 +120,51 @@ export interface SubscriptionPayment {
 }
 
 export type PaymentWalletSettingWallet = typeof PaymentWalletSettingWallet[keyof typeof PaymentWalletSettingWallet];
+
+
+export const PaymentWalletSettingWallet = {
+  jeeb: 'jeeb',
+  floosk: 'floosk',
+  jawali: 'jawali',
+  cash: 'cash',
+  one_cash: 'one_cash',
+  hasib: 'hasib',
+  easy: 'easy',
+} as const;
+
+export interface PaymentWalletSetting {
+  wallet: PaymentWalletSettingWallet;
+  merchantName: string;
+  merchantAccount: string;
+  instructions: string;
+  isActive: boolean;
+}
+
+export interface PaymentWalletSettingInput {
+  merchantName: string;
+  merchantAccount: string;
+  instructions: string;
+  isActive: boolean;
+}
+
+export interface UploadUrlRequest {
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  contentType: string;
+}
+
+export type UploadUrlResponseMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata: UploadUrlResponseMetadata;
+}
+
 export type SubscriptionPaymentInputPlan = typeof SubscriptionPaymentInputPlan[keyof typeof SubscriptionPaymentInputPlan];
 
 
@@ -636,6 +681,98 @@ export interface AdminStats {
   requestsThisMonth?: number;
 }
 
+export type AdminAnalyticsRange = typeof AdminAnalyticsRange[keyof typeof AdminAnalyticsRange];
+
+
+export const AdminAnalyticsRange = {
+  '7d': '7d',
+  '30d': '30d',
+  '90d': '90d',
+} as const;
+
+export interface AdminAnalyticsOverview {
+  totalUsers: number;
+  totalClients: number;
+  totalProviders: number;
+  activeProviders: number;
+  verifiedProviders: number;
+  pendingProviders: number;
+  totalRequests: number;
+  pendingRequests: number;
+  completedRequests: number;
+  profileViews: number;
+  callClicks: number;
+  whatsappClicks: number;
+  messageCount: number;
+  conversationCount: number;
+  pendingPayments: number;
+  approvedPayments: number;
+  rejectedPayments: number;
+  approvedPaymentAmount: number;
+  pendingPaymentAmount: number;
+}
+
+export interface AdminAnalyticsSeriesPoint {
+  date: string;
+  requests: number;
+  messages: number;
+  payments: number;
+  approvedPayments: number;
+}
+
+export interface AdminAnalyticsProvider {
+  providerId: number;
+  name: string;
+  categoryName: string;
+  city: string;
+  rating: number;
+  completedJobs: number;
+  isVerified: boolean;
+  isAvailable: boolean;
+  profileViews: number;
+  callClicks: number;
+  whatsappClicks: number;
+  messages: number;
+  requests: number;
+}
+
+export type AdminAnalyticsPaymentSummaryStatus = typeof AdminAnalyticsPaymentSummaryStatus[keyof typeof AdminAnalyticsPaymentSummaryStatus];
+
+
+export const AdminAnalyticsPaymentSummaryStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+  expired: 'expired',
+  refunded: 'refunded',
+} as const;
+
+export interface AdminAnalyticsPaymentSummary {
+  status: AdminAnalyticsPaymentSummaryStatus;
+  count: number;
+  amount: number;
+}
+
+export interface AdminAnalyticsRecentPayment {
+  id: number;
+  providerName: string;
+  plan: string;
+  wallet: string;
+  status: string;
+  amount: number;
+  transactionReference: string;
+  createdAt: string;
+}
+
+export interface AdminAnalytics {
+  range: AdminAnalyticsRange;
+  overview: AdminAnalyticsOverview;
+  series: AdminAnalyticsSeriesPoint[];
+  topProviders: AdminAnalyticsProvider[];
+  paymentSummary: AdminAnalyticsPaymentSummary[];
+  recentPayments: AdminAnalyticsRecentPayment[];
+}
+
 export interface AdminUser {
   id: number;
   name: string;
@@ -815,6 +952,19 @@ export const ListRequestsRole = {
   provider: 'provider',
 } as const;
 
+export type GetAdminAnalyticsParams = {
+range?: GetAdminAnalyticsRange;
+};
+
+export type GetAdminAnalyticsRange = typeof GetAdminAnalyticsRange[keyof typeof GetAdminAnalyticsRange];
+
+
+export const GetAdminAnalyticsRange = {
+  '7d': '7d',
+  '30d': '30d',
+  '90d': '90d',
+} as const;
+
 export type ListAdminUsersParams = {
 /**
  * @nullable
@@ -845,47 +995,3 @@ lat?: number | null;
 lng?: number | null;
 };
 
-
-export const PaymentWalletSettingWallet = {
-  jeeb: 'jeeb',
-  floosk: 'floosk',
-  jawali: 'jawali',
-  cash: 'cash',
-  one_cash: 'one_cash',
-  hasib: 'hasib',
-  easy: 'easy',
-} as const;
-
-export interface UploadUrlRequest {
-  name: string;
-  /** @minimum 1 */
-  size: number;
-  contentType: string;
-}
-
-export interface PaymentWalletSettingInput {
-  merchantName: string;
-  merchantAccount: string;
-  instructions: string;
-  isActive: boolean;
-}
-
-export interface PaymentWalletSetting {
-  wallet: PaymentWalletSettingWallet;
-  merchantName: string;
-  merchantAccount: string;
-  instructions: string;
-  isActive: boolean;
-}
-
-export type UploadUrlResponseMetadata = {
-  name: string;
-  size: number;
-  contentType: string;
-};
-
-export interface UploadUrlResponse {
-  uploadURL: string;
-  objectPath: string;
-  metadata: UploadUrlResponseMetadata;
-}
