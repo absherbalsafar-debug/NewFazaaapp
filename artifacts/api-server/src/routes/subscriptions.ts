@@ -146,7 +146,13 @@ export async function ensureProviderSubscription(providerId: number) {
     .where(eq(providerSubscriptionsTable.providerId, providerId))
     .orderBy(desc(providerSubscriptionsTable.createdAt))
     .limit(1);
-  if (existing) return existing;
+  if (existing) {
+    await db.update(providersTable).set({
+      isSubscriptionActive: existing.status === "active",
+      professionalStatus: existing.status === "active" ? "approved" : "expired",
+    }).where(eq(providersTable.id, providerId));
+    return existing;
+  }
 
   const [freeCount] = await db
     .select({ count: count(providersTable.freeSlotNumber) })
@@ -156,7 +162,7 @@ export async function ensureProviderSubscription(providerId: number) {
 
   if (usedSlots < 300) {
     const freeSlotNumber = usedSlots + 1;
-    await db.update(providersTable).set({ freeSlotNumber }).where(eq(providersTable.id, providerId));
+    await db.update(providersTable).set({ freeSlotNumber, isSubscriptionActive: true, professionalStatus: "approved" }).where(eq(providersTable.id, providerId));
     const [subscription] = await db
       .insert(providerSubscriptionsTable)
       .values({

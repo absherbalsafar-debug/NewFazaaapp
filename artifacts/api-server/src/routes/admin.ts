@@ -375,6 +375,7 @@ router.patch("/admin/providers/:id/verify", requireAuth, requireAdmin, async (re
   await db.update(providersTable).set({
     isVerified: parsed.data.isVerified,
     verificationStatus: parsed.data.isVerified ? "approved" : "rejected",
+    professionalStatus: parsed.data.isVerified ? "approved" : "rejected",
   }).where(eq(providersTable.id, id));
   res.json({ success: true, message: null });
 });
@@ -477,6 +478,7 @@ router.patch("/admin/subscription-payments/:id/review", requireAuth, requireAdmi
         startsAt: now,
         endsAt: ends.toISOString().slice(0, 10),
       }).where(eq(providerSubscriptionsTable.id, payment.subscriptionId));
+      await db.update(providersTable).set({ isSubscriptionActive: true, professionalStatus: "approved" }).where(eq(providersTable.id, payment.providerId));
     } else {
       await db.update(providerSubscriptionsTable).set({ status: "cancelled" }).where(eq(providerSubscriptionsTable.id, payment.subscriptionId));
     }

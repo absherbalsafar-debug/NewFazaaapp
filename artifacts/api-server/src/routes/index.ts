@@ -15,6 +15,7 @@ import advertisementsRouter from "./advertisements";
 import storageRouter from "./storage";
 import complaintsRouter from "./complaints";
 import verificationRouter from "./verification";
+import commissionsRouter from "./commissions";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(advertisementsRouter);
 router.use(storageRouter);
 router.use(complaintsRouter);
 router.use(verificationRouter);
+router.use(commissionsRouter);
 
 export default router;
