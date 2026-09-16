@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useLocation } from "wouter";
 import {
-  LogOut, ShieldCheck, MapPin, ChevronLeft, Settings, Bell,
+  LogOut, ShieldCheck, MapPin, ChevronLeft, Settings, Bell, Clock3, XCircle, FileCheck2,
   Heart, ClipboardList, CheckCircle2, Phone, Mail, Award,
   TrendingUp, Wallet, Star, Briefcase, Camera, Edit3
 } from "lucide-react";
   import { useUpdateProvider, useGetMyProvider } from "@/lib/api-client-react";
+import { apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -27,12 +28,26 @@ export default function Profile() {
   const [contactEditorOpen, setContactEditorOpen] = useState(false);
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [verification, setVerification] = useState<{ status: "draft" | "submitted" | "approved" | "rejected"; rejectionReason?: string | null; frontUploaded: boolean; backUploaded: boolean; unreadNotifications: number } | null>(null);
 
   useEffect(() => {
     if (!providerDetails) return;
     setPhone(providerDetails.phone ?? "");
     setWhatsapp(providerDetails.whatsapp ?? "");
   }, [providerDetails]);
+
+  useEffect(() => {
+    if (user?.role !== "provider") return;
+    Promise.all([apiRequest("/providers/me"), apiRequest("/notifications")]).then(([provider, notifications]) => {
+      setVerification({
+        status: provider.verificationStatus ?? "draft",
+        rejectionReason: provider.rejectionReason,
+        frontUploaded: Boolean(provider.identityDocumentsUploaded?.front),
+        backUploaded: Boolean(provider.identityDocumentsUploaded?.back),
+        unreadNotifications: notifications.filter((item: { isRead: boolean }) => !item.isRead).length,
+      });
+    }).catch(() => setVerification(null));
+  }, [user?.role]);
 
   const handleAvailabilityToggle = (checked: boolean) => {
     if (!user || !providerDetails) return;
@@ -228,6 +243,25 @@ export default function Profile() {
                 </div>
               ))}
             </div>
+
+            {verification && (() => {
+              const status = {
+                draft: { label: "الملف غير مكتمل", detail: "أكمل بياناتك وارفع وجهي البطاقة للبدء.", icon: FileCheck2, tone: "border-amber-200 bg-amber-50 text-amber-800", iconTone: "bg-amber-100 text-amber-700" },
+                submitted: { label: "قيد المراجعة", detail: "استلم فريق فزعة ملفك، وستصلك نتيجة المراجعة قريباً.", icon: Clock3, tone: "border-blue-200 bg-blue-50 text-blue-800", iconTone: "bg-blue-100 text-blue-700" },
+                approved: { label: "مقبول وموثق", detail: "ملفك ظاهر للعملاء مع علامة التوثيق.", icon: ShieldCheck, tone: "border-green-200 bg-green-50 text-green-800", iconTone: "bg-green-100 text-green-700" },
+                rejected: { label: "مرفوض ويحتاج تحديثاً", detail: verification.rejectionReason || "راجع بياناتك ووثائقك ثم أعد الإرسال.", icon: XCircle, tone: "border-red-200 bg-red-50 text-red-800", iconTone: "bg-red-100 text-red-700" },
+              }[verification.status];
+              const StatusIcon = status.icon;
+              return <div className={`border-t px-4 py-4 ${status.tone}`}>
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${status.iconTone}`}><StatusIcon className="h-5 w-5" /></div>
+                  <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="text-sm font-black">حالة الملف: {status.label}</p><span className="text-[10px] font-bold">{verification.unreadNotifications ? `${verification.unreadNotifications} جديد` : ""}</span></div><p className="mt-1 text-xs leading-5 opacity-80">{status.detail}</p>
+                    {verification.status !== "approved" && <div className="mt-3 flex gap-2 text-[10px] font-bold"><span className={verification.frontUploaded ? "text-green-700" : "opacity-60"}>{verification.frontUploaded ? "✓" : "○"} الوجه الأمامي</span><span className={verification.backUploaded ? "text-green-700" : "opacity-60"}>{verification.backUploaded ? "✓" : "○"} الوجه الخلفي</span></div>}
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2"><Button type="button" size="sm" onClick={() => navigate(verification.status === "approved" ? "/notifications" : "/verify")} className="h-9 rounded-lg bg-white/80 text-current shadow-none hover:bg-white">{verification.status === "approved" ? "عرض الإشعارات" : verification.status === "submitted" ? "عرض التفاصيل" : "إكمال الملف"}</Button>{verification.unreadNotifications > 0 && <Button type="button" size="sm" variant="ghost" onClick={() => navigate("/notifications")} className="h-9 rounded-lg text-current">فتح الإشعارات</Button>}</div>
+              </div>;
+            })()}
 
             <div className="border-t border-border/60 px-4 py-3">
               <div className="flex items-center justify-between gap-3">

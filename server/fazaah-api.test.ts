@@ -101,3 +101,24 @@ describe("Provider profile and identity requirements", () => {
     await expect(submit.json()).resolves.toMatchObject({ error: expect.stringContaining("الوجه الأمامي للهوية") });
   });
 });
+
+
+describe("Provider verification notifications", () => {
+  it("requires authentication and supports marking provider notifications read", async () => {
+    const baseUrl = await createTestBaseUrl();
+    const unauthorized = await fetch(`${baseUrl}/api/notifications`);
+    expect(unauthorized.status).toBe(401);
+
+    const phone = "777999302";
+    const send = await fetch(`${baseUrl}/api/auth/send-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) });
+    const { otp } = await send.json() as { otp: string };
+    const register = await fetch(`${baseUrl}/api/auth/verify-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, code: otp, name: "مهني إشعارات", role: "provider" }) });
+    const { token } = await register.json() as { token: string };
+    const headers = { authorization: `Bearer ${token}` };
+    const list = await fetch(`${baseUrl}/api/notifications`, { headers });
+    expect(list.status).toBe(200);
+    await expect(list.json()).resolves.toEqual([]);
+    const mark = await fetch(`${baseUrl}/api/notifications`, { method: "PATCH", headers: { ...headers, "content-type": "application/json" }, body: "{}" });
+    expect(mark.status).toBe(200);
+  });
+});

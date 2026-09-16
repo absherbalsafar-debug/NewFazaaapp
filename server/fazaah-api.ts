@@ -24,6 +24,7 @@ type Provider = {
   yearsExperience: number; isAvailable: boolean; isVerified: boolean; avatarUrl: string | null;
   phone: string; whatsapp: string; bio: string; distanceKm: number; hourlyRate?: number | null;
 };
+type ProviderNotification = { id: number; title: string; body: string; isRead: boolean; createdAt: string; type: "verification" | "system" };
 type IdentitySubmission = {
   frontKey?: string; backKey?: string; submittedAt?: string; reviewedAt?: string;
   status: VerificationStatus; rejectionReason?: string | null;
@@ -46,6 +47,13 @@ const sessions = new Map<string, FazaahUser>();
 const otps = new Map<string, OtpEntry>();
 const providerProfiles = new Map<number, Provider>();
 const identitySubmissions = new Map<number, IdentitySubmission>();
+const notificationsByUser = new Map<number, ProviderNotification[]>();
+let nextNotificationId = 1;
+function addNotification(userId: number, title: string, body: string) {
+  const items = notificationsByUser.get(userId) ?? [];
+  items.unshift({ id: nextNotificationId++, title, body, isRead: false, createdAt: new Date().toISOString(), type: "verification" });
+  notificationsByUser.set(userId, items.slice(0, 30));
+}
 let nextUserId = 1;
 
 function normalizePhone(value: unknown): string { return String(value ?? "").trim().replace(/\s+/g, ""); }
@@ -101,7 +109,7 @@ export function registerFazaahApi(app: Express) {
   app.patch("/api/providers/me", (req, res) => { const user = requireProvider(req, res); if (!user) return; const provider = providerFor(user); const body = req.body ?? {}; const category = categories.find((item) => item.id === Number(body.categoryId)); Object.assign(provider, { name: body.name?.trim() || provider.name, categoryId: category?.id ?? provider.categoryId, categoryName: category?.name ?? provider.categoryName, categoryIcon: category?.icon ?? provider.categoryIcon, city: body.city?.trim() || provider.city, district: body.district?.trim() || provider.district, bio: body.bio?.trim() ?? provider.bio, yearsExperience: body.yearsExperience == null ? provider.yearsExperience : Number(body.yearsExperience), hourlyRate: body.hourlyRate == null ? provider.hourlyRate : Number(body.hourlyRate), whatsapp: body.whatsapp?.trim() || provider.whatsapp }); res.json(providerForClient(provider)); });
   app.get("/api/providers/me/verification", (req, res) => { const user = requireProvider(req, res); if (!user) return; const verification = identitySubmissions.get(user.id); res.json({ status: verification?.status ?? "draft", frontUploaded: Boolean(verification?.frontKey), backUploaded: Boolean(verification?.backKey), submittedAt: verification?.submittedAt ?? null, rejectionReason: verification?.rejectionReason ?? null }); });
   app.post("/api/providers/me/identity/:side", express.raw({ type: () => true, limit: "8mb" }), async (req, res) => { const user = requireProvider(req, res); if (!user) return; const side = req.params.side; const contentType = String(req.headers["content-type"] ?? ""); const body = req.body as Buffer; if (side !== "front" && side !== "back") return sendError(res, 400, "جهة الهوية غير صحيحة"); if (!contentType.match(/^image\/(jpeg|png|webp)$/i)) return sendError(res, 400, "ارفع صورة JPG أو PNG أو WEBP فقط"); if (!Buffer.isBuffer(body) || body.length < 100 || body.length > 8 * 1024 * 1024) return sendError(res, 400, "حجم صورة الهوية غير صالح"); try { const upload = await storagePut(`private/identity/${user.id}/${side}-${Date.now()}.bin`, body, contentType); const current = identitySubmissions.get(user.id) ?? { status: "draft" as VerificationStatus }; current[`${side}Key` as "frontKey" | "backKey"] = upload.key; current.status = current.status === "approved" ? "draft" : current.status; identitySubmissions.set(user.id, current); res.json({ success: true, side, uploaded: true }); } catch (error) { sendError(res, 500, error instanceof Error ? error.message : "تعذر حفظ وثيقة الهوية"); } });
-  app.post("/api/providers/me/verification/submit", (req, res) => { const user = requireProvider(req, res); if (!user) return; const provider = providerFor(user); const verification = identitySubmissions.get(user.id) ?? { status: "draft" as VerificationStatus }; const missing: string[] = []; if (!provider.name.trim()) missing.push("اسم الملف"); if (!provider.city.trim()) missing.push("المدينة"); if (!provider.bio.trim()) missing.push("نبذة الخدمة"); if (!provider.categoryId) missing.push("مجال الخدمة"); if (!verification?.frontKey) missing.push("الوجه الأمامي للهوية"); if (!verification?.backKey) missing.push("الوجه الخلفي للهوية"); if (missing.length) return res.status(400).json({ error: `أكمل المتطلبات التالية: ${missing.join("، ")}` }); verification.status = "submitted"; verification.submittedAt = new Date().toISOString(); identitySubmissions.set(user.id, verification); res.json({ success: true, status: verification.status, message: "تم إرسال ملفك للمراجعة" }); });
+  app.post("/api/providers/me/verification/submit", (req, res) => { const user = requireProvider(req, res); if (!user) return; const provider = providerFor(user); const verification = identitySubmissions.get(user.id) ?? { status: "draft" as VerificationStatus }; const missing: string[] = []; if (!provider.name.trim()) missing.push("اسم الملف"); if (!provider.city.trim()) missing.push("المدينة"); if (!provider.bio.trim()) missing.push("نبذة الخدمة"); if (!provider.categoryId) missing.push("مجال الخدمة"); if (!verification?.frontKey) missing.push("الوجه الأمامي للهوية"); if (!verification?.backKey) missing.push("الوجه الخلفي للهوية"); if (missing.length) return res.status(400).json({ error: `أكمل المتطلبات التالية: ${missing.join("، ")}` }); verification.status = "submitted"; verification.submittedAt = new Date().toISOString(); identitySubmissions.set(user.id, verification); addNotification(user.id, "تم استلام ملفك للمراجعة", "وصل ملفك ووثائقك إلى فريق فزعة، وسنخبرك عند صدور القرار."); res.json({ success: true, status: verification.status, message: "تم إرسال ملفك للمراجعة" }); });
 
   app.get("/api/providers", (req, res) => { const search = String(req.query.search ?? "").trim().toLowerCase(); const categoryId = Number(req.query.categoryId ?? 0); const filtered = publicProviders().filter((provider) => { const matchesSearch = !search || `${provider.name} ${provider.categoryName} ${provider.bio}`.toLowerCase().includes(search); return matchesSearch && (!categoryId || provider.categoryId === categoryId); }); res.json({ providers: filtered, total: filtered.length, page: 1, pageSize: filtered.length }); });
   app.get("/api/providers/top-rated", (_req, res) => res.json(publicProviders().slice().sort((a, b) => b.rating - a.rating)));
@@ -127,5 +135,8 @@ export function registerFazaahApi(app: Express) {
   });
 
   app.get("/api/home-feed", (_req, res) => res.json({ categories, providers: publicProviders().slice(0, 3), recentRequests: [] }));
-  app.get("/api/ads/featured", (_req, res) => res.json([])); app.get("/api/subscription-plans", (_req, res) => res.json([])); app.get("/api/notifications", (_req, res) => res.json([])); app.get("/api/requests", (_req, res) => res.json([])); app.get("/api/favorites", (_req, res) => res.json([])); app.get("/api/conversations", (_req, res) => res.json([]));
+  app.get("/api/ads/featured", (_req, res) => res.json([])); app.get("/api/subscription-plans", (_req, res) => res.json([]));
+  app.get("/api/notifications", (req, res) => { const user = currentUser(req); if (!user) return sendError(res, 401, "يجب تسجيل الدخول أولاً"); res.json(notificationsByUser.get(user.id) ?? []); });
+  app.patch("/api/notifications", (req, res) => { const user = currentUser(req); if (!user) return sendError(res, 401, "يجب تسجيل الدخول أولاً"); const items = notificationsByUser.get(user.id) ?? []; items.forEach((item) => { item.isRead = true; }); notificationsByUser.set(user.id, items); res.json({ success: true }); });
+  app.get("/api/requests", (_req, res) => res.json([])); app.get("/api/favorites", (_req, res) => res.json([])); app.get("/api/conversations", (_req, res) => res.json([]));
 }
