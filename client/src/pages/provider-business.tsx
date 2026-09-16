@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -65,7 +65,7 @@ const advertisementPackages = [
   { id: "homepage", title: "إعلان رئيسي", days: 30, placement: "الصفحة الرئيسية والفئة", description: "أوسع ظهور داخل فزعة" },
 ] as const;
 
-export default function ProviderBusiness() {
+function ProviderBusinessContent() {
   const { toast } = useToast();
   const { data: business, isLoading: businessLoading } = useGetProviderBusiness();
   const { data: plans = [] } = useListSubscriptionPlans();
@@ -362,4 +362,43 @@ export default function ProviderBusiness() {
       </section>
     </main>
   );
+}
+
+type ProviderBusinessBoundaryState = { hasError: boolean; message?: string };
+
+class ProviderBusinessBoundary extends React.Component<React.PropsWithChildren, ProviderBusinessBoundaryState> {
+  state: ProviderBusinessBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ProviderBusinessBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[ProviderBusiness] Render error", error);
+    this.setState({ hasError: true, message: error.message });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="flex min-h-[100dvh] items-center justify-center bg-background px-5 text-center" dir="rtl">
+          <section className="w-full max-w-md rounded-3xl border border-border bg-card p-7 shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-2xl">!</div>
+            <h1 className="mt-4 text-xl font-black">تعذر فتح الاشتراك والإعلانات</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">حدث خطأ مؤقت أثناء تحميل لوحة الأعمال. أعد المحاولة أو ارجع إلى لوحة المهني.</p>
+            {this.state.message && <p className="mt-3 rounded-lg bg-muted p-2 text-[10px] text-muted-foreground" dir="ltr">{this.state.message}</p>}
+            <div className="mt-5 flex gap-2">
+              <Button className="flex-1 rounded-xl" onClick={() => this.setState({ hasError: false })}>إعادة المحاولة</Button>
+              <Link href="/provider-dashboard" className="flex flex-1 items-center justify-center rounded-xl border border-border px-4 text-sm font-bold">لوحة المهني</Link>
+            </div>
+          </section>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function ProviderBusiness() {
+  return <ProviderBusinessBoundary><ProviderBusinessContent /></ProviderBusinessBoundary>;
 }
