@@ -1,177 +1,340 @@
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Arabic:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --font-sans: 'Alexandria', 'Cairo', 'IBM Plex Arabic', sans-serif;
+  --radius: 0.875rem;
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  color-scheme: light;
+  /* Background: Very light blue-grey */
+  --background: 220 25% 97%;
+  --foreground: 215 60% 12%;
+  --border: 215 20% 88%;
+  --input: 215 20% 90%;
+  --ring: 215 75% 28%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 215 60% 12%;
+  --card-border: 215 20% 90%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 60% 12%;
+  --popover-border: 215 20% 90%;
+
+  /* Primary: Deep Navy Blue */
+  --primary: 215 75% 22%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary: Soft Blue-Grey */
+  --secondary: 215 20% 92%;
+  --secondary-foreground: 215 75% 22%;
+
+  --muted: 215 20% 93%;
+  --muted-foreground: 215 25% 45%;
+
+  /* Accent: Gold */
+  --accent: 42 95% 48%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  color-scheme: dark;
+  --background: 218 30% 8%;
+  --foreground: 215 15% 92%;
+  --border: 215 20% 18%;
+  --input: 215 20% 16%;
+  --ring: 215 65% 45%;
+
+  --card: 218 25% 11%;
+  --card-foreground: 215 15% 92%;
+  --card-border: 215 20% 18%;
+
+  --popover: 218 25% 11%;
+  --popover-foreground: 215 15% 92%;
+  --popover-border: 215 20% 18%;
+
+  --primary: 215 65% 45%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 215 20% 16%;
+  --secondary-foreground: 215 15% 92%;
+
+  --muted: 215 20% 15%;
+  --muted-foreground: 215 15% 55%;
+
+  --accent: 42 90% 52%;
+  --accent-foreground: 218 30% 8%;
+
+  --destructive: 0 62% 40%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+/*
+ * Theme compatibility for legacy screens.
+ * A few older screens still use literal white/light utility classes. Keep
+ * those screens visually coherent with the semantic theme tokens in dark mode
+ * until each surface is migrated to bg-card/bg-background.
+ */
+.dark .bg-white,
+.dark [class~="bg-white/60"],
+.dark [class~="bg-white/80"],
+.dark [class~="bg-white/90"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark [class~="border-white"],
+.dark [class~="border-white/20"],
+.dark [class~="border-white/70"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark [class~="bg-[#f7f8fa]"],
+.dark [class~="bg-[#f5f3ee]"],
+.dark [class~="bg-[#fbfaf7]"],
+.dark [class~="bg-[#f3f6fa]"],
+.dark [class~="bg-[#eef2f6]"],
+.dark [class~="bg-[#f4f7fa]"],
+.dark [class~="bg-[#f1eee7]"],
+.dark [class~="bg-[#fff5db]"],
+.dark [class~="bg-[#faf9f6]"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark [class~="border-[#ddd8ce]"],
+.dark [class~="border-[#d4d9df]"],
+.dark [class~="border-[#dedad1]"],
+.dark [class~="border-[#dfe5ec]"],
+.dark [class~="border-[#e5e9ee]"],
+.dark [class~="border-[#d9d5cd]"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark [class~="text-[#0e2f62]"],
+.dark [class~="text-[#162a2a]"],
+.dark [class~="text-[#35577f]"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark [class~="text-[#60728a]"],
+.dark [class~="text-[#637087]"],
+.dark [class~="text-[#67758a]"],
+.dark [class~="text-[#708198]"],
+.dark [class~="text-[#77766f]"],
+.dark [class~="text-[#8c897f]"],
+.dark [class~="text-[#8b897f]"],
+.dark [class~="text-[#8e8b82]"],
+.dark [class~="text-[#8da0b5]"],
+.dark [class~="text-[#9a978e]"],
+.dark [class~="text-[#aaa69b]"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark [class~="text-[#a17b29]"],
+.dark [class~="text-[#b08625]"] {
+  color: hsl(var(--accent)) !important;
+}
+
+.dark [class~="bg-[#f5b916]"],
+.dark [class~="bg-[#e4c778]"] {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.dark [class~="text-[#e4c778]"],
+.dark [class~="text-[#f5b916]"] {
+  color: hsl(var(--accent)) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-purple-50,
+.dark .bg-gray-50,
+.dark .bg-slate-50,
+.dark .bg-indigo-50 {
+  background-color: hsl(var(--primary) / 0.14) !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-yellow-50,
+.dark .bg-orange-50 {
+  background-color: hsl(var(--accent) / 0.16) !important;
+}
+
+.dark .bg-green-50,
+.dark .bg-emerald-50 {
+  background-color: hsl(142 45% 28% / 0.28) !important;
+}
+
+.dark .bg-red-50 {
+  background-color: hsl(0 55% 28% / 0.28) !important;
+}
+
+.dark .bg-amber-100,
+.dark .bg-yellow-100,
+.dark .bg-orange-100 {
+  background-color: hsl(var(--accent) / 0.22) !important;
+}
+
+.dark .bg-green-100,
+.dark .bg-emerald-100 {
+  background-color: hsl(142 45% 28% / 0.34) !important;
+}
+
+.dark .bg-red-100 {
+  background-color: hsl(0 55% 28% / 0.34) !important;
+}
+
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-purple-200,
+.dark .border-gray-200,
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-yellow-100,
+.dark .border-yellow-200,
+.dark .border-green-100,
+.dark .border-green-200,
+.dark .border-red-100,
+.dark .border-red-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-blue-800,
+.dark .text-purple-600,
+.dark .text-purple-800,
+.dark .text-gray-600,
+.dark .text-green-600,
+.dark .text-green-700,
+.dark .text-emerald-600,
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-yellow-600,
+.dark .text-red-500,
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark img[src="/assets/fazaah-logo.png"] {
+  filter: brightness(1.65) saturate(1.12);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-  }
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
+    @apply font-sans antialiased bg-background text-foreground;
+    font-feature-settings: "kern" 1;
   }
 }
 
-@layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
-  .container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
-    padding-right: 1rem;
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-
-  .flex {
-    min-height: 0;
-    min-width: 0;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
-
-  @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
-    }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-
-  @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
-    }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(215 75% 30%) 100%);
+  }
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(42 95% 48%) 0%, hsl(38 90% 55%) 100%);
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(42 95% 48%), hsl(38 90% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass {
+    background: color-mix(in srgb, hsl(var(--primary)) 8%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .card-shadow {
+    box-shadow: 0 2px 12px rgba(15, 32, 66, 0.08), 0 1px 3px rgba(15, 32, 66, 0.06);
+  }
+  .card-shadow-lg {
+    box-shadow: 0 8px 32px rgba(15, 32, 66, 0.12), 0 2px 8px rgba(15, 32, 66, 0.08);
+  }
+  .premium-surface {
+    background:
+      radial-gradient(circle at 100% 0%, hsl(var(--accent) / 0.09), transparent 26%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(220 25% 95%));
+  }
+  .premium-card {
+    border: 1px solid hsl(var(--primary) / 0.08);
+    box-shadow: 0 12px 30px hsl(var(--primary) / 0.07), 0 2px 6px hsl(var(--primary) / 0.04);
+  }
+  .app-stage {
+    position: relative;
+    isolation: isolate;
+    overflow-x: clip;
+  }
+  .app-stage::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 16rem;
+    height: 16rem;
+    border-radius: 9999px;
+    background: hsl(var(--accent) / 0.045);
+    filter: blur(42px);
+    pointer-events: none;
   }
 }
