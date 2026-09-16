@@ -68,7 +68,10 @@ export default function AuthPhone() {
         method: 'POST',
         body: JSON.stringify({ phone: phone.trim() }),
       });
-      if (data.otp) setDevOtp(data.otp);
+      if (data.otp) {
+        setDevOtp(data.otp);
+        setOtp(data.otp);
+      }
       setStep("otp");
       toast({ title: "تم الإرسال", description: "تم إرسال رمز التحقق إلى هاتفك" });
     } catch (err: any) {
@@ -219,9 +222,11 @@ export default function AuthPhone() {
                     أرسلنا الرمز إلى <span className="font-bold text-primary" dir="ltr">{phone}</span>
                   </p>
                   {devOtp && (
-                    <p className="mb-3 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-[#8a6925]">
-                      رمز التطوير: <span className="font-mono font-bold">{devOtp}</span>
-                    </p>
+                    <div className="mb-3 rounded-2xl border-2 border-accent/50 bg-accent/15 px-4 py-3 text-center shadow-[0_8px_20px_rgba(161,123,41,0.10)]" role="status" aria-live="polite">
+                      <p className="text-[10px] font-bold text-[#8a6925]">رمز التحقق الخاص بالتجربة</p>
+                      <p className="mt-1 font-mono text-3xl font-black tracking-[0.32em] text-primary" dir="ltr">{devOtp}</p>
+                      <p className="mt-1 text-[10px] text-[#8a6925]">تم تعبئته تلقائياً في الخانة أدناه</p>
+                    </div>
                   )}
                   <Input
                     type="text"
