@@ -11,5 +11,7 @@ export type SubscriptionPaymentInputPlan = typeof SubscriptionPaymentInputPlan[k
 
 export const SubscriptionPaymentInputPlan = {
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;

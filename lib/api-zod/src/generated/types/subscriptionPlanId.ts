@@ -12,5 +12,7 @@ export type SubscriptionPlanId = typeof SubscriptionPlanId[keyof typeof Subscrip
 export const SubscriptionPlanId = {
   free: 'free',
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;

@@ -27,6 +27,8 @@ export type SubscriptionPlanId = typeof SubscriptionPlanId[keyof typeof Subscrip
 export const SubscriptionPlanId = {
   free: 'free',
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;
 
@@ -45,6 +47,8 @@ export type ProviderSubscriptionPlan = typeof ProviderSubscriptionPlan[keyof typ
 export const ProviderSubscriptionPlan = {
   free: 'free',
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;
 
@@ -76,6 +80,8 @@ export type SubscriptionPaymentPlan = typeof SubscriptionPaymentPlan[keyof typeo
 
 export const SubscriptionPaymentPlan = {
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;
 
@@ -159,6 +165,7 @@ export type UploadUrlResponseMetadata = {
   size: number;
   contentType: string;
 };
+
 export interface UploadUrlResponse {
   uploadURL: string;
   objectPath: string;
@@ -170,6 +177,8 @@ export type SubscriptionPaymentInputPlan = typeof SubscriptionPaymentInputPlan[k
 
 export const SubscriptionPaymentInputPlan = {
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;
 

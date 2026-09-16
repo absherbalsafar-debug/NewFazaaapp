@@ -471,7 +471,7 @@ router.patch("/admin/subscription-payments/:id/review", requireAuth, requireAdmi
   if (payment.subscriptionId) {
     if (parsed.data.status === "approved") {
       const ends = new Date(now);
-      ends.setMonth(ends.getMonth() + (payment.plan === "yearly" ? 12 : 1));
+      ends.setMonth(ends.getMonth() + (payment.plan === "yearly" ? 12 : payment.plan === "half_yearly" ? 6 : payment.plan === "quarterly" ? 3 : 1));
       await db.update(providerSubscriptionsTable).set({
         status: "active",
         startsAt: now,

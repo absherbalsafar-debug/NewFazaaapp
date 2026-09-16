@@ -11,5 +11,7 @@ export type SubscriptionPaymentPlan = typeof SubscriptionPaymentPlan[keyof typeo
 
 export const SubscriptionPaymentPlan = {
   monthly: 'monthly',
+  quarterly: 'quarterly',
+  half_yearly: 'half_yearly',
   yearly: 'yearly',
 } as const;

@@ -14,6 +14,8 @@ import * as zod from 'zod';
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
+
+
 /**
  * @summary Register new user
  */
@@ -535,7 +537,7 @@ export const TrackProviderContactClickResponse = zod.object({
  * @summary List available provider subscription plans
  */
 export const ListSubscriptionPlansResponseItem = zod.object({
-  "id": zod.enum(['free', 'monthly', 'yearly']),
+  "id": zod.enum(['free', 'monthly', 'quarterly', 'half_yearly', 'yearly']),
   "name": zod.string(),
   "monthlyPrice": zod.number(),
   "yearlyPrice": zod.number(),
@@ -587,7 +589,7 @@ export const RequestUploadUrlResponse = zod.object({
 export const GetProviderBusinessResponse = zod.object({
   "subscription": zod.object({
   "id": zod.number(),
-  "plan": zod.enum(['free', 'monthly', 'yearly']),
+  "plan": zod.enum(['free', 'monthly', 'quarterly', 'half_yearly', 'yearly']),
   "status": zod.enum(['active', 'pending', 'expired', 'cancelled']),
   "freeSlotNumber": zod.number().nullable(),
   "startsAt": zod.string().nullable(),
@@ -610,7 +612,7 @@ export const GetProviderBusinessResponse = zod.object({
 export const ListProviderPaymentsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
-  "plan": zod.enum(['monthly', 'yearly']),
+  "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
   "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),
@@ -630,7 +632,7 @@ export const createSubscriptionPaymentBodyTransactionReferenceMin = 3;
 
 
 export const CreateSubscriptionPaymentBody = zod.object({
-  "plan": zod.enum(['monthly', 'yearly']),
+  "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
   "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
   "transactionReference": zod.string().min(createSubscriptionPaymentBodyTransactionReferenceMin),
   "receiptUrl": zod.string().nullish()
@@ -1007,7 +1009,7 @@ export const GetServiceStatsResponse = zod.array(GetServiceStatsResponseItem)
 export const ListAdminSubscriptionPaymentsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
-  "plan": zod.enum(['monthly', 'yearly']),
+  "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
   "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),
@@ -1070,7 +1072,7 @@ export const ReviewSubscriptionPaymentBody = zod.object({
 export const ReviewSubscriptionPaymentResponse = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
-  "plan": zod.enum(['monthly', 'yearly']),
+  "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
   "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),

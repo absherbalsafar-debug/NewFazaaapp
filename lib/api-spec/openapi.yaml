@@ -1090,7 +1090,7 @@ components:
       properties:
         id:
           type: string
-          enum: [free, monthly, yearly]
+          enum: [free, monthly, quarterly, half_yearly, yearly]
         name:
           type: string
         monthlyPrice:
@@ -1112,7 +1112,7 @@ components:
           type: integer
         plan:
           type: string
-          enum: [free, monthly, yearly]
+          enum: [free, monthly, quarterly, half_yearly, yearly]
         status:
           type: string
           enum: [active, pending, expired, cancelled]
@@ -1135,7 +1135,7 @@ components:
           type: integer
         plan:
           type: string
-          enum: [monthly, yearly]
+          enum: [monthly, quarterly, half_yearly, yearly]
         wallet:
           type: string
           enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
@@ -1220,7 +1220,7 @@ components:
       properties:
         plan:
           type: string
-          enum: [monthly, yearly]
+          enum: [monthly, quarterly, half_yearly, yearly]
         wallet:
           type: string
           enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
