@@ -40,7 +40,7 @@ export default function Register() {
   const registerMutation = useRegister();
   const [step, setStep] = useState(1);
   const [portfolioFiles, setPortfolioFiles] = useState<string[]>([]);
-  const form = useForm<FormValues>({ defaultValues: { name: "", phone: "", password: "", role: "provider", categoryId: null, city: "", district: "", bio: "", yearsExperience: 1 } });
+  const form = useForm<FormValues>({ defaultValues: { name: "", phone: "", password: "", role: new URLSearchParams(window.location.search).get("role") === "provider" ? "provider" : "client", categoryId: null, city: "", district: "", bio: "", yearsExperience: 1 } });
   const role = form.watch("role");
 
   const next = async () => {
@@ -49,6 +49,14 @@ export default function Register() {
     }
     if (step === 2 && (!form.getValues("categoryId") || !form.getValues("city"))) {
       toast({ title: "أكمل بياناتك المهنية", description: "اختر التخصص والمدينة على الأقل.", variant: "destructive" }); return;
+    }
+    if (step === 1 && role === "client") {
+      const values = form.getValues();
+      registerMutation.mutate({ data: { ...values, role: "client" } as any }, {
+        onSuccess: (res) => { setAuth(res.token, res.user as any); setLocation("/"); },
+        onError: (error) => toast({ title: "تعذر إنشاء الحساب", description: error.message, variant: "destructive" }),
+      });
+      return;
     }
     if (step < 4) { setStep(step + 1); return; }
     const values = form.getValues();
@@ -81,7 +89,7 @@ export default function Register() {
           {step === 2 && <div className="space-y-4"><h2 className="text-lg font-black">البيانات المهنية</h2><Select value={String(form.watch("categoryId") ?? "")} onValueChange={(value) => form.setValue("categoryId", Number(value))}><SelectTrigger><SelectValue placeholder="اختر المهنة والتخصص" /></SelectTrigger><SelectContent>{categories?.map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.icon} {category.name}</SelectItem>)}</SelectContent></Select><div className="grid grid-cols-2 gap-3"><Input placeholder="المحافظة / المدينة" {...form.register("city")} /><Input placeholder="المديرية" {...form.register("district")} /></div><Input type="number" placeholder="سنوات الخبرة" {...form.register("yearsExperience")} /><Textarea placeholder="نبذة مهنية مختصرة عن خبرتك وخدماتك" className="min-h-28" {...form.register("bio")} /></div>}
           {step === 3 && <div className="space-y-4"><h2 className="text-lg font-black">معرض الأعمال</h2><p className="text-sm leading-6 text-muted-foreground">أضف صورًا لأعمالك السابقة. يمكنك استكمال الرفع من لوحة التوثيق بعد إنشاء الحساب.</p><label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5"><ImagePlus className="h-8 w-8 text-primary" /><span className="text-sm font-bold">إضافة صور الأعمال</span><input type="file" accept="image/*" multiple className="sr-only" onChange={(event) => setPortfolioFiles(Array.from(event.target.files ?? []).map((file) => file.name))} /></label>{portfolioFiles.length > 0 && <div className="rounded-xl bg-muted p-3 text-xs">تم اختيار {portfolioFiles.length} صور: {portfolioFiles.join("، ")}</div>}<p className="text-xs text-muted-foreground">الصور لا تُعرض للعملاء قبل اعتماد ملفك.</p></div>}
           {step === 4 && <div className="space-y-4"><h2 className="text-lg font-black">التوثيق والتحقق</h2><div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">بعد إنشاء الحساب يجب رفع الهوية من الأمام والخلف، صورة شخصية واضحة، وصور الأعمال أو الشهادات. سيظل حسابك قيد المراجعة ولن يظهر للعملاء قبل الموافقة.</div><div className="space-y-3 text-sm">{["هوية شخصية أمامية وخلفية", "صورة شخصية واضحة", "صور أعمال سابقة", "شهادات أو تراخيص إن وجدت"].map((label) => <div key={label} className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />{label}</div>)}</div></div>}
-          <div className="mt-6 flex gap-3">{step > 1 && <Button type="button" variant="outline" className="h-12 flex-1 rounded-xl" onClick={() => setStep(step - 1)}><ArrowRight className="ml-2 h-4 w-4" />رجوع</Button>}<Button type="button" className="h-12 flex-1 rounded-xl font-bold" onClick={next} disabled={registerMutation.isPending}>{registerMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : step === 4 ? "إنشاء الحساب والمتابعة" : <>التالي<ArrowLeft className="mr-2 h-4 w-4" /></>}</Button></div>
+          <div className="mt-6 flex gap-3">{step > 1 && <Button type="button" variant="outline" className="h-12 flex-1 rounded-xl" onClick={() => setStep(step - 1)}><ArrowRight className="ml-2 h-4 w-4" />رجوع</Button>}<Button type="button" className="h-12 flex-1 rounded-xl font-bold" onClick={next} disabled={registerMutation.isPending}>{registerMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : step === 4 ? "إنشاء الحساب والمتابعة" : step === 1 && role === "client" ? "إنشاء حساب" : <>التالي<ArrowLeft className="mr-2 h-4 w-4" /></>}</Button></div>
         </div>
         <p className="text-center text-sm text-muted-foreground">لديك حساب بالفعل؟ <Link href="/login" className="font-bold text-primary">سجل دخول</Link></p>
       </div>
