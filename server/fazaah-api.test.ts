@@ -80,3 +80,24 @@ describe("Fazaah OTP display flag", () => {
     }
   });
 });
+
+
+describe("Provider profile and identity requirements", () => {
+  it("saves the provider profile and requires both ID sides before submission", async () => {
+    const baseUrl = await createTestBaseUrl();
+    const phone = "777999301";
+    const send = await fetch(`${baseUrl}/api/auth/send-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) });
+    const { otp } = await send.json() as { otp: string };
+    const register = await fetch(`${baseUrl}/api/auth/verify-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, code: otp, name: "مهني اختبار", role: "provider" }) });
+    const registered = await register.json() as { token: string };
+    const auth = { authorization: `Bearer ${registered.token}`, "content-type": "application/json" };
+
+    const save = await fetch(`${baseUrl}/api/providers/me`, { method: "PATCH", headers: auth, body: JSON.stringify({ name: "مؤسسة اختبار", categoryId: 1, city: "صنعاء", district: "حدة", bio: "خدمات كهرباء منزلية بخبرة موثوقة للعملاء", yearsExperience: 5 }) });
+    expect(save.status).toBe(200);
+    await expect(save.json()).resolves.toMatchObject({ name: "مؤسسة اختبار", city: "صنعاء" });
+
+    const submit = await fetch(`${baseUrl}/api/providers/me/verification/submit`, { method: "POST", headers: auth, body: "{}" });
+    expect(submit.status).toBe(400);
+    await expect(submit.json()).resolves.toMatchObject({ error: expect.stringContaining("الوجه الأمامي للهوية") });
+  });
+});
