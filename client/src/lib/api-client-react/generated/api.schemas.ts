@@ -849,6 +849,10 @@ city?: string | null;
 /**
  * @nullable
  */
+isVerified?: boolean | null;
+/**
+ * @nullable
+ */
 district?: string | null;
 /**
  * @nullable

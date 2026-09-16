@@ -3,7 +3,7 @@ import { useListProviders, useListCategories } from "@/lib/api-client-react";
 import { ProviderCard } from "@/components/provider-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal, X, CheckCircle2, Zap } from "lucide-react";
+import { Search, SlidersHorizontal, X, CheckCircle2, Zap, LocateFixed } from "lucide-react";
 import { CitySelector } from "@/components/city-selector";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,20 +18,34 @@ export default function Providers() {
   const [filterCity, setFilterCity] = useState("");
   const [filterAvailable, setFilterAvailable] = useState(false);
   const [filterVerified, setFilterVerified] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const { data: categories } = useListCategories();
   const { data: providersPage, isLoading } = useListProviders({
     categoryId: activeCategory ?? undefined,
     search: search || undefined,
     city: filterCity || undefined,
-  }, { query: { queryKey: ['providers', activeCategory, search, filterCity, filterAvailable] } });
+    isVerified: filterVerified || undefined,
+    lat: userLocation?.lat,
+    lng: userLocation?.lng,
+    sortBy: userLocation ? "distance" : undefined,
+  }, { query: { queryKey: ['providers', activeCategory, search, filterCity, filterAvailable, filterVerified, userLocation] } });
 
   const providers = providersPage?.providers ?? [];
   const filtered = providers
     .filter(p => !filterVerified || p.isVerified)
     .filter(p => !filterAvailable || p.isAvailable);
 
-  const hasActiveFilters = filterCity || filterAvailable || filterVerified;
+  const hasActiveFilters = Boolean(filterCity || filterAvailable || filterVerified || userLocation);
+
+  const locateMe = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      () => undefined,
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   return (
     <div className="pb-28 min-h-[100dvh] bg-background" dir="rtl">
@@ -76,6 +90,7 @@ export default function Providers() {
           >
             <div className="max-w-md mx-auto px-4 py-4 space-y-3">
               <CitySelector value={filterCity} onChange={setFilterCity} placeholder="جميع المحافظات" />
+              <button type="button" onClick={locateMe} className={`flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-colors ${userLocation ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground"}`}><LocateFixed className="h-4 w-4" />{userLocation ? "مرتبة حسب موقعي الحالي" : "استخدم موقعي للترتيب"}</button>
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilterAvailable(!filterAvailable)}
@@ -98,7 +113,7 @@ export default function Providers() {
               </div>
               {hasActiveFilters && (
                 <button
-                  onClick={() => { setFilterCity(""); setFilterAvailable(false); setFilterVerified(false); }}
+                  onClick={() => { setFilterCity(""); setFilterAvailable(false); setFilterVerified(false); setUserLocation(null); }}
                   className="w-full h-9 rounded-xl border border-destructive/30 text-destructive text-sm flex items-center justify-center gap-2"
                 >
                   <X className="w-4 h-4" />

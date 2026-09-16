@@ -176,7 +176,29 @@ export function registerFazaahApi(app: Express) {
   app.post("/api/providers/me/identity/:side", express.raw({ type: () => true, limit: "8mb" }), async (req, res) => { const user = requireProvider(req, res); if (!user) return; const side = req.params.side; const contentType = String(req.headers["content-type"] ?? ""); const body = req.body as Buffer; if (side !== "front" && side !== "back") return sendError(res, 400, "جهة الهوية غير صحيحة"); if (!contentType.match(/^image\/(jpeg|png|webp)$/i)) return sendError(res, 400, "ارفع صورة JPG أو PNG أو WEBP فقط"); if (!Buffer.isBuffer(body) || body.length < 100 || body.length > 8 * 1024 * 1024) return sendError(res, 400, "حجم صورة الهوية غير صالح"); try { const upload = await storagePut(`private/identity/${user.id}/${side}-${Date.now()}.bin`, body, contentType); const current = identitySubmissions.get(user.id) ?? { status: "draft" as VerificationStatus }; current[`${side}Key` as "frontKey" | "backKey"] = upload.key; current.status = current.status === "approved" ? "draft" : current.status; identitySubmissions.set(user.id, current); res.json({ success: true, side, uploaded: true }); } catch (error) { sendError(res, 500, error instanceof Error ? error.message : "تعذر حفظ وثيقة الهوية"); } });
   app.post("/api/providers/me/verification/submit", (req, res) => { const user = requireProvider(req, res); if (!user) return; const provider = providerFor(user); const verification = identitySubmissions.get(user.id) ?? { status: "draft" as VerificationStatus }; const missing: string[] = []; if (!provider.name.trim()) missing.push("اسم الملف"); if (!provider.city.trim()) missing.push("المدينة"); if (!provider.bio.trim()) missing.push("نبذة الخدمة"); if (!provider.categoryId) missing.push("مجال الخدمة"); if (!verification?.frontKey) missing.push("الوجه الأمامي للهوية"); if (!verification?.backKey) missing.push("الوجه الخلفي للهوية"); if (missing.length) return res.status(400).json({ error: `أكمل المتطلبات التالية: ${missing.join("، ")}` }); verification.status = "submitted"; verification.submittedAt = new Date().toISOString(); identitySubmissions.set(user.id, verification); addNotification(user.id, "تم استلام ملفك للمراجعة", "وصل ملفك ووثائقك إلى فريق فزعة، وسنخبرك عند صدور القرار."); res.json({ success: true, status: verification.status, message: "تم إرسال ملفك للمراجعة" }); });
 
-  app.get("/api/providers", (req, res) => { const search = String(req.query.search ?? "").trim().toLowerCase(); const categoryId = Number(req.query.categoryId ?? 0); const filtered = publicProviders().filter((provider) => { const matchesSearch = !search || `${provider.name} ${provider.categoryName} ${provider.bio}`.toLowerCase().includes(search); return matchesSearch && (!categoryId || provider.categoryId === categoryId); }); res.json({ providers: filtered, total: filtered.length, page: 1, pageSize: filtered.length }); });
+  app.get("/api/providers", (req, res) => {
+    const search = String(req.query.search ?? "").trim().toLowerCase();
+    const categoryId = Number(req.query.categoryId ?? 0);
+    const verifiedOnly = String(req.query.isVerified ?? "") === "true";
+    const userLat = Number(req.query.lat);
+    const userLng = Number(req.query.lng);
+    const hasLocation = Number.isFinite(userLat) && Number.isFinite(userLng);
+    const toRadians = (value: number) => value * Math.PI / 180;
+    const distanceKm = (provider: Provider) => {
+      const point = provider as Provider & { lat?: number; lng?: number };
+      if (!hasLocation || point.lat == null || point.lng == null) return null;
+      const dLat = toRadians(point.lat - userLat); const dLng = toRadians(point.lng - userLng);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(userLat)) * Math.cos(toRadians(point.lat)) * Math.sin(dLng / 2) ** 2;
+      return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+    };
+    const filtered = publicProviders().filter((provider) => {
+      const matchesSearch = !search || `${provider.name} ${provider.categoryName} ${provider.bio}`.toLowerCase().includes(search);
+      const matchesCategory = !categoryId || provider.categoryId === categoryId;
+      return matchesSearch && matchesCategory && (!verifiedOnly || provider.isVerified);
+    }).map((provider) => ({ ...provider, distanceKm: distanceKm(provider) }))
+      .sort((a, b) => req.query.sortBy === "distance" ? (a.distanceKm ?? Number.MAX_SAFE_INTEGER) - (b.distanceKm ?? Number.MAX_SAFE_INTEGER) : 0);
+    res.json({ providers: filtered, total: filtered.length, page: 1, pageSize: filtered.length });
+  });
   app.get("/api/providers/top-rated", (_req, res) => res.json(publicProviders().slice().sort((a, b) => b.rating - a.rating)));
   app.get("/api/providers/most-requested", (_req, res) => res.json(publicProviders()));
   app.get("/api/providers/nearby", (_req, res) => res.json(publicProviders()));

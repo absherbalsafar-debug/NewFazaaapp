@@ -149,3 +149,19 @@ describe("Provider subscriptions, ads, and portfolio access", () => {
     await expect(portfolio.json()).resolves.toEqual([]);
   });
 });
+
+
+describe("Provider search filters", () => {
+  it("filters public providers by city and verified status", async () => {
+    const baseUrl = await createTestBaseUrl();
+    const verified = await fetch(`${baseUrl}/api/providers?isVerified=true&city=${encodeURIComponent("صنعاء")}`);
+    expect(verified.status).toBe(200);
+    const verifiedBody = await verified.json() as { providers: Array<{ city: string; isVerified: boolean }> };
+    expect(verifiedBody.providers.length).toBeGreaterThan(0);
+    expect(verifiedBody.providers.every((provider) => provider.city === "صنعاء" && provider.isVerified)).toBe(true);
+
+    const distant = await fetch(`${baseUrl}/api/providers?lat=15.3694&lng=44.1910&sortBy=distance`);
+    expect(distant.status).toBe(200);
+    await expect(distant.json()).resolves.toHaveProperty("providers");
+  });
+});
