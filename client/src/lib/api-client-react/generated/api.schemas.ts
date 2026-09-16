@@ -86,6 +86,7 @@ export const SubscriptionPaymentWallet = {
   jeeb: 'jeeb',
   floosk: 'floosk',
   jawali: 'jawali',
+  mobile_money: 'mobile_money',
   cash: 'cash',
   one_cash: 'one_cash',
   hasib: 'hasib',
@@ -126,6 +127,7 @@ export const PaymentWalletSettingWallet = {
   jeeb: 'jeeb',
   floosk: 'floosk',
   jawali: 'jawali',
+  mobile_money: 'mobile_money',
   cash: 'cash',
   one_cash: 'one_cash',
   hasib: 'hasib',
@@ -180,6 +182,7 @@ export const SubscriptionPaymentInputWallet = {
   jeeb: 'jeeb',
   floosk: 'floosk',
   jawali: 'jawali',
+  mobile_money: 'mobile_money',
   cash: 'cash',
   one_cash: 'one_cash',
   hasib: 'hasib',
@@ -994,4 +997,3 @@ lat?: number | null;
  */
 lng?: number | null;
 };
-

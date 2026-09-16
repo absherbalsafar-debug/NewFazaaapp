@@ -122,3 +122,30 @@ describe("Provider verification notifications", () => {
     expect(mark.status).toBe(200);
   });
 });
+
+
+describe("Provider subscriptions, ads, and portfolio access", () => {
+  it("assigns free access for a new provider but blocks public business features until verification", async () => {
+    const baseUrl = await createTestBaseUrl();
+    const plans = await fetch(`${baseUrl}/api/subscription-plans`);
+    expect(plans.status).toBe(200);
+    await expect(plans.json()).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ id: "monthly" }), expect.objectContaining({ id: "yearly" })]));
+    const wallets = await fetch(`${baseUrl}/api/payment-wallets`);
+    await expect(wallets.json()).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ wallet: "jeeb" }), expect.objectContaining({ wallet: "mobile_money" }), expect.objectContaining({ wallet: "one_cash" })]));
+
+    const phone = "777999303";
+    const send = await fetch(`${baseUrl}/api/auth/send-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) });
+    const { otp } = await send.json() as { otp: string };
+    const register = await fetch(`${baseUrl}/api/auth/verify-otp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, code: otp, name: "مهني اشتراك اختبار", role: "provider", nationalId: "12345678", certificate: "دبلوم", city: "صنعاء" }) });
+    const { token } = await register.json() as { token: string };
+    const headers = { authorization: `Bearer ${token}`, "content-type": "application/json" };
+    const business = await fetch(`${baseUrl}/api/providers/me/business`, { headers });
+    expect(business.status).toBe(200);
+    await expect(business.json()).resolves.toMatchObject({ subscription: { plan: "free", status: "active" } });
+    const ad = await fetch(`${baseUrl}/api/advertisements`, { method: "POST", headers, body: JSON.stringify({ title: "إعلان اختبار", city: "صنعاء", budget: 1000, plan: "standard", durationDays: 7 }) });
+    expect(ad.status).toBe(403);
+    const portfolio = await fetch(`${baseUrl}/api/providers/me/portfolio`, { headers });
+    expect(portfolio.status).toBe(200);
+    await expect(portfolio.json()).resolves.toEqual([]);
+  });
+});

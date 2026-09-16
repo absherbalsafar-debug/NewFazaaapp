@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, LocateFixed, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,10 @@ export default function AuthPhone() {
   const [categoryId, setCategoryId] = useState("");
   const [bio, setBio] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
+  const [nationalId, setNationalId] = useState("");
+  const [certificate, setCertificate] = useState("");
+  const [workLocation, setWorkLocation] = useState("");
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -114,6 +118,22 @@ export default function AuthPhone() {
       toast({ title: "حدد مجال خدمتك", description: "اختر المجال الذي ستقدم خدماته للعملاء", variant: "destructive" });
       return;
     }
+    if (role === "provider" && name.trim().split(/\s+/).length < 4) {
+      toast({ title: "أدخل الاسم الرباعي", description: "اكتب الاسم الأول واسم الأب والجد واسم العائلة.", variant: "destructive" });
+      return;
+    }
+    if (role === "provider" && !/^\d{8,14}$/.test(nationalId.trim())) {
+      toast({ title: "رقم الهوية مطلوب", description: "أدخل رقم الهوية الوطنية من 8 إلى 14 رقماً.", variant: "destructive" });
+      return;
+    }
+    if (role === "provider" && !certificate.trim()) {
+      toast({ title: "اكتب الشهادة أو المؤهل", description: "هذا الحقل مطلوب في تسجيل المهني.", variant: "destructive" });
+      return;
+    }
+    if (role === "provider" && !city.trim() && !coordinates) {
+      toast({ title: "حدد موقع العمل", description: "اختر المدينة أو اسمح للتطبيق بتحديد موقعك.", variant: "destructive" });
+      return;
+    }
     if (role === "provider" && bio.trim().length < 10) {
       toast({ title: "اكتب نبذة عن خدمتك", description: "أضف وصفاً مختصراً لا يقل عن 10 أحرف", variant: "destructive" });
       return;
@@ -131,6 +151,11 @@ export default function AuthPhone() {
           categoryId: categoryId ? Number(categoryId) : undefined,
           bio: bio.trim() || undefined,
           yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+          nationalId: role === "provider" ? nationalId.trim() : undefined,
+          certificate: role === "provider" ? certificate.trim() : undefined,
+          workLocation: role === "provider" ? workLocation.trim() || city.trim() : undefined,
+          lat: coordinates?.lat,
+          lng: coordinates?.lng,
         }),
       });
       login(data.token, data.user);
@@ -321,6 +346,33 @@ export default function AuthPhone() {
                       onChange={(event) => setYearsExperience(event.target.value)}
                       className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
                     />
+                    <Input
+                      inputMode="numeric"
+                      placeholder="رقم الهوية الوطنية (إلزامي)"
+                      value={nationalId}
+                      onChange={(event) => setNationalId(event.target.value.replace(/\D/g, ""))}
+                      className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
+                    />
+                    <Input
+                      placeholder="الشهادة أو المؤهل (إلزامي)"
+                      value={certificate}
+                      onChange={(event) => setCertificate(event.target.value)}
+                      className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
+                    />
+                    <Input
+                      placeholder="اسم موقع العمل أو الحي"
+                      value={workLocation}
+                      onChange={(event) => setWorkLocation(event.target.value)}
+                      className="h-14 rounded-2xl border-[#d4d9df] bg-[#fbfaf7] text-sm shadow-none focus-visible:ring-primary"
+                    />
+                    <Button type="button" variant="outline" onClick={() => {
+                      if (!navigator.geolocation) { toast({ title: "الموقع غير مدعوم", description: "اكتب المدينة يدوياً.", variant: "destructive" }); return; }
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => { setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude }); setWorkLocation("تم تحديد موقع العمل تلقائياً"); toast({ title: "تم تحديد الموقع", description: "سيُستخدم موقعك لتحسين ظهورك للعملاء القريبين." }); },
+                        () => toast({ title: "لم يتم السماح بالموقع", description: "اختر المدينة واكتب موقع العمل يدوياً.", variant: "destructive" }),
+                        { enableHighAccuracy: true, timeout: 10000 },
+                      );
+                    }} className="h-12 w-full rounded-2xl border-dashed"><LocateFixed className="ml-2 h-4 w-4" />السماح بتحديد موقع العمل تلقائياً{coordinates ? " ✓" : ""}</Button>
                   </div>
                 )}
                 <div className="relative">

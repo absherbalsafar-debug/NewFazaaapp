@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -15,6 +15,7 @@ import {
   Sparkles,
   Upload,
   WalletCards,
+  ImagePlus,
 } from "lucide-react";
 import {
   type AdvertisementInput,
@@ -32,15 +33,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/auth";
 
 const wallets: Array<{ value: SubscriptionPaymentInput["wallet"]; label: string }> = [
   { value: "jeeb", label: "جيب" },
   { value: "floosk", label: "فلوسك" },
   { value: "jawali", label: "جوالي" },
+  { value: "mobile_money", label: "موبايل موني" },
   { value: "cash", label: "كاش" },
   { value: "one_cash", label: "ون كاش" },
-  { value: "hasib", label: "حاسب" },
-  { value: "easy", label: "إيزي" },
 ];
 
 const paymentStatus: Record<string, string> = {
@@ -79,6 +80,10 @@ export default function ProviderBusiness() {
   const [transactionReference, setTransactionReference] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [portfolio, setPortfolio] = useState<Array<{ id: number; imageUrl: string; description?: string | null }>>([]);
+  const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
+  const [portfolioDescription, setPortfolioDescription] = useState("");
+  const [portfolioBusy, setPortfolioBusy] = useState(false);
   const [adForm, setAdForm] = useState({
     title: "",
     description: "",
@@ -92,6 +97,26 @@ export default function ProviderBusiness() {
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
   const selectedWallet = useMemo(() => paymentWallets.find((item) => item.wallet === wallet), [paymentWallets, wallet]);
   const selectedAdPackage = advertisementPackages.find((item) => item.id === adForm.plan) ?? advertisementPackages[0];
+
+  useEffect(() => {
+    apiRequest("/providers/me/portfolio").then((items) => setPortfolio(Array.isArray(items) ? items : [])).catch(() => setPortfolio([]));
+  }, []);
+
+  const submitPortfolio = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!portfolioFile) { toast({ title: "اختر صورة العمل", description: "أرفق صورة واضحة من أعمالك السابقة.", variant: "destructive" }); return; }
+    if (!/^image\/(jpeg|png|webp)$/i.test(portfolioFile.type) || portfolioFile.size > 8 * 1024 * 1024) { toast({ title: "صيغة الصورة غير صالحة", description: "JPG أو PNG أو WEBP حتى 8 ميجابايت.", variant: "destructive" }); return; }
+    setPortfolioBusy(true);
+    try {
+      const upload = await requestUploadUrl({ name: portfolioFile.name, size: portfolioFile.size, contentType: portfolioFile.type });
+      const response = await fetch(upload.uploadURL, { method: "PUT", headers: { "Content-Type": portfolioFile.type }, body: portfolioFile });
+      if (!response.ok) throw new Error("تعذر رفع الصورة");
+      const item = await apiRequest("/providers/me/portfolio", { method: "POST", body: JSON.stringify({ imageUrl: `/manus-storage/${upload.objectPath}`, description: portfolioDescription.trim() || null }) });
+      setPortfolio((items) => [item, ...items]); setPortfolioFile(null); setPortfolioDescription("");
+      toast({ title: "تمت إضافة العمل", description: "سيظهر للعملاء بعد توثيق ملفك وتفعيل اشتراكك." });
+    } catch (error) { toast({ title: "تعذر إضافة العمل", description: error instanceof Error ? error.message : "حاول مرة أخرى", variant: "destructive" }); }
+    finally { setPortfolioBusy(false); }
+  };
 
   const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -194,7 +219,7 @@ export default function ProviderBusiness() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs text-white/65">اشتراكك الحالي</p>
-              <h2 className="mt-2 text-2xl font-black">{isFree ? "مجاني لأول 300 مهني" : subscription.status === "active" ? `اشتراك ${subscription.plan === "yearly" ? "سنوي" : "شهري"}` : "لا يوجد اشتراك فعال"}</h2>
+              <h2 className="mt-2 text-2xl font-black">{isFree ? "مجاني لأول 250 مهنياً" : subscription.status === "active" ? `اشتراك ${subscription.plan === "yearly" ? "سنوي" : "شهري"}` : "لا يوجد اشتراك فعال"}</h2>
               <p className="mt-2 text-xs leading-5 text-white/70">
                 {isFree ? `مقعدك المجاني رقم ${subscription.freeSlotNumber ?? "—"} · لا ينتهي` : subscription.endsAt ? `ينتهي في ${subscription.endsAt}` : "أرسل طلب اشتراك ليتم تفعيله بعد المراجعة"}
               </p>
@@ -283,6 +308,16 @@ export default function ProviderBusiness() {
         <section className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3"><Receipt className="h-5 w-5 text-primary" /><div><h2 className="font-black">طلبات الدفع السابقة</h2><p className="mt-1 text-xs text-muted-foreground">لا يتم تفعيل أي اشتراك قبل الاعتماد.</p></div></div>
           {payments.length === 0 ? <p className="mt-5 text-center text-sm text-muted-foreground">لا توجد عمليات دفع حتى الآن.</p> : <div className="mt-4 space-y-2">{payments.slice(0, 5).map((payment) => <div key={payment.id} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-3 text-xs"><span>{payment.transactionReference} · {payment.plan === "yearly" ? "سنوي" : "شهري"}{payment.receiptUrl && <a className="mr-2 font-bold text-primary underline" href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/storage${payment.receiptUrl}`} target="_blank" rel="noreferrer">الإيصال</a>}</span><span className="shrink-0 font-bold text-muted-foreground">{paymentStatus[payment.status] ?? payment.status}</span></div>)}</div>}
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-3"><ImagePlus className="h-5 w-5 text-primary" /><div><h2 className="font-black">معرض أعمالك</h2><p className="mt-1 text-xs text-muted-foreground">أضف صوراً حقيقية من أعمالك لتظهر للعملاء بعد التوثيق والاشتراك.</p></div></div>
+          <form onSubmit={submitPortfolio} className="mt-4 space-y-3">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-3 text-sm"><ImagePlus className="h-5 w-5 text-primary" /><span className="min-w-0 flex-1"><span className="block font-bold">{portfolioFile ? portfolioFile.name : "اختيار صورة عمل"}</span><span className="block text-xs text-muted-foreground">JPG أو PNG أو WEBP — حتى 8 ميجابايت</span></span><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => setPortfolioFile(event.target.files?.[0] ?? null)} /><Upload className="h-4 w-4 text-muted-foreground" /></label>
+            <Textarea value={portfolioDescription} onChange={(event) => setPortfolioDescription(event.target.value)} placeholder="وصف مختصر للعمل (اختياري)" className="rounded-xl" />
+            <Button type="submit" variant="outline" className="h-11 w-full rounded-xl" disabled={portfolioBusy}><Upload className="ml-2 h-4 w-4" />{portfolioBusy ? "جاري رفع الصورة..." : "إضافة إلى المعرض"}</Button>
+          </form>
+          {portfolio.length === 0 ? <p className="mt-5 text-center text-xs text-muted-foreground">لم تضف أعمالاً بعد.</p> : <div className="mt-5 grid grid-cols-2 gap-3">{portfolio.map((item) => <figure key={item.id} className="overflow-hidden rounded-xl border border-border"><img src={item.imageUrl} alt={item.description || "عمل مهني"} className="aspect-square w-full object-cover" />{item.description && <figcaption className="p-2 text-[11px] text-muted-foreground">{item.description}</figcaption>}</figure>)}</div>}
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-5">
