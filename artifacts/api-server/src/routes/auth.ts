@@ -111,6 +111,7 @@ router.post("/auth/verify-otp", async (req, res): Promise<void> => {
           district: "",
           bio: bio?.trim() ?? "",
           yearsExperience: yearsExperience ? Number(yearsExperience) : 1,
+          verificationStatus: "pending",
         });
       }
     }
@@ -184,6 +185,7 @@ router.post("/auth/register/email", async (req, res): Promise<void> => {
       hourlyRate: hourlyRate != null ? String(hourlyRate) : null,
       lat: lat != null ? String(lat) : null,
       lng: lng != null ? String(lng) : null,
+      verificationStatus: "pending",
     });
   }
 
@@ -304,6 +306,7 @@ router.post("/auth/google", async (req, res): Promise<void> => {
             district: "",
             bio: "",
             yearsExperience: 1,
+            verificationStatus: "pending",
           });
         }
       }

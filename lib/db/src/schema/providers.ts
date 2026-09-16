@@ -1,8 +1,10 @@
-import { pgTable, serial, text, integer, numeric, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, serial, text, integer, numeric, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
 import { categoriesTable } from "./categories";
+
+export const verificationStatusEnum = pgEnum("verification_status", ["pending", "approved", "rejected"]);
 
 export const providersTable = pgTable("providers", {
   id: serial("id").primaryKey(),
@@ -16,6 +18,7 @@ export const providersTable = pgTable("providers", {
   whatsapp: text("whatsapp"),
   freeSlotNumber: integer("free_slot_number"),
   isVerified: boolean("is_verified").notNull().default(false),
+  verificationStatus: verificationStatusEnum("verification_status").notNull().default("pending"),
   isAvailable: boolean("is_available").notNull().default(true),
   lat: numeric("lat", { precision: 10, scale: 7 }),
   lng: numeric("lng", { precision: 10, scale: 7 }),

@@ -11,6 +11,11 @@ export const reviewsTable = pgTable("reviews", {
   providerId: integer("provider_id").notNull().references(() => providersTable.id, { onDelete: "cascade" }),
   requestId: integer("request_id").references(() => serviceRequestsTable.id, { onDelete: "set null" }),
   rating: integer("rating").notNull(),
+  quality: integer("quality").notNull().default(0),
+  punctuality: integer("punctuality").notNull().default(0),
+  professionalism: integer("professionalism").notNull().default(0),
+  communication: integer("communication").notNull().default(0),
+  priceFairness: integer("price_fairness").notNull().default(0),
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

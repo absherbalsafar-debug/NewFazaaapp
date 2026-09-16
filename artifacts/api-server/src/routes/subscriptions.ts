@@ -34,6 +34,22 @@ export const subscriptionPlans = [
     benefits: ["أولوية في النتائج", "صور أعمال أكثر", "إحصائيات الملف", "شارة مشترك"],
   },
   {
+    id: "quarterly",
+    name: "اشتراك 3 أشهر",
+    monthlyPrice: 0,
+    yearlyPrice: 40,
+    description: "ظهور أفضل وأدوات متابعة الأداء لمدة ثلاثة أشهر",
+    benefits: ["أولوية في النتائج", "صور أعمال أكثر", "إحصائيات الملف", "شارة مشترك"],
+  },
+  {
+    id: "half_yearly",
+    name: "اشتراك 6 أشهر",
+    monthlyPrice: 0,
+    yearlyPrice: 75,
+    description: "اشتراك نصف سنوي بظهور أعلى",
+    benefits: ["كل مزايا الشهري", "أولوية أعلى", "شارة مشترك"],
+  },
+  {
     id: "yearly",
     name: "اشتراك سنوي",
     monthlyPrice: 0,

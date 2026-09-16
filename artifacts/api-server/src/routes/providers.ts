@@ -36,6 +36,7 @@ function providerSummary(p: any, user: any, cat: any, distanceKm?: number | null
     yearsExperience: p.yearsExperience,
     hourlyRate: p.hourlyRate ? parseFloat(p.hourlyRate) : null,
     isVerified: p.isVerified,
+    verificationStatus: p.verificationStatus,
     isAvailable: p.isAvailable,
     distanceKm: distanceKm ?? null,
     lat: p.lat ? parseFloat(p.lat) : null,
@@ -86,6 +87,7 @@ router.get("/providers/nearby", async (req, res): Promise<void> => {
     .where(
       and(
         eq(usersTable.status, "active"),
+        eq(providersTable.verificationStatus, "approved"),
         categoryId ? eq(providersTable.categoryId, categoryId) : undefined,
       )
     );
@@ -120,6 +122,7 @@ router.get("/providers/top-rated", async (req, res): Promise<void> => {
     .where(
       and(
         eq(usersTable.status, "active"),
+        eq(providersTable.verificationStatus, "approved"),
         categoryId ? eq(providersTable.categoryId, categoryId) : undefined,
       )
     )
@@ -141,7 +144,7 @@ router.get("/providers/most-requested", async (req, res): Promise<void> => {
     .from(providersTable)
     .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
     .innerJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
-    .where(eq(usersTable.status, "active"))
+    .where(and(eq(usersTable.status, "active"), eq(providersTable.verificationStatus, "approved")))
     .orderBy(desc(providersTable.completedJobs))
     .limit(limit ?? 10);
 
@@ -156,7 +159,7 @@ router.get("/providers", optionalAuth, async (req: AuthRequest, res): Promise<vo
   }
   const { categoryId, city, district, search, minRating, sortBy, page = 1, limit = 20 } = params.data;
 
-  const conditions: any[] = [eq(usersTable.status, "active")];
+  const conditions: any[] = [eq(usersTable.status, "active"), eq(providersTable.verificationStatus, "approved")];
   if (categoryId) conditions.push(eq(providersTable.categoryId, categoryId));
   if (city) conditions.push(ilike(providersTable.city, `%${city}%`));
   if (district) conditions.push(ilike(providersTable.district, `%${district}%`));
@@ -235,6 +238,7 @@ router.get("/providers/me", requireAuth, async (req: AuthRequest, res): Promise<
     phone: row.u.phone,
     whatsapp: row.p.whatsapp ?? null,
     isVerified: row.p.isVerified,
+    verificationStatus: row.p.verificationStatus,
     isAvailable: row.p.isAvailable,
     lat: row.p.lat ? parseFloat(row.p.lat) : null,
     lng: row.p.lng ? parseFloat(row.p.lng) : null,
@@ -253,7 +257,7 @@ router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promis
     .from(providersTable)
     .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
     .innerJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
-    .where(eq(providersTable.id, id));
+    .where(and(eq(providersTable.id, id), eq(providersTable.verificationStatus, "approved")));
 
   if (!row) { res.status(404).json({ error: "Provider not found" }); return; }
 
@@ -287,6 +291,7 @@ router.get("/providers/:id", optionalAuth, async (req: AuthRequest, res): Promis
     phone: row.u.phone,
     whatsapp: row.p.whatsapp ?? null,
     isVerified: row.p.isVerified,
+    verificationStatus: row.p.verificationStatus,
     isAvailable: row.p.isAvailable,
     lat: row.p.lat ? parseFloat(row.p.lat) : null,
     lng: row.p.lng ? parseFloat(row.p.lng) : null,

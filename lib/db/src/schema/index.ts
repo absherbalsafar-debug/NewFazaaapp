@@ -13,3 +13,5 @@ export * from "./subscriptions";
 export * from "./payments";
 export * from "./advertisements";
 export * from "./provider_metrics";
+export * from "./provider_verification";
+export * from "./complaints";

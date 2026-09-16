@@ -372,7 +372,10 @@ router.patch("/admin/providers/:id/verify", requireAuth, requireAdmin, async (re
   const parsed = VerifyProviderBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  await db.update(providersTable).set({ isVerified: parsed.data.isVerified }).where(eq(providersTable.id, id));
+  await db.update(providersTable).set({
+    isVerified: parsed.data.isVerified,
+    verificationStatus: parsed.data.isVerified ? "approved" : "rejected",
+  }).where(eq(providersTable.id, id));
   res.json({ success: true, message: null });
 });
 

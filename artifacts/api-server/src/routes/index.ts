@@ -13,6 +13,8 @@ import adminRouter from "./admin";
 import subscriptionsRouter from "./subscriptions";
 import advertisementsRouter from "./advertisements";
 import storageRouter from "./storage";
+import complaintsRouter from "./complaints";
+import verificationRouter from "./verification";
 
 const router: IRouter = Router();
 
@@ -30,5 +32,7 @@ router.use(adminRouter);
 router.use(subscriptionsRouter);
 router.use(advertisementsRouter);
 router.use(storageRouter);
+router.use(complaintsRouter);
+router.use(verificationRouter);
 
 export default router;

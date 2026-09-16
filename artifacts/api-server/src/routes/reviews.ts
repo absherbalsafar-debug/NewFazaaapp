@@ -26,6 +26,11 @@ router.get("/providers/:id/reviews", async (req, res): Promise<void> => {
     providerId: r.providerId,
     requestId: r.requestId ?? null,
     rating: r.rating,
+    quality: r.quality,
+    punctuality: r.punctuality,
+    professionalism: r.professionalism,
+    communication: r.communication,
+    priceFairness: r.priceFairness,
     comment: r.comment ?? null,
     createdAt: r.createdAt.toISOString(),
   })));
@@ -34,6 +39,19 @@ router.get("/providers/:id/reviews", async (req, res): Promise<void> => {
 router.post("/reviews", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const parsed = CreateReviewBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const score = (key: string) => {
+    const value = Number(req.body?.[key] ?? parsed.data.rating);
+    return Number.isInteger(value) && value >= 1 && value <= 5 ? value : null;
+  };
+  const quality = score("quality");
+  const punctuality = score("punctuality");
+  const professionalism = score("professionalism");
+  const communication = score("communication");
+  const priceFairness = score("priceFairness");
+  if ([quality, punctuality, professionalism, communication, priceFairness].some((value) => value == null)) {
+    res.status(400).json({ error: "يجب تقييم الجودة والالتزام والاحترافية والتعامل والسعر من 1 إلى 5" });
+    return;
+  }
 
   const [request] = await db
     .select()
@@ -62,6 +80,11 @@ router.post("/reviews", requireAuth, async (req: AuthRequest, res): Promise<void
     providerId: parsed.data.providerId,
     requestId: parsed.data.requestId ?? null,
     rating: parsed.data.rating,
+    quality: quality!,
+    punctuality: punctuality!,
+    professionalism: professionalism!,
+    communication: communication!,
+    priceFairness: priceFairness!,
     comment: parsed.data.comment ?? null,
   }).returning();
 
@@ -89,6 +112,11 @@ router.post("/reviews", requireAuth, async (req: AuthRequest, res): Promise<void
     providerId: review.providerId,
     requestId: review.requestId ?? null,
     rating: review.rating,
+    quality: review.quality,
+    punctuality: review.punctuality,
+    professionalism: review.professionalism,
+    communication: review.communication,
+    priceFairness: review.priceFairness,
     comment: review.comment ?? null,
     createdAt: review.createdAt.toISOString(),
   });
