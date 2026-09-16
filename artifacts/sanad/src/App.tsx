@@ -35,6 +35,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminProviders from "@/pages/admin/providers";
 import AdminBusiness from "@/pages/admin/business";
+import AdminComplaints from "@/pages/admin/complaints";
 import ProviderDashboard from "@/pages/provider-dashboard";
 import ProviderBusiness from "@/pages/provider-business";
 import Earnings from "@/pages/earnings";
@@ -65,6 +66,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => (
         <a href="/admin/users" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">المستخدمين</a>
         <a href="/admin/providers" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">المهنيين</a>
         <a href="/admin/business" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">الاشتراكات والإعلانات</a>
+        <a href="/admin/complaints" className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/8 hover:text-primary">الشكاوى والنزاعات</a>
       </nav>
       <a href="/" className="mt-auto block rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-primary">← العودة للتطبيق</a>
     </aside>
@@ -136,6 +138,11 @@ function Router() {
       <Route path="/admin/business">
         <ProtectedRoute allowedRoles={['admin']}>
           <AdminLayout><AdminBusiness /></AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/complaints">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout><AdminComplaints /></AdminLayout>
         </ProtectedRoute>
       </Route>
 
