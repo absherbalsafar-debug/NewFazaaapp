@@ -55,3 +55,28 @@ describe("Fazaah OTP authentication", () => {
     await expect(me.json()).resolves.toMatchObject({ phone: "777999101", name: "مستخدم اختبار" });
   });
 });
+
+
+describe("Fazaah OTP display flag", () => {
+  it("returns OTP when FAZAAH_SHOW_DEV_OTP is enabled even in production mode", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousFlag = process.env.FAZAAH_SHOW_DEV_OTP;
+    process.env.NODE_ENV = "production";
+    process.env.FAZAAH_SHOW_DEV_OTP = "true";
+    try {
+      const baseUrl = await createTestBaseUrl();
+      const response = await fetch(`${baseUrl}/api/auth/send-otp`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phone: "777999202" }),
+      });
+      expect(response.status).toBe(200);
+      const body = await response.json() as { otp?: string };
+      expect(body.otp).toMatch(/^\d{6}$/);
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      if (previousFlag === undefined) delete process.env.FAZAAH_SHOW_DEV_OTP;
+      else process.env.FAZAAH_SHOW_DEV_OTP = previousFlag;
+    }
+  });
+});
