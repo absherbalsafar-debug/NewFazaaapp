@@ -851,6 +851,14 @@ categoryId?: number | null;
 /**
  * @nullable
  */
+specializationId?: number | null;
+/**
+ * @nullable
+ */
+serviceId?: number | null;
+/**
+ * @nullable
+ */
 city?: string | null;
 /**
  * @nullable

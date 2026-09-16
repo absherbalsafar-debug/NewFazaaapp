@@ -126,6 +126,8 @@ export const GetMyProviderResponse = zod.object({
  */
 export const ListProvidersQueryParams = zod.object({
   "categoryId": zod.coerce.number().nullish(),
+  "specializationId": zod.coerce.number().nullish(),
+  "serviceId": zod.coerce.number().nullish(),
   "city": zod.coerce.string().nullish(),
   "district": zod.coerce.string().nullish(),
   "search": zod.coerce.string().nullish(),

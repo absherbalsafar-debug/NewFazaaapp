@@ -158,6 +158,14 @@ paths:
           in: query
           schema:
             type: ["integer", "null"]
+        - name: specializationId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: serviceId
+          in: query
+          schema:
+            type: ["integer", "null"]
         - name: city
           in: query
           schema:

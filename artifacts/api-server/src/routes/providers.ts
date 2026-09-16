@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable, providerMetricsTable } from "@workspace/db";
-import { eq, and, ne, gte, ilike, or, desc, asc, count, sql } from "drizzle-orm";
+import { db, providersTable, usersTable, categoriesTable, favoritesTable, portfolioItemsTable, serviceRequestsTable, providerMetricsTable, providerServicesTable, providerSpecializationsTable, servicesTable, specializationsTable } from "@workspace/db";
+import { eq, and, ne, gte, ilike, or, desc, asc, count, sql, exists } from "drizzle-orm";
 import { requireAuth, optionalAuth, type AuthRequest } from "../middlewares/auth";
 import {
   ListProvidersQueryParams,
@@ -161,10 +161,12 @@ router.get("/providers", optionalAuth, async (req: AuthRequest, res): Promise<vo
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const { categoryId, city, district, search, minRating, sortBy, page = 1, limit = 20 } = params.data;
+  const { categoryId, specializationId, serviceId, city, district, search, minRating, sortBy, page = 1, limit = 20 } = params.data;
 
   const conditions: any[] = [eq(usersTable.status, "active"), eq(providersTable.verificationStatus, "approved"), eq(providersTable.isSubscriptionActive, true)];
   if (categoryId) conditions.push(eq(providersTable.categoryId, categoryId));
+  if (specializationId) conditions.push(exists(db.select({ id: providerSpecializationsTable.id }).from(providerSpecializationsTable).where(and(eq(providerSpecializationsTable.providerId, providersTable.id), eq(providerSpecializationsTable.specializationId, specializationId)))));
+  if (serviceId) conditions.push(exists(db.select({ id: providerServicesTable.id }).from(providerServicesTable).where(and(eq(providerServicesTable.providerId, providersTable.id), eq(providerServicesTable.serviceId, serviceId)))));
   if (city) conditions.push(ilike(providersTable.city, `%${city}%`));
   if (district) conditions.push(ilike(providersTable.district, `%${district}%`));
   if (minRating) conditions.push(gte(sql`CAST(${providersTable.rating} AS DECIMAL)`, minRating));
@@ -174,6 +176,8 @@ router.get("/providers", optionalAuth, async (req: AuthRequest, res): Promise<vo
         ilike(usersTable.name, `%${search}%`),
         ilike(providersTable.city, `%${search}%`),
         ilike(providersTable.district, `%${search}%`),
+        exists(db.select({ id: providerServicesTable.id }).from(providerServicesTable).innerJoin(servicesTable, eq(providerServicesTable.serviceId, servicesTable.id)).where(and(eq(providerServicesTable.providerId, providersTable.id), ilike(servicesTable.name, `%${search}%`)))),
+        exists(db.select({ id: providerSpecializationsTable.id }).from(providerSpecializationsTable).innerJoin(specializationsTable, eq(providerSpecializationsTable.specializationId, specializationsTable.id)).where(and(eq(providerSpecializationsTable.providerId, providersTable.id), ilike(specializationsTable.name, `%${search}%`)))),
       )
     );
   }

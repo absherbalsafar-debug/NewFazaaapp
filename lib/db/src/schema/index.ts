@@ -17,3 +17,4 @@ export * from "./provider_verification";
 export * from "./complaints";
 export * from "./commissions";
 export * from "./advertisement_metrics";
+export * from "./professional_taxonomy";
