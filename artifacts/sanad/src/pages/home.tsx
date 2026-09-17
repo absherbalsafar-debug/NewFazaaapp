@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { useGetHomeFeed, useListFeaturedAdvertisements } from "@workspace/api-client-react";
+import { useGetHomeFeed, useListFeaturedAdvertisements } from "@/lib/api-client-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import {
@@ -52,8 +52,9 @@ export default function Home() {
   const { data: feed, isLoading } = useGetHomeFeed({ lat: undefined, lng: undefined });
   const { data: featuredAds = [] } = useListFeaturedAdvertisements();
 
-  const categories = feed?.categories?.slice(0, 8) ?? [];
-  const recentRequests = feed?.recentRequests ?? [];
+  const categories = Array.isArray(feed?.categories) ? feed.categories.slice(0, 8) : [];
+  const recentRequests = Array.isArray(feed?.recentRequests) ? feed.recentRequests : [];
+  const featuredAdvertisements = Array.isArray(featuredAds) ? featuredAds : [];
 
   function handleSearch() {
     if (searchQuery.trim()) navigate(`/providers?search=${encodeURIComponent(searchQuery)}`);
@@ -92,7 +93,7 @@ export default function Home() {
       <main className="mx-auto max-w-lg space-y-5 px-4 pt-4">
         <section className="relative h-[178px] overflow-hidden rounded-[25px] bg-[#eef2f6] shadow-[0_10px_25px_rgba(14,47,98,0.08)]">
           <img
-            src="/assets/fazaah-worker-hero.png"
+            src="/manus-storage/fazaah-worker-hero_81d8686e.png"
             alt=""
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
@@ -172,7 +173,7 @@ export default function Home() {
 
         <section className="relative h-[104px] overflow-hidden rounded-[20px] bg-[#fff5db] shadow-[0_8px_18px_rgba(14,47,98,0.05)]">
           <img
-            src="/assets/fazaah-worker-hero.png"
+            src="/manus-storage/fazaah-worker-hero_81d8686e.png"
             alt=""
             className="absolute left-0 top-0 h-full w-[53%] object-cover object-bottom"
           />
@@ -189,14 +190,14 @@ export default function Home() {
           </div>
         </section>
 
-        {featuredAds.length > 0 && (
+        {featuredAdvertisements.length > 0 && (
           <section>
             <div className="mb-3 flex items-center justify-between">
               <span className="rounded-full bg-[#f5b916]/15 px-2 py-1 text-[10px] font-bold text-[#8c6b00]">إعلانات مدفوعة</span>
               <h2 className="text-[15px] font-black text-[#0e2f62]">مهنيون مميزون</h2>
             </div>
             <div className="space-y-2.5">
-              {featuredAds.slice(0, 3).map((ad) => (
+              {featuredAdvertisements.slice(0, 3).map((ad) => (
                 <Link key={ad.id} href={`/providers/${ad.providerId}`}>
                   <div className="overflow-hidden rounded-[20px] border-2 border-[#eadba7] bg-gradient-to-l from-[#fffdf4] to-[#fff8e8] shadow-[0_8px_18px_rgba(14,47,98,0.08)]">
                     {ad.imageUrl && <img src={ad.imageUrl} alt="" className="h-28 w-full object-cover" />}

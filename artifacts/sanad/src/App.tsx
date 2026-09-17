@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +46,35 @@ import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import SponsoredPreview from "@/pages/sponsored-preview";
 
+class RuntimeErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Fazaa page error", error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[#f5f3ee] px-6 text-center" dir="rtl">
+        <div className="w-full max-w-sm rounded-[28px] bg-white p-7 shadow-[0_18px_50px_rgba(14,47,98,0.12)]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0e2f62] text-2xl font-black text-[#f5b916]">ف</div>
+          <h1 className="mt-5 text-xl font-black text-[#0e2f62]">تعذر تحميل الصفحة</h1>
+          <p className="mt-2 text-sm leading-6 text-[#66758a]">حدث خلل مؤقت. أعد المحاولة أو ارجع إلى الصفحة الرئيسية.</p>
+          <div className="mt-6 flex gap-2">
+            <button type="button" onClick={() => window.location.reload()} className="flex-1 rounded-2xl bg-[#0e2f62] px-4 py-3 text-sm font-bold text-white">إعادة المحاولة</button>
+            <a href="/welcome" className="flex-1 rounded-2xl border border-[#d9dfe7] px-4 py-3 text-sm font-bold text-[#0e2f62]">البدء من جديد</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, refetchOnWindowFocus: false },
@@ -83,7 +113,7 @@ function AppShell({ children, showNav = true }: { children: React.ReactNode; sho
   return (
     <>
       <main className={`app-stage premium-surface ${showNav ? "min-h-[100dvh] pb-20" : "min-h-[100dvh]"}`}>
-        <PageTransition>{children}</PageTransition>
+        <RuntimeErrorBoundary><PageTransition>{children}</PageTransition></RuntimeErrorBoundary>
       </main>
       {showNav && <BottomNav />}
     </>
