@@ -1,63 +1,69 @@
 import { StatusBar } from 'expo-status-bar';
+import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
-import { useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-const apiUrl = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+type Provider = { id: number; name: string; phone: string; whatsapp: string | null; categoryName: string; city: string; district: string; rating: number; reviewCount: number; yearsExperience: number; isVerified: boolean; isAvailable: boolean; bio?: string; };
+type Category = { id: number; name: string; icon: string; providerCount: number };
+type User = { id: number; name: string; phone: string; role: string };
 
-export default function App() {
-  const [checking, setChecking] = useState(false);
-  const [status, setStatus] = useState('');
+const apiUrl = Constants.expoConfig?.extra?.apiUrl as string;
+const tokenKey = 'fazaa_auth_token';
 
-  const checkService = async () => {
-    setChecking(true);
-    setStatus('');
-    try {
-      const response = await fetch(`${apiUrl}/api/health`);
-      setStatus(response.ok ? 'الخدمة متاحة حاليًا' : 'الخدمة تحتاج إلى مراجعة');
-    } catch {
-      setStatus('تعذر الاتصال بالخدمة. تحقق من الشبكة أو بيئة التشغيل.');
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar style="light" />
-      <View style={styles.hero}>
-        <View style={styles.logo}><Text style={styles.logoText}>ف</Text></View>
-        <Text style={styles.title}>فزعة</Text>
-        <Text style={styles.subtitle}>مهنيون موثقون، تواصل مباشر، خدمة أقرب</Text>
-      </View>
-      <View style={styles.content}>
-        <Text style={styles.heading}>ابحث عن المهني المناسب</Text>
-        <Text style={styles.body}>تواصل مباشرة مع المهني عبر الاتصال أو الواتساب. لا يوجد دفع للخدمات داخل التطبيق.</Text>
-        <Pressable style={styles.primary} onPress={() => void checkService()} disabled={checking}>
-          {checking ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>البدء مع فزعة</Text>}
-        </Pressable>
-        <Pressable style={styles.secondary} onPress={() => void Linking.openURL('https://fazaa.com/privacy')}>
-          <Text style={styles.secondaryText}>الخصوصية وشروط الاستخدام</Text>
-        </Pressable>
-        {!!status && <Text style={styles.status}>{status}</Text>}
-      </View>
-    </SafeAreaView>
-  );
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await SecureStore.getItemAsync(tokenKey);
+  const response = await fetch(`${apiUrl}/api${path}`, { ...init, headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) } });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error || 'تعذر تنفيذ الطلب');
+  return data as T;
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0F766E' },
-  hero: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 56, paddingBottom: 48 },
-  logo: { width: 76, height: 76, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FBBF24', marginBottom: 18 },
-  logoText: { color: '#0F766E', fontSize: 48, fontWeight: '900' },
-  title: { color: '#fff', fontSize: 42, fontWeight: '900' },
-  subtitle: { color: '#CCFBF1', fontSize: 16, marginTop: 10, textAlign: 'center' },
-  content: { flex: 1, backgroundColor: '#F8FAFC', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 28 },
-  heading: { color: '#0F172A', fontSize: 25, fontWeight: '800', textAlign: 'right', marginTop: 18 },
-  body: { color: '#475569', fontSize: 16, lineHeight: 27, textAlign: 'right', marginTop: 12 },
-  primary: { minHeight: 54, borderRadius: 16, backgroundColor: '#0F766E', alignItems: 'center', justifyContent: 'center', marginTop: 28 },
-  primaryText: { color: '#fff', fontSize: 17, fontWeight: '800' },
-  secondary: { alignItems: 'center', padding: 18 },
-  secondaryText: { color: '#0F766E', fontSize: 14, fontWeight: '700' },
-  status: { color: '#0F766E', textAlign: 'center', marginTop: 10, fontWeight: '700' },
-});
+function toPhoneHref(phone: string) { return `tel:${phone.replace(/[^\d+]/g, '')}`; }
+function toWhatsAppHref(phone: string) { const digits = phone.replace(/\D/g, ''); return `https://wa.me/${digits.startsWith('0') ? `967${digits.slice(1)}` : digits}`; }
+
+export default function App() {
+  const [query, setQuery] = useState('');
+  const [city, setCity] = useState('');
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Provider | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const loadProviders = async () => {
+    setBusy(true); setError('');
+    try {
+      const params = new URLSearchParams({ limit: '30' });
+      if (query.trim()) params.set('search', query.trim());
+      if (city.trim()) params.set('city', city.trim());
+      if (selectedCategory) params.set('categoryId', String(selectedCategory));
+      const result = await request<{ providers: Provider[] }>(`/providers?${params.toString()}`);
+      setProviders(result.providers);
+    } catch (err) { setError(err instanceof Error ? err.message : 'تعذر تحميل المهنيين'); }
+    finally { setBusy(false); }
+  };
+
+  useEffect(() => { void Promise.all([request<Category[]>('/categories').then(setCategories), loadProviders()]).catch(() => undefined); void SecureStore.getItemAsync(tokenKey).then((token) => { if (token) void request<User>('/auth/me').then(setUser).catch(() => SecureStore.deleteItemAsync(tokenKey)); }).finally(() => setLoading(false)); }, []);
+
+  const login = async () => {
+    setBusy(true); setError('');
+    try { const result = await request<{ token: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ phone, password }) }); await SecureStore.setItemAsync(tokenKey, result.token); setUser(result.user); setPhone(''); setPassword(''); }
+    catch (err) { setError(err instanceof Error ? err.message : 'تعذر تسجيل الدخول'); }
+    finally { setBusy(false); }
+  };
+
+  const selectProvider = async (provider: Provider) => { setBusy(true); try { setSelected(await request<Provider>(`/providers/${provider.id}`)); } catch (err) { setError(err instanceof Error ? err.message : 'تعذر تحميل الملف'); } finally { setBusy(false); } };
+
+  if (loading) return <SafeAreaView style={styles.safe}><StatusBar style="light" /><View style={styles.center}><ActivityIndicator color="#FBBF24" size="large" /></View></SafeAreaView>;
+  if (selected) return <SafeAreaView style={styles.app}><StatusBar style="dark" /><ScrollView contentContainerStyle={styles.detail}><Pressable onPress={() => setSelected(null)}><Text style={styles.back}>‹ العودة للبحث</Text></Pressable><Text style={styles.detailName}>{selected.name}</Text><Text style={styles.muted}>{selected.categoryName} · {selected.city} · {selected.district}</Text><View style={styles.badge}><Text style={styles.badgeText}>{selected.isVerified ? 'مهني موثق' : 'قيد التحقق'}</Text></View><Text style={styles.detailBio}>{selected.bio || 'لا توجد نبذة مضافة بعد.'}</Text><View style={styles.stats}><Text style={styles.stat}>★ {selected.rating.toFixed(1)} ({selected.reviewCount})</Text><Text style={styles.stat}>{selected.yearsExperience} سنة خبرة</Text></View><View style={styles.actionRow}><Pressable style={styles.action} onPress={() => Linking.openURL(toPhoneHref(selected.phone))}><Text style={styles.actionText}>اتصال</Text></Pressable>{selected.whatsapp && <Pressable style={styles.whatsapp} onPress={() => Linking.openURL(toWhatsAppHref(selected.whatsapp!))}><Text style={styles.actionText}>واتساب</Text></Pressable>}</View></ScrollView></SafeAreaView>;
+
+  return <SafeAreaView style={styles.app}><StatusBar style="dark" /><ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled"><View style={styles.header}><View><Text style={styles.brand}>فزعة</Text><Text style={styles.tagline}>تواصل مباشر مع مهنيين موثقين</Text></View>{user ? <Text style={styles.user}>مرحبًا {user.name}</Text> : null}</View><View style={styles.searchBox}><TextInput value={query} onChangeText={setQuery} placeholder="ابحث عن مهني أو خدمة" placeholderTextColor="#94A3B8" style={styles.input} returnKeyType="search" onSubmitEditing={() => void loadProviders()} /><TextInput value={city} onChangeText={setCity} placeholder="المدينة" placeholderTextColor="#94A3B8" style={styles.cityInput} onSubmitEditing={() => void loadProviders()} /><Pressable style={styles.searchButton} onPress={() => void loadProviders()}><Text style={styles.searchButtonText}>بحث</Text></Pressable></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}><Pressable onPress={() => { setSelectedCategory(null); void loadProviders(); }} style={[styles.category, !selectedCategory && styles.categorySelected]}><Text style={[styles.categoryText, !selectedCategory && styles.categoryTextSelected]}>الكل</Text></Pressable>{categories.map((category) => <Pressable key={category.id} onPress={() => { setSelectedCategory(category.id); }} style={[styles.category, selectedCategory === category.id && styles.categorySelected]}><Text style={[styles.categoryText, selectedCategory === category.id && styles.categoryTextSelected]}>{category.name}</Text></Pressable>)}</ScrollView>{error ? <Text style={styles.error}>{error}</Text> : null}<View style={styles.sectionHeader}><Text style={styles.sectionTitle}>المهنيون المتاحون</Text><Text style={styles.count}>{providers.length} نتيجة</Text></View>{busy ? <ActivityIndicator color="#0F766E" style={styles.loader} /> : providers.map((provider) => <Pressable key={provider.id} style={styles.card} onPress={() => void selectProvider(provider)}><View style={styles.cardTop}><View style={styles.avatar}><Text style={styles.avatarText}>{provider.name.slice(0, 1)}</Text></View><View style={styles.cardInfo}><Text style={styles.name}>{provider.name}</Text><Text style={styles.muted}>{provider.categoryName} · {provider.city}</Text><Text style={styles.rating}>★ {provider.rating.toFixed(1)} · {provider.reviewCount} تقييم · {provider.yearsExperience} سنة خبرة</Text></View><Text style={provider.isVerified ? styles.verified : styles.pending}>{provider.isVerified ? 'موثق' : 'مراجعة'}</Text></View><Text style={styles.cardBio} numberOfLines={2}>{provider.bio || 'مهني متاح للتواصل المباشر'}</Text><View style={styles.cardActions}><Pressable onPress={() => Linking.openURL(toPhoneHref(provider.phone))}><Text style={styles.link}>اتصال</Text></Pressable>{provider.whatsapp && <Pressable onPress={() => Linking.openURL(toWhatsAppHref(provider.whatsapp!))}><Text style={styles.whatsappLink}>واتساب</Text></Pressable>}</View></Pressable>)}{!busy && providers.length === 0 ? <Text style={styles.empty}>لا توجد نتائج مطابقة. جرّب تغيير البحث أو المدينة.</Text> : null}<View style={styles.loginBox}><Text style={styles.loginTitle}>حسابك في فزعة</Text>{user ? <Pressable onPress={async () => { await SecureStore.deleteItemAsync(tokenKey); setUser(null); }}><Text style={styles.link}>تسجيل الخروج</Text></Pressable> : <><TextInput value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" placeholderTextColor="#94A3B8" style={styles.loginInput} keyboardType="phone-pad" /><TextInput value={password} onChangeText={setPassword} placeholder="كلمة المرور" placeholderTextColor="#94A3B8" style={styles.loginInput} secureTextEntry /><Pressable style={styles.outlineButton} onPress={() => void login()} disabled={busy}><Text style={styles.outlineText}>تسجيل الدخول</Text></Pressable></>}</View></ScrollView></SafeAreaView>;
+}
+
+const styles = StyleSheet.create({ safe: { flex: 1, backgroundColor: '#0F766E' }, app: { flex: 1, backgroundColor: '#F8FAFC' }, center: { flex: 1, alignItems: 'center', justifyContent: 'center' }, container: { padding: 20, paddingBottom: 48 }, header: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, brand: { color: '#0F766E', fontSize: 34, fontWeight: '900', textAlign: 'right' }, tagline: { color: '#64748B', fontSize: 13, textAlign: 'right', marginTop: 2 }, user: { color: '#0F766E', fontSize: 12, fontWeight: '700' }, searchBox: { backgroundColor: '#fff', borderRadius: 18, padding: 12, borderWidth: 1, borderColor: '#E2E8F0', gap: 8 }, input: { textAlign: 'right', fontSize: 16, color: '#0F172A', minHeight: 42 }, cityInput: { textAlign: 'right', color: '#0F172A', borderTopWidth: 1, borderTopColor: '#F1F5F9', minHeight: 42 }, searchButton: { backgroundColor: '#0F766E', borderRadius: 12, minHeight: 46, alignItems: 'center', justifyContent: 'center' }, searchButtonText: { color: '#fff', fontWeight: '800', fontSize: 16 }, categories: { gap: 8, paddingVertical: 18 }, category: { borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 9, backgroundColor: '#fff' }, categorySelected: { backgroundColor: '#0F766E', borderColor: '#0F766E' }, categoryText: { color: '#475569', fontWeight: '700', fontSize: 13 }, categoryTextSelected: { color: '#fff' }, sectionHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }, sectionTitle: { color: '#0F172A', fontSize: 21, fontWeight: '800' }, count: { color: '#64748B', fontSize: 12 }, card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' }, cardTop: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10 }, avatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center' }, avatarText: { color: '#0F766E', fontSize: 22, fontWeight: '900' }, cardInfo: { flex: 1, alignItems: 'flex-end' }, name: { color: '#0F172A', fontSize: 16, fontWeight: '800' }, muted: { color: '#64748B', fontSize: 12, marginTop: 3, textAlign: 'right' }, rating: { color: '#B45309', fontSize: 11, marginTop: 5, textAlign: 'right' }, verified: { color: '#047857', backgroundColor: '#D1FAE5', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, fontSize: 10, fontWeight: '800' }, pending: { color: '#A16207', backgroundColor: '#FEF3C7', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, fontSize: 10, fontWeight: '800' }, cardBio: { color: '#475569', fontSize: 13, lineHeight: 20, textAlign: 'right', marginTop: 12 }, cardActions: { flexDirection: 'row-reverse', gap: 18, borderTopWidth: 1, borderTopColor: '#F1F5F9', marginTop: 12, paddingTop: 11 }, link: { color: '#0F766E', fontWeight: '800', fontSize: 13 }, whatsappLink: { color: '#15803D', fontWeight: '800', fontSize: 13 }, error: { color: '#B91C1C', backgroundColor: '#FEE2E2', padding: 10, borderRadius: 10, textAlign: 'right', marginBottom: 10 }, loader: { margin: 30 }, empty: { color: '#64748B', textAlign: 'center', padding: 30, lineHeight: 22 }, loginBox: { marginTop: 24, backgroundColor: '#ECFEFF', borderRadius: 18, padding: 16, gap: 10 }, loginTitle: { color: '#0F172A', textAlign: 'right', fontSize: 16, fontWeight: '800' }, loginInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#BAE6FD', borderRadius: 10, padding: 12, textAlign: 'right', color: '#0F172A' }, outlineButton: { borderWidth: 1, borderColor: '#0F766E', borderRadius: 10, minHeight: 44, alignItems: 'center', justifyContent: 'center' }, outlineText: { color: '#0F766E', fontWeight: '800' }, detail: { padding: 22, paddingBottom: 48 }, back: { color: '#0F766E', fontSize: 16, fontWeight: '800', textAlign: 'right', marginBottom: 28 }, detailName: { color: '#0F172A', fontSize: 30, fontWeight: '900', textAlign: 'right' }, badge: { alignSelf: 'flex-end', backgroundColor: '#D1FAE5', borderRadius: 8, padding: 8, marginTop: 14 }, badgeText: { color: '#047857', fontWeight: '800' }, detailBio: { color: '#334155', fontSize: 16, lineHeight: 27, textAlign: 'right', marginTop: 24 }, stats: { flexDirection: 'row-reverse', justifyContent: 'space-around', backgroundColor: '#fff', borderRadius: 16, padding: 16, marginTop: 20 }, stat: { color: '#475569', fontWeight: '800' }, actionRow: { flexDirection: 'row-reverse', gap: 12, marginTop: 28 }, action: { flex: 1, backgroundColor: '#0F766E', borderRadius: 14, minHeight: 52, alignItems: 'center', justifyContent: 'center' }, whatsapp: { flex: 1, backgroundColor: '#16A34A', borderRadius: 14, minHeight: 52, alignItems: 'center', justifyContent: 'center' }, actionText: { color: '#fff', fontWeight: '900', fontSize: 16 } });

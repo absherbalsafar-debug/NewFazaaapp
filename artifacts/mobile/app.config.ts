@@ -20,6 +20,7 @@ const config: ExpoConfig = {
   plugins: [
     ['expo-build-properties', { android: { targetSdkVersion: 36, compileSdkVersion: 36, buildToolsVersion: '36.0.0' } }],
     'expo-system-ui',
+    'expo-secure-store',
   ],
   extra: {
     apiUrl: isProduction ? process.env.EXPO_PUBLIC_API_URL || 'https://api.fazaa.com' : process.env.EXPO_PUBLIC_API_URL || 'https://staging-api.fazaa.com',
