@@ -109,10 +109,21 @@ fun FazaaNativeApp() {
                     Screen.Requests -> MainShell(selected = 2, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 3) Screen.Profile else Screen.Requests) })
                     Screen.Profile -> MainShell(selected = 3, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 2) Screen.Requests else Screen.Profile) })
                     Screen.Pages -> NativePagesIndex(onOpen = { stack.value = stack.value + Screen.Page(it) })
-                    is Screen.Page -> NativePageScreen(route = screen.route, onBack = { stack.value = stack.value.dropLast(1) })
+                    is Screen.Page -> NativeRouteScreen(route = screen.route, onBack = { stack.value = stack.value.dropLast(1) }, onNavigate = { stack.value = stack.value + Screen.Page(it) })
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NativeRouteScreen(route: String, onBack: () -> Unit, onNavigate: (String) -> Unit) {
+    when {
+        route.startsWith("/auth/") || route == "/privacy" || route == "/terms" -> NativeAuthLegalPageScreen(route, onBack, onNavigate)
+        route == "/admin" || route.startsWith("/admin/") || route == "/sponsored-preview" -> NativeAdminPageScreen(route, onBack)
+        route.startsWith("/provider-") || route == "/provider-dashboard" || route == "/provider-business" || route == "/provider-verify" || route == "/verify" || route == "/earnings" || route == "/wallet" || route == "/register" -> NativeProviderPage(route, onBack = onBack, onNavigate = { target -> onNavigate(when (target) { ProviderRoute.DASHBOARD -> "/provider-dashboard"; ProviderRoute.BUSINESS -> "/provider-business"; ProviderRoute.VERIFY -> "/provider-verify"; ProviderRoute.EARNINGS -> "/earnings"; ProviderRoute.WALLET -> "/wallet"; ProviderRoute.REGISTER -> "/register" }) })
+        route == "/" || route == "/discover" || route == "/providers" || route.startsWith("/providers/") || route == "/request/new" || route == "/my-requests" || route.startsWith("/my-requests/") || route == "/favorites" || route == "/notifications" -> NativeClientPage(route, onNavigate = onNavigate, onBack = onBack)
+        else -> NativePageScreen(route, onBack)
     }
 }
 
