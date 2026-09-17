@@ -91,6 +91,7 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-lg space-y-5 px-4 pt-4">
+        <p className="text-lg font-black text-[#0e2f62]">أهلًا {user?.name?.trim().split(/\s+/)[0] || "بك"}</p>
         <section className="relative h-[178px] overflow-hidden rounded-[25px] bg-[#eef2f6] shadow-[0_10px_25px_rgba(14,47,98,0.08)]">
           <img
             src="/manus-storage/fazaah-worker-hero_81d8686e.png"
