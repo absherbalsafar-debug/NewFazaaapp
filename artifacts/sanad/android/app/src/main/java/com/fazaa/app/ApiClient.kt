@@ -9,8 +9,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 object ApiClient {
-    // Replace with the deployed Fazaa API URL when staging is live.
-    const val BASE_URL = "https://staging-api.fazaa.com"
+    // Temporary public deployment of the real Fazaa API from this repository.
+    const val BASE_URL = "https://8090-iuv0tmzqwpojlvc3pkhoo-3c42ac26.us4.manus.computer/api"
     private val client = OkHttpClient()
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
