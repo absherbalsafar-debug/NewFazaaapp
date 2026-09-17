@@ -7,13 +7,12 @@
  */
 import type { SubscriptionPaymentPlan } from './subscriptionPaymentPlan';
 import type { SubscriptionPaymentStatus } from './subscriptionPaymentStatus';
-import type { SubscriptionPaymentWallet } from './subscriptionPaymentWallet';
 
 export interface SubscriptionPayment {
   id: number;
   providerId: number;
   plan: SubscriptionPaymentPlan;
-  wallet: SubscriptionPaymentWallet;
+  wallet: string;
   transactionReference: string;
   /** @nullable */
   receiptUrl?: string | null;

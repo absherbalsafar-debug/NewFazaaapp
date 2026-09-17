@@ -23,7 +23,6 @@ import {
   VerifyProviderBody,
   VerifyProviderParams,
   ReviewSubscriptionPaymentBody,
-  UpdatePaymentWalletBody,
   ReviewAdvertisementBody,
 } from "@workspace/api-zod";
 import { listWalletSettings, serializePayment, walletNames, subscriptionPlans } from "./subscriptions";
@@ -408,42 +407,54 @@ router.get("/admin/subscription-payments", requireAuth, requireAdmin, async (_re
 });
 
 router.get("/admin/payment-wallets", requireAuth, requireAdmin, async (_req: AuthRequest, res): Promise<void> => {
-  res.json(await listWalletSettings());
+  const settings = await db.select().from(paymentWalletSettingsTable).orderBy(paymentWalletSettingsTable.sortOrder, paymentWalletSettingsTable.displayName);
+  res.json(settings);
 });
 
 router.patch("/admin/payment-wallets/:wallet", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   const wallet = Array.isArray(req.params.wallet) ? req.params.wallet[0] : req.params.wallet;
-  if (!Object.prototype.hasOwnProperty.call(walletNames, wallet)) {
-    res.status(400).json({ error: "المحفظة غير صالحة" });
-    return;
-  }
-  const parsed = UpdatePaymentWalletBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
+  if (!wallet || wallet.length > 80) { res.status(400).json({ error: "معرّف المحفظة غير صالح" }); return; }
+  const body = req.body ?? {};
+  if (typeof body.displayName !== "string" || body.displayName.trim().length < 2 || typeof body.usage !== "string" || !["subscriptions", "advertisements", "both"].includes(body.usage)) {
+    res.status(400).json({ error: "بيانات بطاقة المحفظة غير مكتملة" }); return;
   }
   const [setting] = await db
     .insert(paymentWalletSettingsTable)
     .values({
-      wallet: wallet as keyof typeof walletNames,
-      merchantName: parsed.data.merchantName.trim(),
-      merchantAccount: parsed.data.merchantAccount.trim(),
-      instructions: parsed.data.instructions.trim(),
-      isActive: parsed.data.isActive,
+      wallet,
+      displayName: body.displayName.trim(),
+      logoUrl: typeof body.logoUrl === "string" && body.logoUrl.startsWith("/objects/") ? body.logoUrl : null,
+      description: typeof body.description === "string" ? body.description.trim() : "",
+      usage: body.usage,
+      sortOrder: Number.isInteger(Number(body.sortOrder)) ? Number(body.sortOrder) : 0,
+      merchantName: typeof body.merchantName === "string" ? body.merchantName.trim() : "",
+      merchantAccount: typeof body.merchantAccount === "string" ? body.merchantAccount.trim() : "",
+      instructions: typeof body.instructions === "string" ? body.instructions.trim() : "",
+      isActive: body.isActive !== false,
     })
     .onConflictDoUpdate({
       target: paymentWalletSettingsTable.wallet,
       set: {
-        merchantName: parsed.data.merchantName.trim(),
-        merchantAccount: parsed.data.merchantAccount.trim(),
-        instructions: parsed.data.instructions.trim(),
-        isActive: parsed.data.isActive,
+        displayName: body.displayName.trim(),
+        logoUrl: typeof body.logoUrl === "string" && body.logoUrl.startsWith("/objects/") ? body.logoUrl : null,
+        description: typeof body.description === "string" ? body.description.trim() : "",
+        usage: body.usage,
+        sortOrder: Number.isInteger(Number(body.sortOrder)) ? Number(body.sortOrder) : 0,
+        merchantName: typeof body.merchantName === "string" ? body.merchantName.trim() : "",
+        merchantAccount: typeof body.merchantAccount === "string" ? body.merchantAccount.trim() : "",
+        instructions: typeof body.instructions === "string" ? body.instructions.trim() : "",
+        isActive: body.isActive !== false,
         updatedAt: new Date(),
       },
     })
     .returning();
   res.json({
     wallet: setting.wallet,
+    displayName: setting.displayName,
+    logoUrl: setting.logoUrl,
+    description: setting.description,
+    usage: setting.usage,
+    sortOrder: setting.sortOrder,
     merchantName: setting.merchantName,
     merchantAccount: setting.merchantAccount,
     instructions: setting.instructions,

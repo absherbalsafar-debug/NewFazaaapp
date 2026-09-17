@@ -6,11 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { SubscriptionPaymentInputPlan } from './subscriptionPaymentInputPlan';
-import type { SubscriptionPaymentInputWallet } from './subscriptionPaymentInputWallet';
 
 export interface SubscriptionPaymentInput {
   plan: SubscriptionPaymentInputPlan;
-  wallet: SubscriptionPaymentInputWallet;
+  wallet: string;
   /** @minLength 3 */
   transactionReference: string;
   /** @nullable */

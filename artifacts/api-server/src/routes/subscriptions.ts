@@ -59,27 +59,20 @@ export const subscriptionPlans = [
   },
 ] as const;
 
-export const walletNames = {
-  jeeb: "جيب",
-  floosk: "فلوسك",
-  jawali: "جوالي",
-  cash: "كاش",
-  one_cash: "ون كاش",
-  hasib: "حاسب",
-  easy: "إيزي",
-} as const;
+export const walletNames: Record<string, string> = {
+  jeeb: "جيب", floosk: "فلوسك", jawali: "جوالي", cash: "كاش", one_cash: "ون كاش", hasib: "حاسب", easy: "إيزي",
+};
 
-type Wallet = keyof typeof walletNames;
+type Wallet = string;
 
-function serializeWalletSetting(setting: {
-  wallet: Wallet;
-  merchantName: string;
-  merchantAccount: string;
-  instructions: string;
-  isActive: boolean;
-}) {
+function serializeWalletSetting(setting: typeof paymentWalletSettingsTable.$inferSelect) {
   return {
     wallet: setting.wallet,
+    displayName: setting.displayName || walletNames[setting.wallet] || setting.wallet,
+    logoUrl: setting.logoUrl ?? null,
+    description: setting.description,
+    usage: setting.usage,
+    sortOrder: setting.sortOrder,
     merchantName: setting.merchantName,
     merchantAccount: setting.merchantAccount,
     instructions: setting.instructions,
@@ -87,19 +80,9 @@ function serializeWalletSetting(setting: {
   };
 }
 
-export async function listWalletSettings() {
-  const rows = await db.select().from(paymentWalletSettingsTable);
-  const byWallet = new Map(rows.map((row) => [row.wallet, row]));
-  return (Object.keys(walletNames) as Wallet[]).map((wallet) => {
-    const setting = byWallet.get(wallet);
-    return serializeWalletSetting({
-      wallet,
-      merchantName: setting?.merchantName ?? "",
-      merchantAccount: setting?.merchantAccount ?? "",
-      instructions: setting?.instructions ?? "",
-      isActive: setting?.isActive ?? true,
-    });
-  });
+export async function listWalletSettings(usage?: "subscriptions" | "advertisements") {
+  const rows = await db.select().from(paymentWalletSettingsTable).orderBy(paymentWalletSettingsTable.sortOrder, paymentWalletSettingsTable.displayName);
+  return rows.filter((row) => row.isActive && (!usage || row.usage === "both" || row.usage === usage)).map(serializeWalletSetting);
 }
 
 function dateOnly(date: Date): string {
@@ -193,7 +176,7 @@ router.get("/payment-wallets", requireAuth, async (req: AuthRequest, res): Promi
     res.status(403).json({ error: "وسائل الدفع متاحة للمهنيين فقط" });
     return;
   }
-  res.json(await listWalletSettings());
+  res.json(await listWalletSettings("subscriptions"));
 });
 
 router.get("/providers/me/business", requireAuth, async (req: AuthRequest, res): Promise<void> => {

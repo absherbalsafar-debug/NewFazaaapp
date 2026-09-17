@@ -32,6 +32,7 @@ import {
   Star,
   TrendingUp,
   UsersRound,
+  Upload,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -60,10 +61,15 @@ import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient();
 
-type PaymentWallet = 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';
+type PaymentWallet = string;
 
 type PaymentWalletSetting = {
   wallet: PaymentWallet;
+  displayName: string;
+  logoUrl?: string | null;
+  description: string;
+  usage: 'subscriptions' | 'advertisements' | 'both';
+  sortOrder: number;
   merchantName: string;
   merchantAccount: string;
   instructions: string;
@@ -507,9 +513,10 @@ function BusinessPage() {
   const [note, setNote] = useState('');
   const [adId, setAdId] = useState('');
   const [adNote, setAdNote] = useState('');
+  const [newWalletId, setNewWalletId] = useState('');
   const [drafts, setDrafts] = useState<Record<string, Omit<PaymentWalletSetting, 'wallet'>>>({});
   useEffect(() => {
-    if (walletsQuery.data) setDrafts(Object.fromEntries(walletsQuery.data.map((wallet: PaymentWalletSetting) => [wallet.wallet, { merchantName: wallet.merchantName, merchantAccount: wallet.merchantAccount, instructions: wallet.instructions, isActive: wallet.isActive }])));
+    if (walletsQuery.data) setDrafts(Object.fromEntries(walletsQuery.data.map((wallet: PaymentWalletSetting) => [wallet.wallet, { displayName: wallet.displayName, logoUrl: wallet.logoUrl, description: wallet.description, usage: wallet.usage, sortOrder: wallet.sortOrder, merchantName: wallet.merchantName, merchantAccount: wallet.merchantAccount, instructions: wallet.instructions, isActive: wallet.isActive }])));
   }, [walletsQuery.data]);
   const reviewPaymentAction = (id: number, status: 'approved' | 'rejected') => reviewPayment.mutate({ id, data: { status, adminNote: note.trim() || null } }, {
     onSuccess: () => { setNote(''); toast.toast({ title: status === 'approved' ? 'تم اعتماد الاشتراك' : 'تم رفض عملية الدفع' }); void paymentsQuery.refetch(); },
@@ -531,6 +538,11 @@ function BusinessPage() {
       onError: (error: unknown) => toast.toast({ title: 'تعذر حفظ إعدادات المحفظة', description: shortError(error), variant: 'destructive' }),
     });
   };
+  const addWallet = () => {
+    const wallet = newWalletId.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!wallet) { toast.toast({ title: 'أدخل معرف المحفظة', variant: 'destructive' }); return; }
+    updateWallet.mutate({ wallet, data: { displayName: wallet, logoUrl: null, description: '', usage: 'both', sortOrder: 0, merchantName: '', merchantAccount: '', instructions: '', isActive: true } }, { onSuccess: () => { setNewWalletId(''); toast.toast({ title: 'تمت إضافة المحفظة' }); void walletsQuery.refetch(); }, onError: (error) => toast.toast({ title: 'تعذر إضافة المحفظة', description: shortError(error), variant: 'destructive' }) });
+  };
   const payments = paymentsQuery.data ?? [];
   return <>
     <PageHeader eyebrow="العمليات التجارية" title="المدفوعات والتجاري" description="راجع التحويلات اليدوية، تحكم في محافظ التجار، واعتمد الإعلانات المدفوعة." action={<Button variant="secondary" onClick={() => { void paymentsQuery.refetch(); void walletsQuery.refetch(); }} disabled={paymentsQuery.isFetching || walletsQuery.isFetching} testId="button-refresh-business"><RefreshCw className={`h-4 w-4 ${paymentsQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث العمليات</Button>} />
@@ -544,6 +556,7 @@ function BusinessPage() {
         </div>
       </Panel>
       <Panel title="محافظ الدفع" subtitle="تظهر البيانات النشطة للمهني أثناء الدفع اليدوي للاشتراك." icon={WalletCards}>
+        <div className="flex gap-2 border-b border-[hsl(var(--border))] p-5"><input value={newWalletId} onChange={(event) => setNewWalletId(event.target.value)} placeholder="معرف محفظة جديدة مثل cash_mobile" dir="ltr" className="h-10 flex-1 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 text-sm" /><Button onClick={addWallet} disabled={updateWallet.isPending}>إضافة محفظة</Button></div>
         <QueryState loading={walletsQuery.isLoading} error={walletsQuery.error} onRetry={() => { void walletsQuery.refetch(); }}>
           {(walletsQuery.data ?? []).length === 0 ? <EmptyState icon={WalletCards} title="لا توجد محافظ معدة" description="لم تصل إعدادات المحافظ من الخادم." /> : <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">{(walletsQuery.data ?? []).map((wallet: PaymentWalletSetting) => <WalletCard key={wallet.wallet} wallet={wallet} draft={drafts[wallet.wallet] ?? wallet} setDraft={(next) => setDrafts((current) => ({ ...current, [wallet.wallet]: { ...current[wallet.wallet], ...next } }))} onSave={() => saveWallet(wallet)} pending={updateWallet.isPending} />)}</div>}
         </QueryState>
@@ -558,7 +571,9 @@ function BusinessPage() {
 }
 
 function WalletCard({ wallet, draft, setDraft, onSave, pending }: { wallet: PaymentWalletSetting; draft: Omit<PaymentWalletSetting, 'wallet'>; setDraft: (next: Partial<Omit<PaymentWalletSetting, 'wallet'>>) => void; onSave: () => void; pending: boolean }) {
-  return <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/.32)] p-4" data-testid={`card-wallet-${wallet.wallet}`}><div className="mb-4 flex items-start justify-between gap-3"><div><p className="font-bold">{walletNames[wallet.wallet] || wallet.wallet}</p><p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">إعدادات الحساب التجاري</p></div><label className="flex cursor-pointer items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]"><input type="checkbox" checked={draft.isActive} onChange={(event) => setDraft({ isActive: event.target.checked })} data-testid={`input-wallet-active-${wallet.wallet}`} className="h-4 w-4 accent-[hsl(var(--primary))]" />مفعلة</label></div><div className="space-y-2.5"><input value={draft.merchantName} onChange={(event) => setDraft({ merchantName: event.target.value })} placeholder="اسم التاجر" data-testid={`input-wallet-name-${wallet.wallet}`} className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs outline-none focus:border-[hsl(var(--primary))]" /><input value={draft.merchantAccount} onChange={(event) => setDraft({ merchantAccount: event.target.value })} placeholder="رقم أو حساب التاجر" dir="ltr" data-testid={`input-wallet-account-${wallet.wallet}`} className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs outline-none focus:border-[hsl(var(--primary))]" /><textarea value={draft.instructions} onChange={(event) => setDraft({ instructions: event.target.value })} placeholder="تعليمات التحويل" data-testid={`input-wallet-instructions-${wallet.wallet}`} className="min-h-16 w-full resize-y rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-xs outline-none focus:border-[hsl(var(--primary))]" /><Button className="h-9 w-full text-xs" onClick={onSave} disabled={pending} testId={`button-save-wallet-${wallet.wallet}`}>{pending ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}حفظ الإعدادات</Button></div></div>;
+  const [uploading, setUploading] = useState(false);
+  const uploadLogo = async (file: File) => { setUploading(true); try { const token = localStorage.getItem('fazaah_token'); const response = await fetch('/api/storage/uploads/request-url', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }) }); const upload = await response.json(); if (!response.ok) throw new Error(upload.error || 'تعذر تجهيز الرفع'); const put = await fetch(upload.uploadURL, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file }); if (!put.ok) throw new Error('تعذر رفع الشعار'); setDraft({ logoUrl: upload.objectPath }); } finally { setUploading(false); } };
+  return <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/.32)] p-4" data-testid={`card-wallet-${wallet.wallet}`}><div className="mb-4 flex items-start justify-between gap-3"><div><p className="font-bold">{draft.displayName || walletNames[wallet.wallet] || wallet.wallet}</p><p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">بطاقة اختيار المحفظة</p></div><label className="flex cursor-pointer items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]"><input type="checkbox" checked={draft.isActive} onChange={(event) => setDraft({ isActive: event.target.checked })} className="h-4 w-4 accent-[hsl(var(--primary))]" />مفعلة</label></div><div className="space-y-2.5"><input value={draft.displayName} onChange={(event) => setDraft({ displayName: event.target.value })} placeholder="اسم المحفظة" className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[hsl(var(--primary)/.35)] p-3 text-xs"><Upload className="h-4 w-4 text-[hsl(var(--primary))]" /><span className="flex-1">{uploading ? 'جاري رفع الشعار...' : 'رفع شعار المحفظة'}</span><input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadLogo(file); }} /></label><input value={draft.logoUrl ?? ''} onChange={(event) => setDraft({ logoUrl: event.target.value || null })} placeholder="أو رابط الشعار /objects/..." dir="ltr" className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><input value={draft.description} onChange={(event) => setDraft({ description: event.target.value })} placeholder="وصف مختصر (اختياري)" className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><div className="grid grid-cols-2 gap-2"><select value={draft.usage} onChange={(event) => setDraft({ usage: event.target.value as PaymentWalletSetting['usage'] })} className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-2 text-xs"><option value="subscriptions">الاشتراكات</option><option value="advertisements">الإعلانات</option><option value="both">الاثنان</option></select><input type="number" value={draft.sortOrder} onChange={(event) => setDraft({ sortOrder: Number(event.target.value) || 0 })} placeholder="الترتيب" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /></div><input value={draft.merchantName} onChange={(event) => setDraft({ merchantName: event.target.value })} placeholder="اسم التاجر" className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><input value={draft.merchantAccount} onChange={(event) => setDraft({ merchantAccount: event.target.value })} placeholder="رقم أو حساب التاجر" dir="ltr" className="h-10 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><textarea value={draft.instructions} onChange={(event) => setDraft({ instructions: event.target.value })} placeholder="تعليمات التحويل" className="min-h-16 w-full resize-y rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-xs" /><Button className="h-9 w-full text-xs" onClick={onSave} disabled={pending}>{pending ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}حفظ الإعدادات</Button></div></div>;
 }
 
 function EmptyState({ icon: Icon, title, description }: { icon: typeof UsersRound; title: string; description: string }) {

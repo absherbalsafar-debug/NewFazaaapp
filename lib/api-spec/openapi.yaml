@@ -987,7 +987,6 @@ paths:
           required: true
           schema:
             type: string
-            enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
       requestBody:
         required: true
         content:
@@ -1146,7 +1145,6 @@ components:
           enum: [monthly, quarterly, half_yearly, yearly]
         wallet:
           type: string
-          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
         transactionReference:
           type: string
         receiptUrl:
@@ -1163,11 +1161,21 @@ components:
 
     PaymentWalletSetting:
       type: object
-      required: [wallet, merchantName, merchantAccount, instructions, isActive]
+      required: [wallet, displayName, description, usage, sortOrder, merchantName, merchantAccount, instructions, isActive]
       properties:
         wallet:
           type: string
-          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
+        displayName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        description:
+          type: string
+        usage:
+          type: string
+          enum: [subscriptions, advertisements, both]
+        sortOrder:
+          type: integer
         merchantName:
           type: string
         merchantAccount:
@@ -1179,8 +1187,19 @@ components:
 
     PaymentWalletSettingInput:
       type: object
-      required: [merchantName, merchantAccount, instructions, isActive]
+      required: [displayName, description, usage, sortOrder, merchantName, merchantAccount, instructions, isActive]
       properties:
+        displayName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        description:
+          type: string
+        usage:
+          type: string
+          enum: [subscriptions, advertisements, both]
+        sortOrder:
+          type: integer
         merchantName:
           type: string
         merchantAccount:
@@ -1231,7 +1250,6 @@ components:
           enum: [monthly, quarterly, half_yearly, yearly]
         wallet:
           type: string
-          enum: [jeeb, floosk, jawali, cash, one_cash, hasib, easy]
         transactionReference:
           type: string
           minLength: 3

@@ -85,19 +85,6 @@ export const SubscriptionPaymentPlan = {
   yearly: 'yearly',
 } as const;
 
-export type SubscriptionPaymentWallet = typeof SubscriptionPaymentWallet[keyof typeof SubscriptionPaymentWallet];
-
-
-export const SubscriptionPaymentWallet = {
-  jeeb: 'jeeb',
-  floosk: 'floosk',
-  jawali: 'jawali',
-  cash: 'cash',
-  one_cash: 'one_cash',
-  hasib: 'hasib',
-  easy: 'easy',
-} as const;
-
 export type SubscriptionPaymentStatus = typeof SubscriptionPaymentStatus[keyof typeof SubscriptionPaymentStatus];
 
 
@@ -113,7 +100,7 @@ export interface SubscriptionPayment {
   id: number;
   providerId: number;
   plan: SubscriptionPaymentPlan;
-  wallet: SubscriptionPaymentWallet;
+  wallet: string;
   transactionReference: string;
   /** @nullable */
   receiptUrl?: string | null;
@@ -125,28 +112,45 @@ export interface SubscriptionPayment {
   reviewedAt?: string | null;
 }
 
-export type PaymentWalletSettingWallet = typeof PaymentWalletSettingWallet[keyof typeof PaymentWalletSettingWallet];
+export type PaymentWalletSettingUsage = typeof PaymentWalletSettingUsage[keyof typeof PaymentWalletSettingUsage];
 
 
-export const PaymentWalletSettingWallet = {
-  jeeb: 'jeeb',
-  floosk: 'floosk',
-  jawali: 'jawali',
-  cash: 'cash',
-  one_cash: 'one_cash',
-  hasib: 'hasib',
-  easy: 'easy',
+export const PaymentWalletSettingUsage = {
+  subscriptions: 'subscriptions',
+  advertisements: 'advertisements',
+  both: 'both',
 } as const;
 
 export interface PaymentWalletSetting {
-  wallet: PaymentWalletSettingWallet;
+  wallet: string;
+  displayName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  description: string;
+  usage: PaymentWalletSettingUsage;
+  sortOrder: number;
   merchantName: string;
   merchantAccount: string;
   instructions: string;
   isActive: boolean;
 }
 
+export type PaymentWalletSettingInputUsage = typeof PaymentWalletSettingInputUsage[keyof typeof PaymentWalletSettingInputUsage];
+
+
+export const PaymentWalletSettingInputUsage = {
+  subscriptions: 'subscriptions',
+  advertisements: 'advertisements',
+  both: 'both',
+} as const;
+
 export interface PaymentWalletSettingInput {
+  displayName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  description: string;
+  usage: PaymentWalletSettingInputUsage;
+  sortOrder: number;
   merchantName: string;
   merchantAccount: string;
   instructions: string;
@@ -182,22 +186,9 @@ export const SubscriptionPaymentInputPlan = {
   yearly: 'yearly',
 } as const;
 
-export type SubscriptionPaymentInputWallet = typeof SubscriptionPaymentInputWallet[keyof typeof SubscriptionPaymentInputWallet];
-
-
-export const SubscriptionPaymentInputWallet = {
-  jeeb: 'jeeb',
-  floosk: 'floosk',
-  jawali: 'jawali',
-  cash: 'cash',
-  one_cash: 'one_cash',
-  hasib: 'hasib',
-  easy: 'easy',
-} as const;
-
 export interface SubscriptionPaymentInput {
   plan: SubscriptionPaymentInputPlan;
-  wallet: SubscriptionPaymentInputWallet;
+  wallet: string;
   /** @minLength 3 */
   transactionReference: string;
   /** @nullable */

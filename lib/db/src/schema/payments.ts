@@ -13,7 +13,7 @@ export const subscriptionPaymentsTable = pgTable("subscription_payments", {
   providerId: integer("provider_id").notNull().references(() => providersTable.id, { onDelete: "cascade" }),
   subscriptionId: integer("subscription_id").references(() => providerSubscriptionsTable.id, { onDelete: "set null" }),
   plan: text("plan").notNull(),
-  wallet: walletProviderEnum("wallet").notNull(),
+  wallet: text("wallet").notNull(),
   transactionReference: text("transaction_reference").notNull(),
   receiptUrl: text("receipt_url"),
   status: paymentStatusEnum("status").notNull().default("pending"),
@@ -25,16 +25,19 @@ export const subscriptionPaymentsTable = pgTable("subscription_payments", {
 
 export const paymentWalletSettingsTable = pgTable("payment_wallet_settings", {
   id: serial("id").primaryKey(),
-  wallet: walletProviderEnum("wallet").notNull(),
+  wallet: text("wallet").notNull(),
+  displayName: text("display_name").notNull().default(""),
+  logoUrl: text("logo_url"),
+  description: text("description").notNull().default(""),
+  usage: text("usage").notNull().default("both"),
+  sortOrder: integer("sort_order").notNull().default(0),
   merchantName: text("merchant_name").notNull().default(""),
   merchantAccount: text("merchant_account").notNull().default(""),
   instructions: text("instructions").notNull().default(""),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-}, (table) => ({
-  walletUnique: uniqueIndex("payment_wallet_settings_wallet_unique").on(table.wallet),
-}));
+}, (table) => ({ walletUnique: uniqueIndex("payment_wallet_settings_wallet_unique").on(table.wallet) }));
 
 export const insertSubscriptionPaymentSchema = createInsertSchema(subscriptionPaymentsTable).omit({ id: true, createdAt: true });
 export type InsertSubscriptionPayment = z.infer<typeof insertSubscriptionPaymentSchema>;

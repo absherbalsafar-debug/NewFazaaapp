@@ -47,6 +47,11 @@ export default function AdminBusiness() {
     setWalletDrafts(Object.fromEntries(walletSettings.map((setting) => [
       setting.wallet,
       {
+        displayName: setting.displayName,
+        logoUrl: setting.logoUrl ?? null,
+        description: setting.description,
+        usage: setting.usage,
+        sortOrder: setting.sortOrder,
         merchantName: setting.merchantName,
         merchantAccount: setting.merchantAccount,
         instructions: setting.instructions,

@@ -553,7 +553,12 @@ export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResp
  * @summary List merchant payment accounts
  */
 export const ListPaymentWalletsResponseItem = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
+  "displayName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "description": zod.string(),
+  "usage": zod.enum(['subscriptions', 'advertisements', 'both']),
+  "sortOrder": zod.number(),
   "merchantName": zod.string(),
   "merchantAccount": zod.string(),
   "instructions": zod.string(),
@@ -615,7 +620,7 @@ export const ListProviderPaymentsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
   "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
@@ -635,7 +640,7 @@ export const createSubscriptionPaymentBodyTransactionReferenceMin = 3;
 
 export const CreateSubscriptionPaymentBody = zod.object({
   "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
   "transactionReference": zod.string().min(createSubscriptionPaymentBodyTransactionReferenceMin),
   "receiptUrl": zod.string().nullish()
 })
@@ -1012,7 +1017,7 @@ export const ListAdminSubscriptionPaymentsResponseItem = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
   "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),
@@ -1027,7 +1032,12 @@ export const ListAdminSubscriptionPaymentsResponse = zod.array(ListAdminSubscrip
  * @summary List merchant payment accounts for administration
  */
 export const ListAdminPaymentWalletsResponseItem = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
+  "displayName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "description": zod.string(),
+  "usage": zod.enum(['subscriptions', 'advertisements', 'both']),
+  "sortOrder": zod.number(),
   "merchantName": zod.string(),
   "merchantAccount": zod.string(),
   "instructions": zod.string(),
@@ -1040,10 +1050,15 @@ export const ListAdminPaymentWalletsResponse = zod.array(ListAdminPaymentWallets
  * @summary Update a merchant payment account
  */
 export const UpdatePaymentWalletParams = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy'])
+  "wallet": zod.coerce.string()
 })
 
 export const UpdatePaymentWalletBody = zod.object({
+  "displayName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "description": zod.string(),
+  "usage": zod.enum(['subscriptions', 'advertisements', 'both']),
+  "sortOrder": zod.number(),
   "merchantName": zod.string(),
   "merchantAccount": zod.string(),
   "instructions": zod.string(),
@@ -1051,7 +1066,12 @@ export const UpdatePaymentWalletBody = zod.object({
 })
 
 export const UpdatePaymentWalletResponse = zod.object({
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
+  "displayName": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "description": zod.string(),
+  "usage": zod.enum(['subscriptions', 'advertisements', 'both']),
+  "sortOrder": zod.number(),
   "merchantName": zod.string(),
   "merchantAccount": zod.string(),
   "instructions": zod.string(),
@@ -1075,7 +1095,7 @@ export const ReviewSubscriptionPaymentResponse = zod.object({
   "id": zod.number(),
   "providerId": zod.number(),
   "plan": zod.enum(['monthly', 'quarterly', 'half_yearly', 'yearly']),
-  "wallet": zod.enum(['jeeb', 'floosk', 'jawali', 'cash', 'one_cash', 'hasib', 'easy']),
+  "wallet": zod.string(),
   "transactionReference": zod.string(),
   "receiptUrl": zod.string().nullish(),
   "status": zod.enum(['pending', 'approved', 'rejected', 'expired', 'refunded']),

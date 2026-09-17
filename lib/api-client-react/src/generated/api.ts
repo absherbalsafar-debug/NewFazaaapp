@@ -3650,7 +3650,7 @@ export function useListAdminPaymentWallets<TData = Awaited<ReturnType<typeof lis
 
 
 
-export const getUpdatePaymentWalletUrl = (wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy',) => {
+export const getUpdatePaymentWalletUrl = (wallet: string,) => {
 
 
 
@@ -3661,7 +3661,7 @@ export const getUpdatePaymentWalletUrl = (wallet: 'jeeb' | 'floosk' | 'jawali' |
 /**
  * @summary Update a merchant payment account
  */
-export const updatePaymentWallet = async (wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy',
+export const updatePaymentWallet = async (wallet: string,
     paymentWalletSettingInput: PaymentWalletSettingInput, options?: RequestInit): Promise<PaymentWalletSetting> => {
 
   return customFetch<PaymentWalletSetting>(getUpdatePaymentWalletUrl(wallet),
@@ -3678,8 +3678,8 @@ export const updatePaymentWallet = async (wallet: 'jeeb' | 'floosk' | 'jawali' |
 
 
 export const getUpdatePaymentWalletMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: string;data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: string;data: BodyType<PaymentWalletSettingInput>}, TContext> => {
 
 const mutationKey = ['updatePaymentWallet'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -3691,7 +3691,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePaymentWallet>>, {wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePaymentWallet>>, {wallet: string;data: BodyType<PaymentWalletSettingInput>}> = (props) => {
           const {wallet,data} = props ?? {};
 
           return  updatePaymentWallet(wallet,data,requestOptions)
@@ -3712,11 +3712,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update a merchant payment account
  */
 export const useUpdatePaymentWallet = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentWallet>>, TError,{wallet: string;data: BodyType<PaymentWalletSettingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof updatePaymentWallet>>,
         TError,
-        {wallet: 'jeeb' | 'floosk' | 'jawali' | 'cash' | 'one_cash' | 'hasib' | 'easy';data: BodyType<PaymentWalletSettingInput>},
+        {wallet: string;data: BodyType<PaymentWalletSettingInput>},
         TContext
       > => {
       return useMutation(getUpdatePaymentWalletMutationOptions(options));

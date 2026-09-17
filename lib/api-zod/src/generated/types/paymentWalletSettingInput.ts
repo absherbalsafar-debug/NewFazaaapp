@@ -5,8 +5,15 @@
  * فزعة FAZAAH – منصة الخدمات والمهنيين في اليمن
  * OpenAPI spec version: 0.1.0
  */
+import type { PaymentWalletSettingInputUsage } from './paymentWalletSettingInputUsage';
 
 export interface PaymentWalletSettingInput {
+  displayName: string;
+  /** @nullable */
+  logoUrl?: string | null;
+  description: string;
+  usage: PaymentWalletSettingInputUsage;
+  sortOrder: number;
   merchantName: string;
   merchantAccount: string;
   instructions: string;

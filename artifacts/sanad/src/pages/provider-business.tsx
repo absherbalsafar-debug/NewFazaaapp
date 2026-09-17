@@ -225,58 +225,18 @@ export default function ProviderBusiness() {
           <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center gap-3">
               <WalletCards className="h-5 w-5 text-primary" />
-              <div><h2 className="font-black">تجديد أو تفعيل الاشتراك</h2><p className="mt-1 text-xs text-muted-foreground">حوّل للمحفظة ثم أرسل رقم العملية للمراجعة.</p></div>
+              <div><h2 className="font-black">اختر محفظة الدفع</h2><p className="mt-1 text-xs text-muted-foreground">اختر المحفظة للانتقال إلى شاشة الدفع الخاصة بها.</p></div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {plans.filter((plan) => plan.id !== "free").map((plan) => (
-                <button key={plan.id} type="button" onClick={() => setPaymentPlan(plan.id as "monthly" | "yearly")} className={`rounded-xl border p-3 text-right ${paymentPlan === plan.id ? "border-primary bg-primary/5" : "border-border"}`}>
-                  <p className="text-sm font-black">{plan.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{plan.id === "monthly" ? `${plan.monthlyPrice} ريال شهرياً` : `${plan.yearlyPrice} ريال سنوياً`}</p>
+            <div className="mt-4 grid gap-3">
+              {paymentWallets.length === 0 ? <div className="rounded-2xl bg-muted/50 p-5 text-center text-sm text-muted-foreground">لا توجد محافظ مفعلة حاليًا.</div> : paymentWallets.map((item) => (
+                <button key={item.wallet} type="button" onClick={() => setWallet(item.wallet)} className={`flex min-h-[84px] w-full items-center gap-4 rounded-2xl border p-4 text-right transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${wallet === item.wallet ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary">{item.logoUrl ? <img src={item.logoUrl} alt="" className="h-full w-full object-contain" /> : <WalletCards className="h-7 w-7" />}</span>
+                  <span className="min-w-0 flex-1"><span className="block text-base font-black">{item.displayName}</span>{item.description && <span className="mt-1 block truncate text-xs text-muted-foreground">{item.description}</span>}<span className="mt-1 block text-[11px] text-primary">متابعة الدفع</span></span>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                 </button>
               ))}
             </div>
-            <div className="mt-3 rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">
-              <p>{selectedPlan?.description ?? "بعد التحويل أرسل رقم العملية."}</p>
-              {selectedWallet?.isActive && selectedWallet.merchantAccount ? (
-                <div className="mt-3 rounded-lg border border-primary/15 bg-background/70 p-3">
-                  <p className="font-bold text-foreground">حوّل إلى {selectedWallet.merchantName || wallets.find((item) => item.value === wallet)?.label}</p>
-                  <p className="mt-1 text-base font-black tracking-wide text-primary" dir="ltr">{selectedWallet.merchantAccount}</p>
-                  {selectedWallet.instructions && <p className="mt-1 whitespace-pre-line">{selectedWallet.instructions}</p>}
-                </div>
-              ) : (
-                <p className="mt-2 font-semibold text-amber-700 dark:text-amber-300">لم تضبط الإدارة حساب هذه المحفظة بعد.</p>
-              )}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">أكمل التحويل ثم أرفق صورة الإيصال أو ملف PDF مع رقم العملية.</p>
-            <form onSubmit={submitPayment} className="mt-4 space-y-3">
-              <select value={wallet} onChange={(event) => setWallet(event.target.value as SubscriptionPaymentInput["wallet"])} className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm">
-                {wallets.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-              </select>
-              <Input value={transactionReference} onChange={(event) => setTransactionReference(event.target.value)} placeholder="رقم عملية التحويل" className="h-11 rounded-xl" />
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-3 text-sm">
-                <FileUp className="h-5 w-5 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold">{receiptFile ? receiptFile.name : "إرفاق إيصال التحويل"}</span>
-                  <span className="block text-xs text-muted-foreground">JPG أو PNG أو WEBP أو PDF — حتى 10 ميجابايت</span>
-                </span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    if (file && (file.size > 10 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type))) {
-                      toast({ title: "صيغة الإيصال غير صالحة", description: "اختر صورة مناسبة أو PDF بحجم لا يتجاوز 10 ميجابايت.", variant: "destructive" });
-                      event.target.value = "";
-                      return;
-                    }
-                    setReceiptFile(file);
-                  }}
-                />
-                <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </label>
-              <Button type="submit" className="h-11 w-full rounded-xl" disabled={createPayment.isPending || isUploadingReceipt}><Send className="ml-2 h-4 w-4" />{isUploadingReceipt ? "جاري رفع الإيصال..." : createPayment.isPending ? "جاري الإرسال..." : "إرسال للمراجعة"}</Button>
-            </form>
+            {selectedWallet && <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm leading-6"><p className="font-black text-primary">تم اختيار {selectedWallet.displayName}</p><p className="mt-1 text-muted-foreground">شاشة الدفع الإلكتروني الخاصة بالمحفظة ستكون متاحة عند اكتمال الربط مع مزود الدفع. لا يُطلب منك حاليًا إدخال رقم عملية أو رفع إيصال.</p></div>}
           </section>
         )}
 
