@@ -11,6 +11,12 @@ out-tsc
 # dependencies
 node_modules
 
+# environment files; only sanitized examples are committed
+.env
+.env.*
+!.env.example
+!.env.staging.example
+
 # IDEs and editors
 /.idea
 .project

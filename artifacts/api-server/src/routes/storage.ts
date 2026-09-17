@@ -5,9 +5,11 @@ import {
   db,
   providersTable,
   subscriptionPaymentsTable,
+  portfolioItemsTable,
+  providerVerificationDocumentsTable,
 } from "@workspace/db";
 import { Router, type IRouter } from "express";
-import { requireAuth, type AuthRequest } from "../middlewares/auth";
+import { optionalAuth, requireAuth, type AuthRequest } from "../middlewares/auth";
 import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
 
 const router: IRouter = Router();
@@ -22,7 +24,8 @@ router.post("/storage/uploads/request-url", requireAuth, async (req: AuthRequest
     return;
   }
   const { name, size, contentType } = parsed.data;
-  if (!allowedReceiptTypes.has(contentType) || size > maxReceiptSize) {
+  const cleanName = name.trim();
+  if (!cleanName || cleanName.length > 180 || /[\u0000-\u001f\\/]/.test(cleanName) || !allowedReceiptTypes.has(contentType) || size > maxReceiptSize) {
     res.status(400).json({ error: "يسمح بصور JPG أو PNG أو WEBP وملفات PDF حتى 10 ميجابايت" });
     return;
   }
@@ -40,31 +43,37 @@ router.post("/storage/uploads/request-url", requireAuth, async (req: AuthRequest
   }
 });
 
-router.get("/storage/objects/*path", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+router.get("/storage/objects/*path", optionalAuth, async (req: AuthRequest, res): Promise<void> => {
   const raw = req.params.path;
   const objectPath = `/objects/${Array.isArray(raw) ? raw.join("/") : raw}`;
   const [payment] = await db
     .select({ providerId: subscriptionPaymentsTable.providerId })
     .from(subscriptionPaymentsTable)
     .where(eq(subscriptionPaymentsTable.receiptUrl, objectPath));
-  if (!payment) {
-    res.status(404).json({ error: "الإيصال غير موجود" });
-    return;
-  }
-  if (req.userRole !== "admin") {
+  const [portfolio] = await db.select({ id: portfolioItemsTable.id, providerId: portfolioItemsTable.providerId, reviewStatus: portfolioItemsTable.reviewStatus }).from(portfolioItemsTable).where(eq(portfolioItemsTable.imageUrl, objectPath));
+  const [verification] = await db.select({ id: providerVerificationDocumentsTable.id, providerId: providerVerificationDocumentsTable.providerId }).from(providerVerificationDocumentsTable).where(eq(providerVerificationDocumentsTable.objectPath, objectPath));
+  let allowed = Boolean(portfolio?.reviewStatus === "approved");
+  if (payment && (req.userRole === "admin" || !req.userId)) allowed = Boolean(req.userRole === "admin");
+  if (payment && req.userId && req.userRole !== "admin") {
     const [provider] = await db
       .select({ id: providersTable.id })
       .from(providersTable)
       .where(and(eq(providersTable.id, payment.providerId), eq(providersTable.userId, req.userId!)));
-    if (!provider) {
-      res.status(403).json({ error: "لا تملك صلاحية عرض هذا الإيصال" });
-      return;
-    }
+    allowed = Boolean(provider);
   }
+  if (verification && req.userRole === "admin") allowed = true;
+  if (verification && req.userId && req.userRole !== "admin") {
+    const [provider] = await db.select({ id: providersTable.id }).from(providersTable).where(and(eq(providersTable.id, verification.providerId), eq(providersTable.userId, req.userId)));
+    allowed = Boolean(provider);
+  }
+  if (!payment && !portfolio && !verification) { res.status(404).json({ error: "الملف غير موجود" }); return; }
+  if (!allowed) { res.status(403).json({ error: "لا تملك صلاحية عرض هذا الملف" }); return; }
   try {
     const response = await objectStorageService.downloadObject(await objectStorageService.getObjectEntityFile(objectPath));
     res.status(response.status);
     response.headers.forEach((value, key) => res.setHeader(key, value));
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    if (!portfolio) res.setHeader("Content-Disposition", "attachment");
     if (response.body) Readable.fromWeb(response.body as ReadableStream<Uint8Array>).pipe(res);
     else res.end();
   } catch (error) {

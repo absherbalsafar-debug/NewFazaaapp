@@ -19,6 +19,10 @@ import {
 
 const router: IRouter = Router();
 
+function objectUrl(objectPath: string): string {
+  return objectPath.startsWith("/objects/") ? `/api/storage/objects/${objectPath.slice("/objects/".length)}` : objectPath;
+}
+
 function providerSummary(p: any, user: any, cat: any, distanceKm?: number | null) {
   return {
     id: p.id,
@@ -418,7 +422,7 @@ router.get("/providers/:id/portfolio", async (req, res): Promise<void> => {
   const items = await db.select().from(portfolioItemsTable).where(and(eq(portfolioItemsTable.providerId, id), eq(portfolioItemsTable.reviewStatus, "approved")));
   res.json(items.map((i) => ({
     id: i.id,
-    imageUrl: i.imageUrl,
+    imageUrl: objectUrl(i.imageUrl),
     description: i.description ?? null,
     providerId: i.providerId,
     createdAt: i.createdAt.toISOString(),

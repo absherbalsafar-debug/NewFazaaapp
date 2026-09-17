@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, or } from "drizzle-orm";
 import { randomBytes, createHash } from "crypto";
 import { db, usersTable, providersTable, categoriesTable, otpsTable, emailTokensTable } from "@workspace/db";
-import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
+import { hashPassword, verifyPassword, needsPasswordRehash, generateToken } from "../lib/auth";
 import { normalizeRegistrationRole, shouldCreateProviderProfile } from "../lib/auth-roles";
 import { requireAuth, type AuthRequest } from "../middlewares/auth";
 
@@ -140,8 +140,8 @@ router.post("/auth/register/email", async (req, res): Promise<void> => {
     res.status(400).json({ error: "الاسم والبريد وكلمة المرور مطلوبة" });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
+  if (password.length < 8) {
+    res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" });
     return;
   }
 
@@ -225,6 +225,7 @@ router.post("/auth/login/email", async (req, res): Promise<void> => {
     res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     return;
   }
+  if (needsPasswordRehash(user.passwordHash)) await db.update(usersTable).set({ passwordHash: hashPassword(password) }).where(eq(usersTable.id, user.id));
   if (user.status === "banned") {
     res.status(403).json({ error: "تم إيقاف هذا الحساب" });
     return;
@@ -337,6 +338,7 @@ router.post("/auth/link", requireAuth, async (req: AuthRequest, res): Promise<vo
       res.status(400).json({ error: "البريد وكلمة المرور مطلوبان" });
       return;
     }
+    if (password.length < 8) { res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }); return; }
     const normalizedEmail = email.trim().toLowerCase();
     const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, normalizedEmail));
     if (existing && existing.id !== user.id) {
@@ -415,8 +417,8 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     res.status(400).json({ error: "الرمز وكلمة المرور الجديدة مطلوبان" });
     return;
   }
-  if (newPassword.length < 6) {
-    res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" });
     return;
   }
 
@@ -465,6 +467,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     res.status(400).json({ error: "الاسم ورقم الهاتف وكلمة المرور مطلوبة" });
     return;
   }
+  if (password.length < 8) { res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }); return; }
   const normalizedPhone = phone.trim().replace(/\s+/g, "");
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.phone, normalizedPhone));
   if (existing) {
@@ -509,6 +512,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     res.status(401).json({ error: "رقم الهاتف أو كلمة المرور غير صحيحة" });
     return;
   }
+  if (needsPasswordRehash(user.passwordHash)) await db.update(usersTable).set({ passwordHash: hashPassword(password) }).where(eq(usersTable.id, user.id));
   if (user.status === "banned") {
     res.status(403).json({ error: "تم إيقاف هذا الحساب" });
     return;

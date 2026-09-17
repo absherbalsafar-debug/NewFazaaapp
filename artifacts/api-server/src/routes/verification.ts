@@ -5,6 +5,7 @@ import { requireAdmin, requireAuth, requireVerificationStaff, type AuthRequest }
 
 const router: IRouter = Router();
 const documentTypes = new Set(["id_front", "id_back", "selfie", "portfolio", "certificate"]);
+const objectUrl = (path: string) => path.startsWith("/objects/") ? `/api/storage/objects/${path.slice("/objects/".length)}` : path;
 
 async function providerForUser(userId: number) {
   const [provider] = await db.select().from(providersTable).where(eq(providersTable.userId, userId));
@@ -122,7 +123,7 @@ router.get("/admin/portfolio-review/queue", requireAuth, requireVerificationStaf
     .orderBy(desc(portfolioItemsTable.createdAt));
   res.json(rows.map(({ item, provider, user, category }) => ({
     id: item.id, providerId: provider.id, providerName: user.name, phone: user.phone, categoryName: category.name,
-    city: provider.city, imageUrl: item.imageUrl, description: item.description ?? null, reviewStatus: item.reviewStatus,
+    city: provider.city, imageUrl: objectUrl(item.imageUrl), description: item.description ?? null, reviewStatus: item.reviewStatus,
     rejectionReason: item.rejectionReason ?? null, reviewerNote: item.reviewerNote ?? null, createdAt: item.createdAt.toISOString(),
   })));
 });
