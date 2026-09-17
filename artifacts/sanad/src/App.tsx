@@ -1,5 +1,5 @@
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,41 +10,41 @@ import { ProtectedRoute } from "@/components/layout/protected-route";
 import { PageTransition } from "@/components/layout/page-transition";
 
 // Auth Pages
-import Welcome from "@/pages/welcome";
-import AuthPhone from "@/pages/auth-phone";
-import AuthEmail from "@/pages/auth-email";
-import ForgotPassword from "@/pages/forgot-password";
+const Welcome = lazy(() => import("@/pages/welcome"));
+const AuthPhone = lazy(() => import("@/pages/auth-phone"));
+const AuthEmail = lazy(() => import("@/pages/auth-email"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
 
 // App Pages
-import Home from "@/pages/home";
-import Discover from "@/pages/discover";
-import Providers from "@/pages/providers";
-import ProviderDetail from "@/pages/provider-detail";
-import NewRequest from "@/pages/new-request";
-import MyRequests from "@/pages/my-requests";
-import RequestDetail from "@/pages/request-detail";
-import Favorites from "@/pages/favorites";
-import Notifications from "@/pages/notifications";
-import Profile from "@/pages/profile";
-import Settings from "@/pages/settings";
-import Emergency from "@/pages/emergency";
-import ProviderVerify from "@/pages/provider-verify";
-import NotFound from "@/pages/not-found";
+const Home = lazy(() => import("@/pages/home"));
+const Discover = lazy(() => import("@/pages/discover"));
+const Providers = lazy(() => import("@/pages/providers"));
+const ProviderDetail = lazy(() => import("@/pages/provider-detail"));
+const NewRequest = lazy(() => import("@/pages/new-request"));
+const MyRequests = lazy(() => import("@/pages/my-requests"));
+const RequestDetail = lazy(() => import("@/pages/request-detail"));
+const Favorites = lazy(() => import("@/pages/favorites"));
+const Notifications = lazy(() => import("@/pages/notifications"));
+const Profile = lazy(() => import("@/pages/profile"));
+const Settings = lazy(() => import("@/pages/settings"));
+const Emergency = lazy(() => import("@/pages/emergency"));
+const ProviderVerify = lazy(() => import("@/pages/provider-verify"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Admin Pages
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminUsers from "@/pages/admin/users";
-import AdminProviders from "@/pages/admin/providers";
-import AdminBusiness from "@/pages/admin/business";
-import AdminComplaints from "@/pages/admin/complaints";
-import AdminTaxonomy from "@/pages/admin/taxonomy";
-import ProviderDashboard from "@/pages/provider-dashboard";
-import ProviderBusiness from "@/pages/provider-business";
-import Earnings from "@/pages/earnings";
-import Wallet from "@/pages/wallet";
-import Privacy from "@/pages/privacy";
-import Terms from "@/pages/terms";
-import SponsoredPreview from "@/pages/sponsored-preview";
+const AdminDashboard = lazy(() => import("@/pages/admin/dashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminProviders = lazy(() => import("@/pages/admin/providers"));
+const AdminBusiness = lazy(() => import("@/pages/admin/business"));
+const AdminComplaints = lazy(() => import("@/pages/admin/complaints"));
+const AdminTaxonomy = lazy(() => import("@/pages/admin/taxonomy"));
+const ProviderDashboard = lazy(() => import("@/pages/provider-dashboard"));
+const ProviderBusiness = lazy(() => import("@/pages/provider-business"));
+const Earnings = lazy(() => import("@/pages/earnings"));
+const Wallet = lazy(() => import("@/pages/wallet"));
+const Privacy = lazy(() => import("@/pages/privacy"));
+const Terms = lazy(() => import("@/pages/terms"));
+const SponsoredPreview = lazy(() => import("@/pages/sponsored-preview"));
 
 class RuntimeErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -295,7 +295,9 @@ function App() {
           <TooltipProvider>
             <div dir="rtl" className="min-h-[100dvh] bg-background text-foreground font-sans">
               <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <Router />
+                <Suspense fallback={<div className="flex min-h-[100dvh] items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
+                  <Router />
+                </Suspense>
               </WouterRouter>
             </div>
             <Toaster />
