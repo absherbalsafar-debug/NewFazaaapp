@@ -4,6 +4,7 @@ import { randomInt } from "node:crypto";
 interface PendingOtp {
   code: string;
   expiresAt: number;
+  role: "client" | "provider";
 }
 
 const pending = new Map<string, PendingOtp>();
@@ -53,7 +54,7 @@ export function registerPhoneAuthRoutes(app: Express) {
     if (phone.length < 7) return res.status(400).json({ error: "أدخل رقم هاتف صحيح" });
 
     const code = String(randomInt(100000, 1000000));
-    pending.set(phone, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
+    pending.set(phone, { code, expiresAt: Date.now() + 10 * 60 * 1000, role: req.body?.role === "provider" ? "provider" : "client" });
     // SMS provider is not configured in this deployment, so the code is returned
     // for display in the same screen as an explicit development fallback.
     return res.json({ success: true, otp: code, expiresIn: 600 });
@@ -68,7 +69,8 @@ export function registerPhoneAuthRoutes(app: Express) {
     }
 
     pending.delete(phone);
-    const user = userFor(phone, req.body ?? {});
+    const role = saved.role === "provider" || req.body?.role === "provider" ? "provider" : "client";
+    const user = userFor(phone, { ...(req.body ?? {}), role });
     const tokenPayload = { phone, issuedAt: Date.now(), role: user.role, name: user.name, city: user.city, specialty: user.specialty };
     const token = `phone_${Buffer.from(JSON.stringify(tokenPayload)).toString("base64url")}`;
     sessions.set(token, { user, expiresAt: Date.now() + SESSION_TTL });

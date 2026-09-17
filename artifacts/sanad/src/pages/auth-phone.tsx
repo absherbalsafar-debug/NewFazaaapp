@@ -69,7 +69,7 @@ export default function AuthPhone() {
     try {
       const data = await apiRequest('/auth/send-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: phone.trim() }),
+        body: JSON.stringify({ phone: phone.trim(), role }),
       });
       if (data.otp) setDevOtp(data.otp);
       setOtpSent(true);
@@ -95,8 +95,9 @@ export default function AuthPhone() {
       if (data.needsRegistration) {
         setStep("name");
       } else {
-        login(data.token, data.user);
-        navigate(getPostAuthPath(data.user.role === "provider" ? "provider" : "client"));
+        const authenticatedUser = role === "provider" ? { ...data.user, role: "provider" } : data.user;
+        login(data.token, authenticatedUser);
+        navigate(getPostAuthPath(role));
       }
     } catch (err: any) {
       toast({ title: "رمز خاطئ", description: err.message, variant: "destructive" });
@@ -138,7 +139,7 @@ export default function AuthPhone() {
           yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
         }),
       });
-      login(data.token, data.user);
+      login(data.token, role === "provider" ? { ...data.user, role: "provider" } : data.user);
       navigate(getPostAuthPath(role));
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
