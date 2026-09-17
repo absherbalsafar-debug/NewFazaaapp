@@ -60,10 +60,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
-private val FazaaNavy = Color(0xFF0E2F62)
-private val FazaaGold = Color(0xFFF5B916)
-private val FazaaTeal = Color(0xFF0F766E)
-private val FazaaBackground = Color(0xFFF7F8FA)
+internal val FazaaNavy = Color(0xFF0E2F62)
+internal val FazaaGold = Color(0xFFF5B916)
+internal val FazaaTeal = Color(0xFF0F766E)
+internal val FazaaBackground = Color(0xFFF7F8FA)
 
 object NativeNavigation {
     var handler: (() -> Boolean)? = null
@@ -79,6 +79,8 @@ private sealed class Screen {
     data object Discover : Screen()
     data object Requests : Screen()
     data object Profile : Screen()
+    data object Pages : Screen()
+    data class Page(val route: String) : Screen()
 }
 
 @Composable
@@ -102,10 +104,12 @@ fun FazaaNativeApp() {
                     is Screen.Phone -> PhoneScreen(role = screen.role, onBack = { stack.value = stack.value.dropLast(1) }, onOtp = { phone, code -> stack.value = stack.value + Screen.Otp(screen.role, phone, code) })
                     is Screen.Otp -> OtpScreen(screen, onBack = { stack.value = stack.value.dropLast(1) }, onNeedsName = { stack.value = stack.value + Screen.Name(screen.role, screen.phone, it) }, onLoggedIn = { stack.value = listOf(Screen.Home) })
                     is Screen.Name -> NameScreen(screen, onBack = { stack.value = stack.value.dropLast(1) }, onComplete = { stack.value = listOf(Screen.Home) })
-                    Screen.Home -> MainShell(selected = 0, onSelect = { index -> stack.value = listOf(if (index == 1) Screen.Discover else if (index == 2) Screen.Requests else if (index == 3) Screen.Profile else Screen.Home) })
-                    Screen.Discover -> MainShell(selected = 1, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 2) Screen.Requests else if (index == 3) Screen.Profile else Screen.Discover) })
-                    Screen.Requests -> MainShell(selected = 2, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 3) Screen.Profile else Screen.Requests) })
-                    Screen.Profile -> MainShell(selected = 3, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 2) Screen.Requests else Screen.Profile) })
+                    Screen.Home -> MainShell(selected = 0, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 1) Screen.Discover else if (index == 2) Screen.Requests else if (index == 3) Screen.Profile else Screen.Home) })
+                    Screen.Discover -> MainShell(selected = 1, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 2) Screen.Requests else if (index == 3) Screen.Profile else Screen.Discover) })
+                    Screen.Requests -> MainShell(selected = 2, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 3) Screen.Profile else Screen.Requests) })
+                    Screen.Profile -> MainShell(selected = 3, onOpenPages = { stack.value = stack.value + Screen.Pages }, onSelect = { index -> stack.value = listOf(if (index == 0) Screen.Home else if (index == 1) Screen.Discover else if (index == 2) Screen.Requests else Screen.Profile) })
+                    Screen.Pages -> NativePagesIndex(onOpen = { stack.value = stack.value + Screen.Page(it) })
+                    is Screen.Page -> NativePageScreen(route = screen.route, onBack = { stack.value = stack.value.dropLast(1) })
                 }
             }
         }
@@ -214,7 +218,7 @@ private fun AuthScaffold(title: String, onBack: () -> Unit, content: @Composable
 }
 
 @Composable
-private fun MainShell(selected: Int, onSelect: (Int) -> Unit) {
+private fun MainShell(selected: Int, onOpenPages: () -> Unit, onSelect: (Int) -> Unit) {
     Scaffold(bottomBar = { BottomBar(selected, onSelect) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(22.dp), horizontalAlignment = Alignment.End) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { BrandMark(); Text("مرحباً بك في فزعة", color = FazaaNavy, fontSize = 22.sp, fontWeight = FontWeight.Black) }
@@ -224,6 +228,7 @@ private fun MainShell(selected: Int, onSelect: (Int) -> Unit) {
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = FazaaNavy)) {
                 Column(modifier = Modifier.padding(20.dp)) { Text("تواصل مباشرة مع المهني", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold); Text("اتصال أو واتساب فقط — بدون رسائل داخلية أو مكالمات داخل التطبيق", color = Color.White.copy(alpha = .7f), fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp)); ContactButtons() }
             }
+            OutlinedButton(onClick = onOpenPages, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) { Text("استعراض صفحات فزعة") }
         }
     }
 }
