@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, count, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull } from "drizzle-orm";
 import {
   db,
   providersTable,
@@ -8,7 +8,9 @@ import {
   paymentWalletSettingsTable,
   providerMetricsTable,
   serviceRequestsTable,
+  commercialPlansTable,
 } from "@workspace/db";
+import { ensureCommercialPlanDefaults } from "./commercial-plans";
 import {
   CreateSubscriptionPaymentBody,
 } from "@workspace/api-zod";
@@ -168,7 +170,10 @@ export async function ensureProviderSubscription(providerId: number) {
 }
 
 router.get("/subscription-plans", (_req, res) => {
-  res.json(subscriptionPlans);
+  ensureCommercialPlanDefaults().then(async () => {
+    const rows = await db.select().from(commercialPlansTable).where(and(eq(commercialPlansTable.kind, "subscription"), eq(commercialPlansTable.isActive, true))).orderBy(asc(commercialPlansTable.sortOrder), asc(commercialPlansTable.id));
+    res.json([{ id: "free", name: "مجاني لأول 300 مهني", monthlyPrice: 0, yearlyPrice: 0, description: "مقعد مجاني مدى الحياة للمهنيين الأوائل", benefits: ["ملف مهني", "الظهور في البحث", "استقبال الطلبات", "صور أعمال محدودة"] }, ...rows.map((row) => ({ id: row.code, name: row.name, monthlyPrice: row.code === "monthly" ? Number(row.price) : 0, yearlyPrice: row.code === "monthly" ? 0 : Number(row.price), description: row.description, benefits: Array.isArray(row.benefits) ? row.benefits : [] }))]);
+  }).catch(() => res.status(500).json({ error: "تعذر تحميل خطط الاشتراك" }));
 });
 
 router.get("/payment-wallets", requireAuth, async (req: AuthRequest, res): Promise<void> => {

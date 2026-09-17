@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -58,11 +58,11 @@ const adStatus: Record<string, string> = {
   expired: "منتهي",
 };
 
-const advertisementPackages = [
+const advertisementPackages: Array<{ id: string; title: string; days: number; placement: string; description: string }> = [
   { id: "standard", title: "إعلان عادي", days: 7, placement: "داخل نتائج الفئة", description: "حل مناسب للظهور الأساسي" },
   { id: "featured", title: "إعلان مميز", days: 14, placement: "ترتيب أعلى وشارة مميز", description: "ظهور أقوى لمدة أسبوعين" },
   { id: "homepage", title: "إعلان رئيسي", days: 30, placement: "الصفحة الرئيسية والفئة", description: "أوسع ظهور داخل فزعة" },
-] as const;
+];
 
 export default function ProviderBusiness() {
   const { toast } = useToast();
@@ -89,11 +89,13 @@ export default function ProviderBusiness() {
     durationDays: 7 as AdvertisementInput["durationDays"],
     budget: "",
   });
+  const [adPackages, setAdPackages] = useState(advertisementPackages);
+  useEffect(() => { const token = localStorage.getItem("fazaah_token"); fetch("/api/commercial-plans?kind=advertisement", { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then((response) => response.ok ? response.json() : []).then((rows: Array<{ code: string; name: string; description: string; durationDays: number }>) => { if (rows.length) setAdPackages(rows.map((row) => ({ id: row.code, title: row.name, days: row.durationDays, placement: row.description, description: row.description }))); }).catch(() => undefined); }, []);
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
   const selectedWallet = useMemo(() => paymentWallets.find((item) => item.wallet === wallet), [paymentWallets, wallet]);
   const availableWallets = useMemo(() => paymentWallets.filter((item) => item.usage === "both" || item.usage === paymentPurpose), [paymentWallets, paymentPurpose]);
-  const selectedAdPackage = advertisementPackages.find((item) => item.id === adForm.plan) ?? advertisementPackages[0];
+  const selectedAdPackage = adPackages.find((item) => item.id === adForm.plan) ?? adPackages[0];
 
   const submitPayment = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -265,7 +267,7 @@ export default function ProviderBusiness() {
             <div>
               <p className="mb-2 text-xs font-black text-foreground">اختر باقة الإعلان</p>
               <div className="grid gap-2">
-                {advertisementPackages.map((item) => (
+                {adPackages.map((item) => (
                   <button
                     key={item.id}
                     type="button"

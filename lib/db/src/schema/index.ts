@@ -11,6 +11,7 @@ export * from "./otps";
 export * from "./email_tokens";
 export * from "./subscriptions";
 export * from "./payments";
+export * from "./commercial_plans";
 export * from "./advertisements";
 export * from "./provider_metrics";
 export * from "./provider_verification";

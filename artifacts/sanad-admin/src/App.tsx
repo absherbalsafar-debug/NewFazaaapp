@@ -61,6 +61,14 @@ import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient();
 
+type CommercialPlan = { id: number; code: string; kind: 'subscription' | 'advertisement'; name: string; description: string; price: number; durationDays: number; benefits: string[]; isActive: boolean; sortOrder: number };
+async function adminCommercialApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('fazaah_token');
+  const response = await fetch(`/api${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) } });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.error || 'تعذر تنفيذ العملية');
+  return response.json() as Promise<T>;
+}
+
 type PaymentWallet = string;
 
 type PaymentWalletSetting = {
@@ -514,10 +522,12 @@ function BusinessPage() {
   const [adId, setAdId] = useState('');
   const [adNote, setAdNote] = useState('');
   const [newWalletId, setNewWalletId] = useState('');
+  const [plans, setPlans] = useState<CommercialPlan[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Omit<PaymentWalletSetting, 'wallet'>>>({});
   useEffect(() => {
     if (walletsQuery.data) setDrafts(Object.fromEntries(walletsQuery.data.map((wallet: PaymentWalletSetting) => [wallet.wallet, { displayName: wallet.displayName, logoUrl: wallet.logoUrl, description: wallet.description, usage: wallet.usage, sortOrder: wallet.sortOrder, merchantName: wallet.merchantName, merchantAccount: wallet.merchantAccount, instructions: wallet.instructions, isActive: wallet.isActive }])));
   }, [walletsQuery.data]);
+  useEffect(() => { void adminCommercialApi<CommercialPlan[]>('/admin/commercial-plans').then(setPlans).catch((error) => toast.toast({ title: 'تعذر تحميل الباقات', description: shortError(error), variant: 'destructive' })); }, []);
   const reviewPaymentAction = (id: number, status: 'approved' | 'rejected') => reviewPayment.mutate({ id, data: { status, adminNote: note.trim() || null } }, {
     onSuccess: () => { setNote(''); toast.toast({ title: status === 'approved' ? 'تم اعتماد الاشتراك' : 'تم رفض عملية الدفع' }); void paymentsQuery.refetch(); },
     onError: (error) => toast.toast({ title: 'تعذر مراجعة الدفع', description: shortError(error), variant: 'destructive' }),
@@ -543,6 +553,7 @@ function BusinessPage() {
     if (!wallet) { toast.toast({ title: 'أدخل معرف المحفظة', variant: 'destructive' }); return; }
     updateWallet.mutate({ wallet, data: { displayName: wallet, logoUrl: null, description: '', usage: 'both', sortOrder: 0, merchantName: '', merchantAccount: '', instructions: '', isActive: true } }, { onSuccess: () => { setNewWalletId(''); toast.toast({ title: 'تمت إضافة المحفظة' }); void walletsQuery.refetch(); }, onError: (error) => toast.toast({ title: 'تعذر إضافة المحفظة', description: shortError(error), variant: 'destructive' }) });
   };
+  const savePlan = async (plan: CommercialPlan) => { try { const saved = await adminCommercialApi<CommercialPlan>(`/admin/commercial-plans/${plan.id}`, { method: 'PATCH', body: JSON.stringify(plan) }); setPlans((current) => current.map((item) => item.id === saved.id ? saved : item)); toast.toast({ title: `تم حفظ ${saved.name}` }); } catch (error) { toast.toast({ title: 'تعذر حفظ الباقة', description: shortError(error), variant: 'destructive' }); } };
   const payments = paymentsQuery.data ?? [];
   return <>
     <PageHeader eyebrow="العمليات التجارية" title="المدفوعات والتجاري" description="راجع التحويلات اليدوية، تحكم في محافظ التجار، واعتمد الإعلانات المدفوعة." action={<Button variant="secondary" onClick={() => { void paymentsQuery.refetch(); void walletsQuery.refetch(); }} disabled={paymentsQuery.isFetching || walletsQuery.isFetching} testId="button-refresh-business"><RefreshCw className={`h-4 w-4 ${paymentsQuery.isFetching ? 'animate-spin' : ''}`} /> تحديث العمليات</Button>} />
@@ -554,6 +565,9 @@ function BusinessPage() {
           <Button onClick={() => reviewAdAction('active')} disabled={reviewAd.isPending} testId="button-approve-ad"><Check className="h-4 w-4" />تفعيل الإعلان</Button>
           <Button variant="danger" onClick={() => reviewAdAction('rejected')} disabled={reviewAd.isPending} testId="button-reject-ad"><X className="h-4 w-4" />رفض الإعلان</Button>
         </div>
+      </Panel>
+      <Panel title="باقات الاشتراكات والإعلانات" subtitle="عدّل الأسعار والمزايا والمدة والترتيب والتفعيل من مكان واحد." icon={SlidersHorizontal}>
+        <div className="grid gap-4 p-5 xl:grid-cols-2">{plans.map((plan) => <div key={plan.id} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/.25)] p-4"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-[hsl(var(--primary))]">{plan.kind === 'subscription' ? 'اشتراك مهني' : 'إعلان مدفوع'}</p><p className="font-bold">{plan.code}</p></div><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={plan.isActive} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, isActive: event.target.checked } : item))} />مفعلة</label></div><div className="grid gap-2 sm:grid-cols-2"><input value={plan.name} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, name: event.target.value } : item))} placeholder="اسم الباقة" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><input type="number" value={plan.price} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, price: Number(event.target.value) || 0 } : item))} placeholder="السعر بالريال" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><input value={plan.description} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, description: event.target.value } : item))} placeholder="وصف الباقة" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs sm:col-span-2" /><input type="number" value={plan.durationDays} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, durationDays: Number(event.target.value) || 1 } : item))} placeholder="المدة بالأيام" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /><input type="number" value={plan.sortOrder} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, sortOrder: Number(event.target.value) || 0 } : item))} placeholder="الترتيب" className="h-10 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 text-xs" /></div><textarea value={plan.benefits.join('\n')} onChange={(event) => setPlans((current) => current.map((item) => item.id === plan.id ? { ...item, benefits: event.target.value.split('\n').map((value) => value.trim()).filter(Boolean) } : item))} placeholder="ميزة في كل سطر" className="mt-2 min-h-20 w-full rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-xs" /><Button className="mt-3 w-full" onClick={() => void savePlan(plan)}>حفظ الباقة</Button></div>)}</div>
       </Panel>
       <Panel title="محافظ الدفع" subtitle="تظهر البيانات النشطة للمهني أثناء الدفع اليدوي للاشتراك." icon={WalletCards}>
         <div className="flex gap-2 border-b border-[hsl(var(--border))] p-5"><input value={newWalletId} onChange={(event) => setNewWalletId(event.target.value)} placeholder="معرف محفظة جديدة مثل cash_mobile" dir="ltr" className="h-10 flex-1 rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 text-sm" /><Button onClick={addWallet} disabled={updateWallet.isPending}>إضافة محفظة</Button></div>
