@@ -13,6 +13,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ApiClient.initialize(this)
         setContent { FazaaNativeApp() }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

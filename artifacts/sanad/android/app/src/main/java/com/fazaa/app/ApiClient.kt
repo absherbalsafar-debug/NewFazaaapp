@@ -1,5 +1,6 @@
 package com.fazaa.app
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -13,11 +14,20 @@ object ApiClient {
     private val client = OkHttpClient()
     private val jsonType = "application/json; charset=utf-8".toMediaType()
     @Volatile private var authToken: String? = null
+    private var preferences: android.content.SharedPreferences? = null
 
     data class OtpResult(val otp: String?, val message: String)
     data class VerifyResult(val token: String?, val needsRegistration: Boolean, val error: String? = null)
 
-    fun setToken(token: String?) { authToken = token }
+    fun initialize(context: Context) {
+        preferences = context.getSharedPreferences("fazaa_auth", Context.MODE_PRIVATE)
+        authToken = preferences?.getString("token", null)
+    }
+
+    fun setToken(token: String?) {
+        authToken = token
+        preferences?.edit()?.putString("token", token)?.apply() ?: preferences?.edit()?.remove("token")?.apply()
+    }
 
     suspend fun request(path: String, method: String = "GET", payload: JSONObject? = null): JSONObject = withContext(Dispatchers.IO) {
         val builder = Request.Builder().url(BASE_URL.trimEnd('/') + path)
