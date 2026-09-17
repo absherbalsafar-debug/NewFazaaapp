@@ -216,10 +216,11 @@ export class ResponseParseError extends Error {
     cause: unknown,
     requestInfo: { method: string; url: string },
   ) {
-    super(
-      `Failed to parse response from ${requestInfo.method} ${response.url || requestInfo.url} ` +
-        `(${response.status} ${response.statusText}) as JSON`,
-    );
+    const looksLikeHtml = /<doctype html|<html[\s>]/i.test(rawBody);
+    super(looksLikeHtml
+      ? "عنوان خادم API غير صحيح أو غير جاهز. التطبيق تلقى صفحة ويب بدلاً من استجابة API."
+      : `Failed to parse response from ${requestInfo.method} ${response.url || requestInfo.url} ` +
+        `(${response.status} ${response.statusText}) as JSON`);
     Object.setPrototypeOf(this, new.target.prototype);
 
     this.status = response.status;
