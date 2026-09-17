@@ -324,8 +324,8 @@ export default function AuthPhone() {
                         <BriefcaseBusiness className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-extrabold text-primary">ما الخدمة التي تقدمها؟</p>
-                        <p className="mt-0.5 text-[10px] text-[#8b897f]">هذه المعلومات تظهر للعملاء عند تصفح المهنيين</p>
+                        <p className="text-sm font-extrabold text-primary">اختر تخصصك أو مجالك</p>
+                        <p className="mt-0.5 text-[10px] text-[#8b897f]">اختر المجال والتخصص الفرعي واكتب وصفًا مختصرًا لخدمتك</p>
                       </div>
                     </div>
                     <div className="relative">
@@ -350,7 +350,7 @@ export default function AuthPhone() {
                       <Textarea
                         value={bio}
                         onChange={(event) => setBio(event.target.value)}
-                        placeholder="مثال: أقدم خدمات السباكة المنزلية وإصلاح التسربات وتركيب الأدوات الصحية..."
+                        placeholder="اكتب وصف تخصصك أو مجالك، مثل: أقدم خدمات السباكة المنزلية وإصلاح التسربات..."
                         className="min-h-[96px] resize-none rounded-2xl border-[#d4d9df] bg-[#fbfaf7] pr-11 pt-3 text-sm leading-6 shadow-none focus-visible:ring-primary"
                         maxLength={240}
                       />
@@ -373,7 +373,7 @@ export default function AuthPhone() {
                   <CitySelector value={city} onChange={setCity} placeholder="المدينة (اختياري)" />
                 </div>
                 <Button onClick={completeRegistration} disabled={loading || !name.trim()} className="h-14 w-full rounded-2xl bg-primary text-base font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90">
-                  {loading ? "جاري إنشاء الحساب..." : "أكمل إلى فزعة"}
+                  {loading ? "جاري إنشاء الحساب..." : "المتابعة"}
                   <ArrowLeft className="mr-2 h-4 w-4" />
                 </Button>
               </>
