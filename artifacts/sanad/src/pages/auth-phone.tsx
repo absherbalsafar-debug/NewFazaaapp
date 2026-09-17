@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getPostAuthPath, getRegistrationRole, type RegistrationRole } from "@/lib/registration";
 
 type Step = "phone" | "otp" | "name";
-type Category = { id: number; name: string; icon?: string | null };
+type Category = { id: number; name: string; icon?: string | null; specialties?: string[] };
 
 const roleLabels: Record<RegistrationRole, { title: string; description: string }> = {
   client: { title: "أبحث عن خدمة", description: "ستظهر لك أفضل الخدمات والمهنيين" },
@@ -25,6 +25,7 @@ export default function AuthPhone() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [specialty, setSpecialty] = useState("");
   const [bio, setBio] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,6 +39,7 @@ export default function AuthPhone() {
   const role = getRegistrationRole(window.location.search);
   const selectedRole = roleLabels[role];
   const RoleIcon = role === "provider" ? BriefcaseBusiness : UserRound;
+  const selectedCategory = categories.find((category) => String(category.id) === categoryId);
 
   useEffect(() => {
     if (role !== "provider" || step !== "name") return;
@@ -112,6 +114,10 @@ export default function AuthPhone() {
       toast({ title: "حدد مجال خدمتك", description: "اختر المجال الذي ستقدم خدماته للعملاء", variant: "destructive" });
       return;
     }
+    if (role === "provider" && selectedCategory?.specialties?.length && !specialty) {
+      toast({ title: "حدد تخصصك الفرعي", description: "اختر التخصص الأدق داخل مجال خدمتك", variant: "destructive" });
+      return;
+    }
     if (role === "provider" && bio.trim().length < 10) {
       toast({ title: "اكتب نبذة عن خدمتك", description: "أضف وصفاً مختصراً لا يقل عن 10 أحرف", variant: "destructive" });
       return;
@@ -127,6 +133,7 @@ export default function AuthPhone() {
           role,
           city: city || undefined,
           categoryId: categoryId ? Number(categoryId) : undefined,
+          specialty: specialty.trim() || undefined,
           bio: bio.trim() || undefined,
           yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
         }),
@@ -323,7 +330,7 @@ export default function AuthPhone() {
                     <div className="relative">
                       <select
                         value={categoryId}
-                        onChange={(event) => setCategoryId(event.target.value)}
+                        onChange={(event) => { setCategoryId(event.target.value); setSpecialty(""); }}
                         disabled={categoriesLoading}
                         className="h-14 w-full appearance-none rounded-2xl border border-[#d4d9df] bg-[#fbfaf7] px-4 pl-10 text-sm font-bold text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
                       >
@@ -336,6 +343,7 @@ export default function AuthPhone() {
                       </select>
                       <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8e8b82]" />
                     </div>
+                    {selectedCategory?.specialties?.length ? <div className="relative"><select value={specialty} onChange={(event) => setSpecialty(event.target.value)} className="h-14 w-full appearance-none rounded-2xl border border-[#d4d9df] bg-[#fbfaf7] px-4 pl-10 text-sm font-bold text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"><option value="">اختر تخصصك الفرعي</option>{selectedCategory.specialties.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8e8b82]" /></div> : null}
                     <div className="relative">
                       <FileText className="pointer-events-none absolute right-4 top-4 h-4 w-4 text-[#a17b29]" />
                       <Textarea

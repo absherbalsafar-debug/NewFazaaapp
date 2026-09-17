@@ -29,6 +29,7 @@ function userFor(phone: string, body: Record<string, unknown> = {}) {
     phoneVerified: true,
     emailVerified: false,
     city: body.city ? String(body.city) : null,
+    specialty: body.specialty ? String(body.specialty) : null,
     createdAt: new Date().toISOString(),
   };
 }
@@ -68,7 +69,7 @@ export function registerPhoneAuthRoutes(app: Express) {
 
     pending.delete(phone);
     const user = userFor(phone, req.body ?? {});
-    const tokenPayload = { phone, issuedAt: Date.now(), role: user.role, name: user.name, city: user.city };
+    const tokenPayload = { phone, issuedAt: Date.now(), role: user.role, name: user.name, city: user.city, specialty: user.specialty };
     const token = `phone_${Buffer.from(JSON.stringify(tokenPayload)).toString("base64url")}`;
     sessions.set(token, { user, expiresAt: Date.now() + SESSION_TTL });
     return res.json({ token, user, needsRegistration: false });
@@ -84,20 +85,20 @@ export function registerPhoneAuthRoutes(app: Express) {
     const user = getTokenUser(req);
     if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
     if (user.role !== "provider") return res.status(403).json({ error: "هذا المسار للمهنيين فقط" });
-    return res.json({ id: user.id, name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: "", bio: "", rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: 0, hourlyRate: null, phone: user.phone, whatsapp: null, isVerified: false, isAvailable: true, lat: null, lng: null, createdAt: user.createdAt });
+    return res.json({ id: user.id, name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", specialty: user.specialty, categoryIcon: null, city: user.city ?? "صنعاء", district: "", bio: "", rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: 0, hourlyRate: null, phone: user.phone, whatsapp: null, isVerified: false, isAvailable: true, lat: null, lng: null, createdAt: user.createdAt });
   });
 
   app.get("/api/categories", (_req: Request, res: Response) => res.json([
-    { id: 1, name: "كهرباء وتمديدات", icon: "⚡" },
-    { id: 2, name: "سباكة وصيانة مياه", icon: "💧" },
-    { id: 3, name: "تكييف وتبريد", icon: "❄️" },
-    { id: 4, name: "نجارة وأثاث", icon: "🪚" },
-    { id: 5, name: "دهانات وديكور", icon: "🎨" },
-    { id: 6, name: "تنظيف ومكافحة حشرات", icon: "✨" },
-    { id: 7, name: "نقل وترحيل", icon: "🚚" },
-    { id: 8, name: "صيانة أجهزة", icon: "🔧" },
-    { id: 9, name: "تقنية وبرمجة", icon: "💻" },
-    { id: 10, name: "تصوير وتصميم", icon: "📷" },
+    { id: 1, name: "كهرباء وتمديدات", icon: "⚡", specialties: ["تمديدات منزلية", "كهرباء صناعية", "تركيب الإنارة", "صيانة المولدات"] },
+    { id: 2, name: "سباكة وصيانة مياه", icon: "💧", specialties: ["إصلاح التسربات", "تركيب الأدوات الصحية", "تمديدات المياه", "خزانات ومضخات"] },
+    { id: 3, name: "تكييف وتبريد", icon: "❄️", specialties: ["تركيب المكيفات", "صيانة وتنظيف", "تعبئة فريون", "تبريد تجاري"] },
+    { id: 4, name: "نجارة وأثاث", icon: "🪚", specialties: ["أثاث منزلي", "مطابخ وخزائن", "أبواب ونوافذ", "ترميم الأثاث"] },
+    { id: 5, name: "دهانات وديكور", icon: "🎨", specialties: ["دهانات داخلية", "واجهات خارجية", "جبس وديكور", "ورق جدران"] },
+    { id: 6, name: "تنظيف ومكافحة حشرات", icon: "✨", specialties: ["تنظيف منازل", "تنظيف مكاتب", "مكافحة الحشرات", "تنظيف خزانات"] },
+    { id: 7, name: "نقل وترحيل", icon: "🚚", specialties: ["نقل أثاث", "نقل بضائع", "شاحنات صغيرة", "تغليف وتركيب"] },
+    { id: 8, name: "صيانة أجهزة", icon: "🔧", specialties: ["صيانة جوالات", "صيانة كمبيوتر", "أجهزة منزلية", "كاميرات ومراقبة"] },
+    { id: 9, name: "تقنية وبرمجة", icon: "💻", specialties: ["تطوير مواقع", "تطبيقات جوال", "شبكات وأنظمة", "دعم فني"] },
+    { id: 10, name: "تصوير وتصميم", icon: "📷", specialties: ["تصوير مناسبات", "تصميم جرافيك", "مونتاج فيديو", "تصوير منتجات"] },
   ]));
   app.get("/api/requests", (_req: Request, res: Response) => res.json([]));
   app.patch("/api/providers/:id", (req: Request, res: Response) => {
@@ -105,7 +106,8 @@ export function registerPhoneAuthRoutes(app: Express) {
     if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
     if (req.body?.phone !== undefined) user.phone = normalizePhone(req.body.phone);
     if (req.body?.city !== undefined) user.city = String(req.body.city || "");
-    return res.json({ id: Number(req.params.id), name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: String(req.body?.district || ""), bio: String(req.body?.bio || ""), rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: Number(req.body?.yearsExperience) || 0, hourlyRate: Number(req.body?.hourlyRate) || null, phone: user.phone, whatsapp: req.body?.whatsapp ? normalizePhone(req.body.whatsapp) : null, isVerified: false, isAvailable: req.body?.isAvailable !== false, lat: null, lng: null, createdAt: user.createdAt });
+    if (req.body?.specialty !== undefined) user.specialty = String(req.body.specialty || "");
+    return res.json({ id: Number(req.params.id), name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", specialty: user.specialty, categoryIcon: null, city: user.city ?? "صنعاء", district: String(req.body?.district || ""), bio: String(req.body?.bio || ""), rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: Number(req.body?.yearsExperience) || 0, hourlyRate: Number(req.body?.hourlyRate) || null, phone: user.phone, whatsapp: req.body?.whatsapp ? normalizePhone(req.body.whatsapp) : null, isVerified: false, isAvailable: req.body?.isAvailable !== false, lat: null, lng: null, createdAt: user.createdAt });
   });
   app.get("/api/providers/me/business", (_req: Request, res: Response) => res.json({ subscription: { id: 0, plan: "free", status: "active", freeSlotNumber: null, startsAt: null, endsAt: null, createdAt: new Date().toISOString() }, metrics: { profileViews: 0, callClicks: 0, whatsappClicks: 0, serviceRequests: 0 }, freeSlotsRemaining: 300 }));
   app.get("/api/subscription-plans", (_req: Request, res: Response) => res.json([]));
