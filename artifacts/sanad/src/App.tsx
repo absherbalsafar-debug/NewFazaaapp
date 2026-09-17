@@ -43,6 +43,7 @@ import Earnings from "@/pages/earnings";
 import Wallet from "@/pages/wallet";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
+import SponsoredPreview from "@/pages/sponsored-preview";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -182,6 +183,11 @@ function Router() {
       <Route path="/providers/:id">
         <ProtectedRoute>
           <AppShell><ProviderDetail /></AppShell>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/sponsored-preview">
+        <ProtectedRoute>
+          <AppShell><SponsoredPreview /></AppShell>
         </ProtectedRoute>
       </Route>
       <Route path="/emergency">
