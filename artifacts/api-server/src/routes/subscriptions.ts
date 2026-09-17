@@ -176,7 +176,7 @@ router.get("/payment-wallets", requireAuth, async (req: AuthRequest, res): Promi
     res.status(403).json({ error: "وسائل الدفع متاحة للمهنيين فقط" });
     return;
   }
-  res.json(await listWalletSettings("subscriptions"));
+  res.json(await listWalletSettings());
 });
 
 router.get("/providers/me/business", requireAuth, async (req: AuthRequest, res): Promise<void> => {

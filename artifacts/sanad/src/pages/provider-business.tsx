@@ -75,6 +75,7 @@ export default function ProviderBusiness() {
   const createAd = useCreateAdvertisement();
 
   const [paymentPlan, setPaymentPlan] = useState<"monthly" | "yearly">("monthly");
+  const [paymentPurpose, setPaymentPurpose] = useState<"subscriptions" | "advertisements">("subscriptions");
   const [wallet, setWallet] = useState<SubscriptionPaymentInput["wallet"]>("jeeb");
   const [transactionReference, setTransactionReference] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -91,6 +92,7 @@ export default function ProviderBusiness() {
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
   const selectedWallet = useMemo(() => paymentWallets.find((item) => item.wallet === wallet), [paymentWallets, wallet]);
+  const availableWallets = useMemo(() => paymentWallets.filter((item) => item.usage === "both" || item.usage === paymentPurpose), [paymentWallets, paymentPurpose]);
   const selectedAdPackage = advertisementPackages.find((item) => item.id === adForm.plan) ?? advertisementPackages[0];
 
   const submitPayment = async (event: React.FormEvent) => {
@@ -223,12 +225,21 @@ export default function ProviderBusiness() {
 
         {!isFree && (
           <section className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center gap-3"><Sparkles className="h-5 w-5 text-primary" /><div><h2 className="font-black">خطط اشتراك المهني</h2><p className="mt-1 text-xs text-muted-foreground">اختر مدة الظهور والمزايا المناسبة لملفك المهني.</p></div></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {plans.filter((plan) => plan.id !== "free").map((plan) => <button key={plan.id} type="button" onClick={() => { setPaymentPlan(plan.id as "monthly" | "yearly"); setPaymentPurpose("subscriptions"); }} className={`rounded-2xl border p-4 text-right transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${paymentPurpose === "subscriptions" && paymentPlan === plan.id ? "border-primary bg-primary/5 shadow-sm" : "border-border"}`}><div className="flex items-start justify-between gap-3"><span className="font-black">{plan.name}</span><span className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-black text-primary">{plan.id === "monthly" ? `${plan.monthlyPrice} ريال / شهر` : `${plan.yearlyPrice} ريال`}</span></div><p className="mt-2 text-xs leading-5 text-muted-foreground">{plan.description}</p><ul className="mt-3 space-y-1 text-xs text-muted-foreground">{plan.benefits.map((benefit) => <li key={benefit}>✓ {benefit}</li>)}</ul></button>)}
+            </div>
+          </section>
+        )}
+
+        {!isFree && (
+          <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center gap-3">
               <WalletCards className="h-5 w-5 text-primary" />
-              <div><h2 className="font-black">اختر محفظة الدفع</h2><p className="mt-1 text-xs text-muted-foreground">اختر المحفظة للانتقال إلى شاشة الدفع الخاصة بها.</p></div>
+              <div><h2 className="font-black">اختر محفظة الدفع</h2><p className="mt-1 text-xs text-muted-foreground">لـ {paymentPurpose === "subscriptions" ? selectedPlan?.name ?? "الاشتراك المختار" : selectedAdPackage.title} — اختر المحفظة للانتقال إلى شاشة الدفع الخاصة بها.</p></div>
             </div>
             <div className="mt-4 grid gap-3">
-              {paymentWallets.length === 0 ? <div className="rounded-2xl bg-muted/50 p-5 text-center text-sm text-muted-foreground">لا توجد محافظ مفعلة حاليًا.</div> : paymentWallets.map((item) => (
+              {availableWallets.length === 0 ? <div className="rounded-2xl bg-muted/50 p-5 text-center text-sm text-muted-foreground">لا توجد محافظ مفعلة لهذا الاستخدام حاليًا.</div> : availableWallets.map((item) => (
                 <button key={item.wallet} type="button" onClick={() => setWallet(item.wallet)} className={`flex min-h-[84px] w-full items-center gap-4 rounded-2xl border p-4 text-right transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${wallet === item.wallet ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary">{item.logoUrl ? <img src={item.logoUrl} alt="" className="h-full w-full object-contain" /> : <WalletCards className="h-7 w-7" />}</span>
                   <span className="min-w-0 flex-1"><span className="block text-base font-black">{item.displayName}</span>{item.description && <span className="mt-1 block truncate text-xs text-muted-foreground">{item.description}</span>}<span className="mt-1 block text-[11px] text-primary">متابعة الدفع</span></span>
@@ -258,7 +269,7 @@ export default function ProviderBusiness() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setAdForm({ ...adForm, plan: item.id as AdvertisementInput["plan"], durationDays: item.days as AdvertisementInput["durationDays"] })}
+                    onClick={() => { setPaymentPurpose("advertisements"); setAdForm({ ...adForm, plan: item.id as AdvertisementInput["plan"], durationDays: item.days as AdvertisementInput["durationDays"] }); }}
                     className={`flex items-center justify-between rounded-xl border p-3 text-right transition-colors ${adForm.plan === item.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
                   >
                     <span>
