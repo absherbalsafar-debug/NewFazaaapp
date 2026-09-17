@@ -17,6 +17,10 @@ node_modules
 !.env.example
 !.env.staging.example
 
+# Android signing keys must stay outside Git
+*.keystore
+*.jks
+
 # IDEs and editors
 /.idea
 .project
