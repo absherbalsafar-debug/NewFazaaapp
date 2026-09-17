@@ -86,8 +86,23 @@ export function registerPhoneAuthRoutes(app: Express) {
     return res.json({ id: user.id, name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: "", bio: "", rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: 0, hourlyRate: null, phone: user.phone, whatsapp: null, isVerified: false, isAvailable: true, lat: null, lng: null, createdAt: user.createdAt });
   });
 
+  app.get("/api/categories", (_req: Request, res: Response) => res.json([]));
   app.get("/api/requests", (_req: Request, res: Response) => res.json([]));
-  app.patch("/api/providers/:id", (req: Request, res: Response) => res.json({ id: Number(req.params.id), ...req.body }));
+  app.patch("/api/providers/:id", (req: Request, res: Response) => {
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    if (req.body?.phone !== undefined) user.phone = normalizePhone(req.body.phone);
+    if (req.body?.city !== undefined) user.city = String(req.body.city || "");
+    return res.json({ id: Number(req.params.id), name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: String(req.body?.district || ""), bio: String(req.body?.bio || ""), rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: Number(req.body?.yearsExperience) || 0, hourlyRate: Number(req.body?.hourlyRate) || null, phone: user.phone, whatsapp: req.body?.whatsapp ? normalizePhone(req.body.whatsapp) : null, isVerified: false, isAvailable: req.body?.isAvailable !== false, lat: null, lng: null, createdAt: user.createdAt });
+  });
+  app.get("/api/providers/me/business", (_req: Request, res: Response) => res.json({ subscription: { id: 0, plan: "free", status: "active", freeSlotNumber: null, startsAt: null, endsAt: null, createdAt: new Date().toISOString() }, metrics: { profileViews: 0, callClicks: 0, whatsappClicks: 0, serviceRequests: 0 }, freeSlotsRemaining: 300 }));
+  app.get("/api/subscription-plans", (_req: Request, res: Response) => res.json([]));
+  app.get("/api/payment-wallets", (_req: Request, res: Response) => res.json([]));
+  app.get("/api/providers/me/payments", (_req: Request, res: Response) => res.json([]));
+  app.get("/api/ads/mine", (_req: Request, res: Response) => res.json([]));
+  app.get("/api/commercial-plans", (_req: Request, res: Response) => res.json([]));
+  app.post("/api/subscriptions/checkout", (req: Request, res: Response) => res.status(201).json({ id: Date.now(), providerId: 0, plan: req.body?.plan || "monthly", wallet: req.body?.wallet || "", transactionReference: req.body?.transactionReference || "", receiptUrl: req.body?.receiptUrl || null, status: "pending", createdAt: new Date().toISOString() }));
+  app.post("/api/ads", (req: Request, res: Response) => res.status(201).json({ id: Date.now(), providerId: 0, ...req.body, status: "pending", createdAt: new Date().toISOString() }));
   app.post("/api/storage/uploads/request-url", (_req: Request, res: Response) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     return res.json({ uploadURL: `/api/storage/uploads/${id}`, objectPath: `verification/${id}` });
