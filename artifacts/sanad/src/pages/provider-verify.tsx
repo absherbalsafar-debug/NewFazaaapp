@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle, FileCheck2, ImagePlus, Loader2, ShieldCheck, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,17 @@ export default function ProviderVerify() {
   const progress = Math.round(((step + 1) / docs.length) * 100);
   const requiredReady = useMemo(() => Boolean(files.selfie?.length && files.id_front?.length && files.id_back?.length), [files]);
 
+  useEffect(() => {
+    let active = true;
+    if (localStorage.getItem("fazaah_verification_submitted") === "true") setSubmitted(true);
+    apiRequest("/providers/me/verification-status")
+      .then((status) => {
+        if (active && status?.submitted) setSubmitted(true);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
   const selectFiles = (type: DocumentType, selected: FileList | null) => {
     const list = Array.from(selected ?? []);
     if (!list.length) return;
@@ -45,6 +56,7 @@ export default function ProviderVerify() {
           await apiRequest("/providers/me/verification-documents", { method: "POST", body: JSON.stringify({ type: item.type, objectPath: upload.objectPath, originalName: file.name }) });
         }
       }
+      localStorage.setItem("fazaah_verification_submitted", "true");
       setSubmitted(true);
       toast({ title: "تم إرسال التوثيق", description: "سيبقى ملفك مخفيًا حتى اعتماد فريق فزعة." });
     } catch (error) {

@@ -9,6 +9,7 @@ interface PendingOtp {
 const pending = new Map<string, PendingOtp>();
 const sessions = new Map<string, { user: ReturnType<typeof userFor>; expiresAt: number }>();
 const revokedTokens = new Set<string>();
+const verificationRequests = new Map<number, { status: "pending"; submittedAt: string; documents: Array<Record<string, unknown>> }>();
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 
 function normalizePhone(value: unknown) {
@@ -86,7 +87,18 @@ export function registerPhoneAuthRoutes(app: Express) {
     return res.json({ id: user.id, name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: "", bio: "", rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: 0, hourlyRate: null, phone: user.phone, whatsapp: null, isVerified: false, isAvailable: true, lat: null, lng: null, createdAt: user.createdAt });
   });
 
-  app.get("/api/categories", (_req: Request, res: Response) => res.json([]));
+  app.get("/api/categories", (_req: Request, res: Response) => res.json([
+    { id: 1, name: "كهرباء وتمديدات", icon: "⚡" },
+    { id: 2, name: "سباكة وصيانة مياه", icon: "💧" },
+    { id: 3, name: "تكييف وتبريد", icon: "❄️" },
+    { id: 4, name: "نجارة وأثاث", icon: "🪚" },
+    { id: 5, name: "دهانات وديكور", icon: "🎨" },
+    { id: 6, name: "تنظيف ومكافحة حشرات", icon: "✨" },
+    { id: 7, name: "نقل وترحيل", icon: "🚚" },
+    { id: 8, name: "صيانة أجهزة", icon: "🔧" },
+    { id: 9, name: "تقنية وبرمجة", icon: "💻" },
+    { id: 10, name: "تصوير وتصميم", icon: "📷" },
+  ]));
   app.get("/api/requests", (_req: Request, res: Response) => res.json([]));
   app.patch("/api/providers/:id", (req: Request, res: Response) => {
     const user = getTokenUser(req);
@@ -109,8 +121,18 @@ export function registerPhoneAuthRoutes(app: Express) {
   });
   app.put("/api/storage/uploads/:id", (_req: Request, res: Response) => res.status(200).json({ success: true }));
   app.post("/api/providers/me/verification-documents", (req: Request, res: Response) => {
-    if (!getTokenUser(req)) return res.status(401).json({ error: "انتهت جلسة الدخول" });
-    return res.status(201).json({ success: true, document: req.body });
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    const current = verificationRequests.get(user.id) ?? { status: "pending" as const, submittedAt: new Date().toISOString(), documents: [] };
+    current.documents.push(req.body as Record<string, unknown>);
+    verificationRequests.set(user.id, current);
+    return res.status(201).json({ success: true, document: req.body, status: current.status });
+  });
+  app.get("/api/providers/me/verification-status", (req: Request, res: Response) => {
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    const request = verificationRequests.get(user.id);
+    return res.json(request ? { submitted: true, ...request } : { submitted: false, status: null, submittedAt: null, documents: [] });
   });
 
   const revokeSession = (req: Request, res: Response) => {

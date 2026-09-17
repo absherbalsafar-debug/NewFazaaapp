@@ -27,11 +27,12 @@ import {
   useListPaymentWallets,
   useListProviderPayments,
   useListSubscriptionPlans,
-} from "@workspace/api-client-react";
+} from "@/lib/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/auth";
 
 const wallets: Array<{ value: SubscriptionPaymentInput["wallet"]; label: string }> = [
   { value: "jeeb", label: "جيب" },
@@ -93,7 +94,9 @@ export default function ProviderBusiness() {
   const [adPackages, setAdPackages] = useState(advertisementPackages);
   const [adImageFile, setAdImageFile] = useState<File | null>(null);
   const [isUploadingAdImage, setIsUploadingAdImage] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   useEffect(() => { const token = localStorage.getItem("fazaah_token"); fetch("/api/commercial-plans?kind=advertisement", { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then((response) => response.ok ? response.json() : []).then((rows: Array<{ code: string; name: string; description: string; durationDays: number }>) => { if (rows.length) setAdPackages(rows.map((row) => ({ id: row.code, title: row.name, days: row.durationDays, placement: row.description, description: row.description }))); }).catch(() => undefined); }, []);
+  useEffect(() => { apiRequest("/providers/me/verification-status").then((status) => setVerificationStatus(status?.status ?? null)).catch(() => setVerificationStatus(null)); }, []);
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
   const selectedWallet = useMemo(() => paymentWallets.find((item) => item.wallet === wallet), [paymentWallets, wallet]);
@@ -144,6 +147,10 @@ export default function ProviderBusiness() {
 
   const submitAd = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (verificationStatus !== "approved") {
+      toast({ title: "التوثيق مطلوب أولاً", description: "لا يمكن نشر إعلان قبل اعتماد ملفك المهني.", variant: "destructive" });
+      return;
+    }
     const budget = Number(adForm.budget);
     if (!adForm.title.trim() || !adForm.city.trim() || !Number.isFinite(budget) || budget <= 0) {
       toast({ title: "أكمل بيانات الإعلان", description: "العنوان والمدينة والميزانية مطلوبة.", variant: "destructive" });
@@ -268,6 +275,8 @@ export default function ProviderBusiness() {
 
         <section className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3"><Megaphone className="h-5 w-5 text-primary" /><div><h2 className="font-black">إنشاء إعلان مدفوع</h2><p className="mt-1 text-xs text-muted-foreground">يظهر بوضوح كإعلان بعد اعتماد الإدارة.</p></div></div>
+          {verificationStatus !== "approved" && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900"><b>التوثيق مطلوب قبل نشر الإعلان</b><p className="mt-1">أرسل مستنداتك وانتظر اعتماد فريق فزعة، ثم ستتمكن من إنشاء إعلان.</p><Link href="/verify" className="mt-3 inline-block font-black text-primary underline">الانتقال إلى التوثيق</Link></div>}
+          <fieldset disabled={verificationStatus !== "approved"}>
           <form onSubmit={submitAd} className="mt-4 space-y-3">
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 text-xs"><Upload className="h-4 w-4 text-primary" /><span className="flex-1">{adImageFile ? adImageFile.name : "إضافة صورة رئيسية للإعلان أو من أعمالك"}</span><input type="file" accept="image/*" className="sr-only" onChange={(event) => setAdImageFile(event.target.files?.[0] ?? null)} /></label>
             <Input value={adForm.title} onChange={(event) => setAdForm({ ...adForm, title: event.target.value })} placeholder="عنوان الإعلان" className="h-11 rounded-xl" />
@@ -298,6 +307,7 @@ export default function ProviderBusiness() {
             <Input type="number" min="1" step="1" value={adForm.budget} onChange={(event) => setAdForm({ ...adForm, budget: event.target.value })} placeholder="مبلغ الإعلان بالريال اليمني" className="h-11 rounded-xl" />
             <Button type="submit" variant="outline" className="h-11 w-full rounded-xl" disabled={createAd.isPending}><Megaphone className="ml-2 h-4 w-4" />إرسال الإعلان للمراجعة</Button>
           </form>
+          </fieldset>
           <div className="mt-5 space-y-2">{ads.length === 0 ? <p className="text-center text-xs text-muted-foreground">ستظهر إعلاناتك هنا.</p> : ads.map((ad) => <div key={ad.id} className="rounded-xl border border-border px-3 py-3 text-xs"><div className="flex items-center justify-between gap-3"><span className="font-bold">{ad.title}</span><span className="text-muted-foreground">{adStatus[ad.status] ?? ad.status}</span></div>{ad.imageUrl && <img src={ad.imageUrl} alt="" className="mt-3 h-28 w-full rounded-xl object-cover" />}<p className="mt-2 text-muted-foreground">#{ad.id} · {ad.plan === "standard" ? "عادي" : ad.plan === "featured" ? "مميز" : ad.plan === "homepage" ? "رئيسي" : "VIP"} · {ad.durationDays} يوماً · <b className="text-foreground">{ad.budget.toLocaleString("ar-YE")} ريال</b></p><div className="mt-3 grid grid-cols-4 gap-2 text-center"><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.impressions ?? 0}</b><span className="text-[10px] text-muted-foreground">ظهور</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.clicks ?? 0}</b><span className="text-[10px] text-muted-foreground">نقرات</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.callClicks ?? 0}</b><span className="text-[10px] text-muted-foreground">اتصالات</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.whatsappClicks ?? 0}</b><span className="text-[10px] text-muted-foreground">واتساب</span></div></div></div>)}</div>
         </section>
 
