@@ -1,5 +1,6 @@
 import { pgEnum, pgTable, serial, integer, text, timestamp } from "drizzle-orm/pg-core";
 import { providersTable } from "./providers";
+import { portfolioItemsTable } from "./portfolio";
 
 export const verificationDocumentTypeEnum = pgEnum("verification_document_type", [
   "id_front",
@@ -44,6 +45,7 @@ export const providerVerificationAuditTable = pgTable("provider_verification_aud
   id: serial("id").primaryKey(),
   providerId: integer("provider_id").notNull().references(() => providersTable.id, { onDelete: "cascade" }),
   documentId: integer("document_id").references(() => providerVerificationDocumentsTable.id, { onDelete: "set null" }),
+  portfolioId: integer("portfolio_id").references(() => portfolioItemsTable.id, { onDelete: "set null" }),
   actorId: integer("actor_id").notNull(),
   action: verificationAuditActionEnum("action").notNull(),
   fromStatus: text("from_status"),

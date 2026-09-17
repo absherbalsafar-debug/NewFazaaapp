@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { db, providersTable, providerVerificationDocumentsTable, providerVerificationAuditTable, usersTable, categoriesTable } from "@workspace/db";
+import { db, providersTable, providerVerificationDocumentsTable, providerVerificationAuditTable, usersTable, categoriesTable, portfolioItemsTable } from "@workspace/db";
 import { requireAdmin, requireAuth, requireVerificationStaff, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -15,8 +15,8 @@ function serialize(row: typeof providerVerificationDocumentsTable.$inferSelect) 
   return { id: row.id, providerId: row.providerId, type: row.type, objectPath: row.objectPath, originalName: row.originalName, status: row.status, reviewerNote: row.reviewerNote ?? null, reviewedAt: row.reviewedAt?.toISOString() ?? null, createdAt: row.createdAt.toISOString() };
 }
 
-async function audit(providerId: number, actorId: number, action: typeof providerVerificationAuditTable.$inferInsert["action"], details: { documentId?: number; fromStatus?: string | null; toStatus?: string | null; note?: string | null } = {}) {
-  await db.insert(providerVerificationAuditTable).values({ providerId, actorId, action, documentId: details.documentId, fromStatus: details.fromStatus ?? null, toStatus: details.toStatus ?? null, note: details.note ?? null });
+async function audit(providerId: number, actorId: number, action: typeof providerVerificationAuditTable.$inferInsert["action"], details: { documentId?: number; portfolioId?: number; fromStatus?: string | null; toStatus?: string | null; note?: string | null } = {}) {
+  await db.insert(providerVerificationAuditTable).values({ providerId, actorId, action, documentId: details.documentId, portfolioId: details.portfolioId, fromStatus: details.fromStatus ?? null, toStatus: details.toStatus ?? null, note: details.note ?? null });
 }
 
 router.get("/providers/me/verification-documents", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -110,6 +110,34 @@ router.get("/admin/providers/:id/verification-audit", requireAuth, requireVerifi
   if (!Number.isInteger(providerId)) { res.status(400).json({ error: "Invalid id" }); return; }
   const rows = await db.select().from(providerVerificationAuditTable).where(eq(providerVerificationAuditTable.providerId, providerId)).orderBy(desc(providerVerificationAuditTable.createdAt));
   res.json(rows);
+});
+
+router.get("/admin/portfolio-review/queue", requireAuth, requireVerificationStaff, async (_req: AuthRequest, res): Promise<void> => {
+  const rows = await db.select({ item: portfolioItemsTable, provider: providersTable, user: usersTable, category: categoriesTable })
+    .from(portfolioItemsTable)
+    .innerJoin(providersTable, eq(portfolioItemsTable.providerId, providersTable.id))
+    .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+    .innerJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
+    .where(eq(portfolioItemsTable.reviewStatus, "pending"))
+    .orderBy(desc(portfolioItemsTable.createdAt));
+  res.json(rows.map(({ item, provider, user, category }) => ({
+    id: item.id, providerId: provider.id, providerName: user.name, phone: user.phone, categoryName: category.name,
+    city: provider.city, imageUrl: item.imageUrl, description: item.description ?? null, reviewStatus: item.reviewStatus,
+    rejectionReason: item.rejectionReason ?? null, reviewerNote: item.reviewerNote ?? null, createdAt: item.createdAt.toISOString(),
+  })));
+});
+
+router.patch("/admin/portfolio-items/:id", requireAuth, requireVerificationStaff, async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  const { status, rejectionReason = null, reviewerNote = null } = req.body ?? {};
+  const reasons = ["unrelated", "low_quality", "contact_info", "external_ad", "not_original", "policy_violation", "insufficient_proof", "other"];
+  if (!Number.isInteger(id) || !["pending", "approved", "rejected", "hidden"].includes(status) || (rejectionReason !== null && !reasons.includes(rejectionReason))) { res.status(400).json({ error: "بيانات مراجعة الصورة غير صالحة" }); return; }
+  const [item] = await db.select().from(portfolioItemsTable).where(eq(portfolioItemsTable.id, id));
+  if (!item) { res.status(404).json({ error: "صورة العمل غير موجودة" }); return; }
+  const [updated] = await db.update(portfolioItemsTable).set({ reviewStatus: status, rejectionReason: status === "rejected" ? rejectionReason : null, reviewerNote: reviewerNote == null ? null : String(reviewerNote).slice(0, 1000), reviewedBy: req.userId!, reviewedAt: new Date() }).where(eq(portfolioItemsTable.id, id)).returning();
+  const action = status === "approved" ? "approved" : status === "hidden" ? "hidden" : status === "rejected" ? "rejected" : "review_started";
+  await audit(item.providerId, req.userId!, action, { portfolioId: id, fromStatus: item.reviewStatus, toStatus: status, note: reviewerNote || rejectionReason });
+  res.json({ id: updated.id, providerId: updated.providerId, reviewStatus: updated.reviewStatus, rejectionReason: updated.rejectionReason, reviewerNote: updated.reviewerNote, reviewedAt: updated.reviewedAt?.toISOString() ?? null });
 });
 
 export default router;

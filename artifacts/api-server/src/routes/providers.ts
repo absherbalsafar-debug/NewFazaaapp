@@ -415,7 +415,7 @@ router.get("/providers/:id/portfolio", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const items = await db.select().from(portfolioItemsTable).where(eq(portfolioItemsTable.providerId, id));
+  const items = await db.select().from(portfolioItemsTable).where(and(eq(portfolioItemsTable.providerId, id), eq(portfolioItemsTable.reviewStatus, "approved")));
   res.json(items.map((i) => ({
     id: i.id,
     imageUrl: i.imageUrl,
@@ -433,10 +433,16 @@ router.post("/providers/:id/portfolio", requireAuth, async (req: AuthRequest, re
   const parsed = AddPortfolioItemBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  const [provider] = await db.select({ userId: providersTable.userId }).from(providersTable).where(eq(providersTable.id, id));
+  if (!provider) { res.status(404).json({ error: "Provider not found" }); return; }
+  if (provider.userId !== req.userId && req.userRole !== "admin") { res.status(403).json({ error: "لا يمكنك إضافة صورة لهذا الملف" }); return; }
+  if (!parsed.data.imageUrl.startsWith("/objects/")) { res.status(400).json({ error: "يجب أن تكون الصورة مرفوعة عبر التخزين الآمن" }); return; }
+
   const [item] = await db.insert(portfolioItemsTable).values({
     providerId: id,
     imageUrl: parsed.data.imageUrl,
     description: parsed.data.description ?? null,
+    reviewStatus: "pending",
   }).returning();
 
   res.status(201).json({
@@ -444,6 +450,9 @@ router.post("/providers/:id/portfolio", requireAuth, async (req: AuthRequest, re
     imageUrl: item.imageUrl,
     description: item.description ?? null,
     providerId: item.providerId,
+    reviewStatus: item.reviewStatus,
+    rejectionReason: item.rejectionReason ?? null,
+    reviewerNote: item.reviewerNote ?? null,
     createdAt: item.createdAt.toISOString(),
   });
 });
