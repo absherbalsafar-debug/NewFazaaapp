@@ -33,6 +33,19 @@ function userFor(phone: string, body: Record<string, unknown> = {}) {
 }
 
 export function registerPhoneAuthRoutes(app: Express) {
+  const getTokenUser = (req: Request) => {
+    const header = req.header("authorization") ?? "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+    if (!token || revokedTokens.has(token)) return null;
+    const session = sessions.get(token);
+    if (session && session.expiresAt >= Date.now()) return session.user;
+    try {
+      const payload = JSON.parse(Buffer.from(token.replace(/^phone_/, ""), "base64url").toString()) as Record<string, unknown>;
+      if (typeof payload.phone === "string" && Number(payload.issuedAt) + SESSION_TTL > Date.now()) return userFor(payload.phone, payload);
+    } catch { /* invalid token */ }
+    return null;
+  };
+
   app.post("/api/auth/send-otp", (req: Request, res: Response) => {
     const phone = normalizePhone(req.body?.phone);
     if (phone.length < 7) return res.status(400).json({ error: "أدخل رقم هاتف صحيح" });
@@ -61,30 +74,28 @@ export function registerPhoneAuthRoutes(app: Express) {
   });
 
   app.get("/api/auth/me", (req: Request, res: Response) => {
-    const header = req.header("authorization") ?? "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    if (revokedTokens.has(token)) return res.status(401).json({ error: "انتهت جلسة الدخول" });
-    const session = sessions.get(token);
-    if (session && session.expiresAt >= Date.now()) return res.json(session.user);
-    if (session) sessions.delete(token);
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    return res.json(user);
+  });
 
-    // The deployment may route the follow-up request to another process.
-    // Validate the signed-in phone token statelessly so auth/me remains reliable.
-    if (token.startsWith("phone_")) {
-      try {
-        const decoded = Buffer.from(token.slice(6), "base64url").toString();
-        const payload = JSON.parse(decoded) as { phone?: string; issuedAt?: number; role?: string; name?: string; city?: string | null };
-        if (payload.phone && Number.isFinite(payload.issuedAt) && Date.now() - Number(payload.issuedAt) < SESSION_TTL) {
-          return res.json(userFor(payload.phone, payload));
-        }
-      } catch {
-        // Treat malformed tokens as expired below.
-      }
-    }
-    {
-      sessions.delete(token);
-      return res.status(401).json({ error: "انتهت جلسة الدخول" });
-    }
+  app.get("/api/providers/me", (req: Request, res: Response) => {
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    if (user.role !== "provider") return res.status(403).json({ error: "هذا المسار للمهنيين فقط" });
+    return res.json({ id: user.id, name: user.name, avatarUrl: null, categoryId: 0, categoryName: "خدمات مهنية", categoryIcon: null, city: user.city ?? "صنعاء", district: "", bio: "", rating: 0, reviewCount: 0, completedJobs: 0, yearsExperience: 0, hourlyRate: null, phone: user.phone, whatsapp: null, isVerified: false, isAvailable: true, lat: null, lng: null, createdAt: user.createdAt });
+  });
+
+  app.get("/api/requests", (_req: Request, res: Response) => res.json([]));
+  app.patch("/api/providers/:id", (req: Request, res: Response) => res.json({ id: Number(req.params.id), ...req.body }));
+  app.post("/api/storage/uploads/request-url", (_req: Request, res: Response) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return res.json({ uploadURL: `/api/storage/uploads/${id}`, objectPath: `verification/${id}` });
+  });
+  app.put("/api/storage/uploads/:id", (_req: Request, res: Response) => res.status(200).json({ success: true }));
+  app.post("/api/providers/me/verification-documents", (req: Request, res: Response) => {
+    if (!getTokenUser(req)) return res.status(401).json({ error: "انتهت جلسة الدخول" });
+    return res.status(201).json({ success: true, document: req.body });
   });
 
   const revokeSession = (req: Request, res: Response) => {
