@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, FileText, Loader2, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -201,11 +201,11 @@ export default function AuthPhone() {
                   onChange={e => setPhone(e.target.value)}
                   className="h-14 rounded-2xl border-[#d4d9df] bg-white text-center text-lg font-semibold shadow-sm focus-visible:ring-primary"
                   dir="ltr"
+                  disabled={loading}
                   onKeyDown={e => e.key === "Enter" && sendOtp()}
                 />
                 <Button onClick={sendOtp} disabled={loading} className="h-14 w-full rounded-2xl bg-primary text-base font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90">
-                  {loading ? "جاري الإرسال..." : otpSent ? "إعادة إرسال الرمز" : "إرسال رمز التحقق"}
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {loading ? <><Loader2 className="ml-2 h-5 w-5 animate-spin" /> جاري إرسال الرمز...</> : <>{otpSent ? "إعادة إرسال الرمز" : "إرسال رمز التحقق"}<ArrowLeft className="mr-2 h-4 w-4" /></>}
                 </Button>
                 {otpSent && (
                   <div className="space-y-4 rounded-[26px] border border-primary/10 bg-white p-4 shadow-[0_12px_28px_rgba(14,47,98,0.06)]">
@@ -225,14 +225,26 @@ export default function AuthPhone() {
                         onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
                         className="h-14 rounded-2xl border-[#d4d9df] bg-white text-center font-mono text-2xl tracking-[0.5em] shadow-sm focus-visible:ring-primary"
                         dir="ltr"
+                        disabled={loading}
                         autoFocus
                         onKeyDown={e => e.key === "Enter" && verifyOtp()}
                       />
                     </div>
                     <Button onClick={verifyOtp} disabled={loading || otp.length !== 6} className="h-14 w-full rounded-2xl bg-primary text-base font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90">
-                      {loading ? "جاري التحقق..." : "تأكيد الدخول"}
-                      <Check className="mr-2 h-4 w-4" />
+                      {loading ? <><Loader2 className="ml-2 h-5 w-5 animate-spin" /> جاري التحقق...</> : <>تأكيد الدخول<Check className="mr-2 h-4 w-4" /></>}
                     </Button>
+                    {loading && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center justify-center gap-2 text-xs font-bold text-[#a17b29]"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#a17b29]" />
+                        نتحقق من الرمز ونجهز حسابك...
+                      </motion.div>
+                    )}
                   </div>
                 )}
               </>
