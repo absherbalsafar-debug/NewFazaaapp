@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -149,8 +150,17 @@ private fun WelcomeScreen(onStart: (String) -> Unit) {
 
 @Composable
 private fun BrandMark(large: Boolean = false) {
-    Box(modifier = Modifier.size(if (large) 112.dp else 54.dp).background(FazaaGold, CircleShape), contentAlignment = Alignment.Center) {
-        Text("ف", color = FazaaNavy, fontSize = if (large) 58.sp else 30.sp, fontWeight = FontWeight.Black)
+    androidx.compose.foundation.Image(
+        painter = painterResource(com.fazaa.app.R.drawable.fazaah_logo),
+        contentDescription = "شعار فزعة",
+        modifier = Modifier.size(if (large) 180.dp else 92.dp)
+    )
+}
+
+@Composable
+private fun NativeBrandMarkFallback() {
+    Box(modifier = Modifier.size(54.dp).background(FazaaGold, CircleShape), contentAlignment = Alignment.Center) {
+        Text("ف", color = FazaaNavy, fontSize = 30.sp, fontWeight = FontWeight.Black)
     }
 }
 
