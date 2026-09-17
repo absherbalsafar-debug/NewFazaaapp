@@ -88,7 +88,7 @@ export default function AuthPhone() {
     try {
       const data = await apiRequest('/auth/verify-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: phone.trim(), code: otp }),
+        body: JSON.stringify({ phone: phone.trim(), code: otp, role }),
       });
       if (data.needsRegistration) {
         setStep("name");

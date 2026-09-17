@@ -15,11 +15,12 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { useListRequests, useUpdateProvider } from "@workspace/api-client-react";
+import { useListRequests, useUpdateProvider } from "@/lib/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth, apiRequest } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface ProviderProfile {
   id: number;
@@ -54,6 +55,7 @@ export default function ProviderDashboard() {
     { query: { queryKey: ["provider-requests", user?.id], refetchOnMount: "always", staleTime: 15_000 } },
   );
   const updateProvider = useUpdateProvider();
+  const safeRequests = Array.isArray(requests) ? requests : [];
 
   useEffect(() => {
     let active = true;
@@ -73,11 +75,11 @@ export default function ProviderDashboard() {
   }, [toast]);
 
   const stats = useMemo(() => {
-    const pending = requests.filter((request) => request.status === "pending").length;
-    const active = requests.filter((request) => ["accepted", "in_progress"].includes(request.status)).length;
-    const completed = requests.filter((request) => request.status === "completed").length;
+    const pending = safeRequests.filter((request) => request.status === "pending").length;
+    const active = safeRequests.filter((request) => ["accepted", "in_progress"].includes(request.status)).length;
+    const completed = safeRequests.filter((request) => request.status === "completed").length;
     return { pending, active, completed };
-  }, [requests]);
+  }, [safeRequests]);
 
   const toggleAvailability = (isAvailable: boolean) => {
     if (!profile) return;
@@ -116,6 +118,7 @@ export default function ProviderDashboard() {
         <div className="mx-auto max-w-lg">
           <div className="flex items-start justify-between">
             <div>
+              <BrandLogo className="mb-4 h-12 w-24 object-contain brightness-0 invert" />
               <p className="text-sm text-white/65">لوحة المهني</p>
               <h1 className="mt-1 text-2xl font-extrabold">مرحباً، {profile.name}</h1>
           <p className="mt-2 text-xs text-white/70">{profile.categoryName} · {profile.city}</p>
@@ -141,8 +144,8 @@ export default function ProviderDashboard() {
           {[
             { label: "طلبات جديدة", value: stats.pending, icon: Clock3, color: "text-amber-600 bg-amber-50" },
             { label: "أعمال نشطة", value: stats.active, icon: BriefcaseBusiness, color: "text-blue-600 bg-blue-50" },
-            { label: "أعمال مكتملة", value: profile.completedJobs + stats.completed, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50" },
-            { label: "التقييم", value: profile.rating.toFixed(1), icon: Star, color: "text-yellow-600 bg-yellow-50" },
+            { label: "أعمال مكتملة", value: (Number(profile.completedJobs) || 0) + stats.completed, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50" },
+            { label: "التقييم", value: (Number(profile.rating) || 0).toFixed(1), icon: Star, color: "text-yellow-600 bg-yellow-50" },
           ].map((item, index) => (
             <motion.div key={item.label} initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: index * 0.05 }} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${item.color}`}><item.icon className="h-4 w-4" /></div>
@@ -184,11 +187,11 @@ export default function ProviderDashboard() {
             <div><h2 className="font-bold">آخر الطلبات</h2><p className="mt-1 text-xs text-muted-foreground">تابع أعمالك ورد على العملاء</p></div>
             <Link href="/my-requests" className="text-xs font-bold text-primary">عرض الكل</Link>
           </div>
-          {requests.length === 0 ? (
+          {safeRequests.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">لا توجد طلبات حتى الآن</div>
           ) : (
             <div className="divide-y divide-border">
-              {requests.slice(0, 4).map((request) => (
+              {safeRequests.slice(0, 4).map((request) => (
                 <Link key={request.id} href={`/my-requests/${request.id}`} className="flex items-center gap-3 p-4 transition-colors hover:bg-muted/40">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Eye className="h-4 w-4" /></div>
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{request.serviceType}</p><p className="mt-1 truncate text-xs text-muted-foreground">{request.clientName} · {request.city}</p></div>
