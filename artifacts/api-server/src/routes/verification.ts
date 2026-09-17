@@ -20,6 +20,13 @@ async function audit(providerId: number, actorId: number, action: typeof provide
   await db.insert(providerVerificationAuditTable).values({ providerId, actorId, action, documentId: details.documentId, portfolioId: details.portfolioId, fromStatus: details.fromStatus ?? null, toStatus: details.toStatus ?? null, note: details.note ?? null });
 }
 
+async function hasRequiredIdentityDocuments(providerId: number): Promise<boolean> {
+  const rows = await db.select({ type: providerVerificationDocumentsTable.type, status: providerVerificationDocumentsTable.status })
+    .from(providerVerificationDocumentsTable).where(eq(providerVerificationDocumentsTable.providerId, providerId));
+  const approved = new Set(rows.filter((row) => row.status === "approved").map((row) => row.type));
+  return ["id_front", "id_back", "selfie"].every((type) => approved.has(type));
+}
+
 router.get("/providers/me/verification-documents", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   if (req.userRole !== "provider") { res.status(403).json({ error: "هذا المسار للمهنيين فقط" }); return; }
   const provider = await providerForUser(req.userId!);
@@ -78,8 +85,7 @@ router.patch("/admin/verification-documents/:id", requireAuth, requireVerificati
   await audit(document.providerId, req.userId!, status === "hidden" ? "hidden" : status === "approved" ? "approved" : "rejected", { documentId: id, fromStatus: document.status, toStatus: status, note: reviewerNote });
   if (status === "rejected") await db.update(providersTable).set({ isVerified: false, verificationStatus: "changes_requested" }).where(eq(providersTable.id, document.providerId));
   if (status === "approved") {
-    const pending = await db.select({ id: providerVerificationDocumentsTable.id }).from(providerVerificationDocumentsTable).where(and(eq(providerVerificationDocumentsTable.providerId, document.providerId), eq(providerVerificationDocumentsTable.status, "pending")));
-    if (pending.length === 0) await db.update(providersTable).set({ isVerified: true, verificationStatus: "approved" }).where(eq(providersTable.id, document.providerId));
+    if (await hasRequiredIdentityDocuments(document.providerId)) await db.update(providersTable).set({ isVerified: true, verificationStatus: "approved" }).where(eq(providersTable.id, document.providerId));
   }
   res.json(serialize(updated));
 });
@@ -92,6 +98,7 @@ router.patch("/admin/providers/:id/verification", requireAuth, requireVerificati
   const [provider] = await db.select().from(providersTable).where(eq(providersTable.id, providerId));
   if (!provider) { res.status(404).json({ error: "المهني غير موجود" }); return; }
   const nextStatus = status ?? provider.verificationStatus;
+  if (nextStatus === "approved" && !(await hasRequiredIdentityDocuments(providerId))) { res.status(409).json({ error: "لا يمكن اعتماد المهني قبل اعتماد الهوية الأمامية والخلفية والصورة الشخصية" }); return; }
   const isApproved = nextStatus === "approved";
   const [updated] = await db.update(providersTable).set({
     verificationStatus: nextStatus,

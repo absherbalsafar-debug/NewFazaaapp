@@ -7,6 +7,7 @@ import {
   subscriptionPaymentsTable,
   portfolioItemsTable,
   providerVerificationDocumentsTable,
+  usersTable,
 } from "@workspace/db";
 import { Router, type IRouter } from "express";
 import { optionalAuth, requireAuth, type AuthRequest } from "../middlewares/auth";
@@ -46,6 +47,8 @@ router.post("/storage/uploads/request-url", requireAuth, async (req: AuthRequest
 router.get("/storage/objects/*path", optionalAuth, async (req: AuthRequest, res): Promise<void> => {
   const raw = req.params.path;
   const objectPath = `/objects/${Array.isArray(raw) ? raw.join("/") : raw}`;
+  const [currentUser] = req.userId ? await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, req.userId)) : [null];
+  const role = currentUser?.role;
   const [payment] = await db
     .select({ providerId: subscriptionPaymentsTable.providerId })
     .from(subscriptionPaymentsTable)
@@ -53,16 +56,16 @@ router.get("/storage/objects/*path", optionalAuth, async (req: AuthRequest, res)
   const [portfolio] = await db.select({ id: portfolioItemsTable.id, providerId: portfolioItemsTable.providerId, reviewStatus: portfolioItemsTable.reviewStatus }).from(portfolioItemsTable).where(eq(portfolioItemsTable.imageUrl, objectPath));
   const [verification] = await db.select({ id: providerVerificationDocumentsTable.id, providerId: providerVerificationDocumentsTable.providerId }).from(providerVerificationDocumentsTable).where(eq(providerVerificationDocumentsTable.objectPath, objectPath));
   let allowed = Boolean(portfolio?.reviewStatus === "approved");
-  if (payment && (req.userRole === "admin" || !req.userId)) allowed = Boolean(req.userRole === "admin");
-  if (payment && req.userId && req.userRole !== "admin") {
+  if (payment && (role === "admin" || !req.userId)) allowed = role === "admin";
+  if (payment && req.userId && role !== "admin") {
     const [provider] = await db
       .select({ id: providersTable.id })
       .from(providersTable)
       .where(and(eq(providersTable.id, payment.providerId), eq(providersTable.userId, req.userId!)));
     allowed = Boolean(provider);
   }
-  if (verification && req.userRole === "admin") allowed = true;
-  if (verification && req.userId && req.userRole !== "admin") {
+  if (verification && role === "admin") allowed = true;
+  if (verification && req.userId && role !== "admin") {
     const [provider] = await db.select({ id: providersTable.id }).from(providersTable).where(and(eq(providersTable.id, verification.providerId), eq(providersTable.userId, req.userId)));
     allowed = Boolean(provider);
   }
