@@ -68,8 +68,11 @@ export function registerPhoneAuthRoutes(app: Express) {
       return res.status(401).json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية" });
     }
 
-    pending.delete(phone);
     const role = saved.role === "provider" || req.body?.role === "provider" ? "provider" : "client";
+    if (role === "provider" && !String(req.body?.name ?? "").trim()) {
+      return res.json({ needsRegistration: true, role: "provider" });
+    }
+    pending.delete(phone);
     const user = userFor(phone, { ...(req.body ?? {}), role });
     const tokenPayload = { phone, issuedAt: Date.now(), role: user.role, name: user.name, city: user.city, specialty: user.specialty };
     const token = `phone_${Buffer.from(JSON.stringify(tokenPayload)).toString("base64url")}`;
