@@ -8,6 +8,11 @@ android {
     namespace = "com.fazaa.nativeapp"
     compileSdk = 36
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
     defaultConfig {
         applicationId = "com.fazaa.nativeapp"
         minSdk = 26
@@ -20,6 +25,8 @@ android {
     buildFeatures { compose = true; buildConfig = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
+
+kotlin { jvmToolchain(21) }
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2025.09.00")

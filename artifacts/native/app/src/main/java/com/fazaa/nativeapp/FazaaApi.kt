@@ -21,9 +21,9 @@ class FazaaApi(private val baseUrl: String) {
         return List(array.length()) { i -> array.getJSONObject(i).toProvider() }
     }
 
-    suspend fun provider(id: Int): Provider = get("/providers/$id").toProvider()
+    suspend fun provider(id: Int): Provider = JSONObject(get("/providers/$id")).toProvider()
 
-    suspend fun login(phone: String, password: String): Session = post("/auth/login", JSONObject().put("phone", phone).put("password", password)).let {
+    suspend fun login(phone: String, password: String): Session = JSONObject(post("/auth/login", JSONObject().put("phone", phone).put("password", password))).let {
         Session(it.getString("token"), it.getJSONObject("user").toUser())
     }
 
