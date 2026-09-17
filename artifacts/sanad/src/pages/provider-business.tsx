@@ -62,6 +62,7 @@ const advertisementPackages: Array<{ id: string; title: string; days: number; pl
   { id: "standard", title: "إعلان عادي", days: 7, placement: "داخل نتائج الفئة", description: "حل مناسب للظهور الأساسي" },
   { id: "featured", title: "إعلان مميز", days: 14, placement: "ترتيب أعلى وشارة مميز", description: "ظهور أقوى لمدة أسبوعين" },
   { id: "homepage", title: "إعلان رئيسي", days: 30, placement: "الصفحة الرئيسية والفئة", description: "أوسع ظهور داخل فزعة" },
+  { id: "vip", title: "إعلان VIP", days: 60, placement: "أعلى الصفحة الرئيسية", description: "أعلى أولوية وظهور" },
 ];
 
 export default function ProviderBusiness() {
@@ -90,6 +91,8 @@ export default function ProviderBusiness() {
     budget: "",
   });
   const [adPackages, setAdPackages] = useState(advertisementPackages);
+  const [adImageFile, setAdImageFile] = useState<File | null>(null);
+  const [isUploadingAdImage, setIsUploadingAdImage] = useState(false);
   useEffect(() => { const token = localStorage.getItem("fazaah_token"); fetch("/api/commercial-plans?kind=advertisement", { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then((response) => response.ok ? response.json() : []).then((rows: Array<{ code: string; name: string; description: string; durationDays: number }>) => { if (rows.length) setAdPackages(rows.map((row) => ({ id: row.code, title: row.name, days: row.durationDays, placement: row.description, description: row.description }))); }).catch(() => undefined); }, []);
 
   const selectedPlan = useMemo(() => plans.find((plan) => plan.id === paymentPlan), [plans, paymentPlan]);
@@ -139,12 +142,17 @@ export default function ProviderBusiness() {
     }
   };
 
-  const submitAd = (event: React.FormEvent) => {
+  const submitAd = async (event: React.FormEvent) => {
     event.preventDefault();
     const budget = Number(adForm.budget);
     if (!adForm.title.trim() || !adForm.city.trim() || !Number.isFinite(budget) || budget <= 0) {
       toast({ title: "أكمل بيانات الإعلان", description: "العنوان والمدينة والميزانية مطلوبة.", variant: "destructive" });
       return;
+    }
+    let imageUrl: string | null = null;
+    if (adImageFile) {
+      setIsUploadingAdImage(true);
+      try { const upload = await requestUploadUrl({ name: adImageFile.name, size: adImageFile.size, contentType: adImageFile.type || "image/jpeg" }); const response = await fetch(upload.uploadURL, { method: "PUT", headers: { "Content-Type": adImageFile.type || "image/jpeg" }, body: adImageFile }); if (!response.ok) throw new Error("تعذر رفع صورة الإعلان"); imageUrl = upload.objectPath; } catch (error) { toast({ title: "تعذر رفع صورة الإعلان", description: error instanceof Error ? error.message : "حاول مرة أخرى.", variant: "destructive" }); return; } finally { setIsUploadingAdImage(false); }
     }
     createAd.mutate(
       {
@@ -158,12 +166,12 @@ export default function ProviderBusiness() {
           plan: adForm.plan,
           durationDays: adForm.durationDays,
           budget,
-          imageUrl: null,
+          imageUrl,
         },
       },
       {
         onSuccess: () => {
-          setAdForm({ title: "", description: "", city: "", district: "", plan: "standard", durationDays: 7, budget: "" });
+          setAdForm({ title: "", description: "", city: "", district: "", plan: "standard", durationDays: 7, budget: "" }); setAdImageFile(null);
           refetchAds();
           toast({ title: "تم إرسال الإعلان", description: "سيظهر بعد اعتماد الإدارة واستلام الدفع." });
         },
@@ -261,6 +269,7 @@ export default function ProviderBusiness() {
         <section className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3"><Megaphone className="h-5 w-5 text-primary" /><div><h2 className="font-black">إنشاء إعلان مدفوع</h2><p className="mt-1 text-xs text-muted-foreground">يظهر بوضوح كإعلان بعد اعتماد الإدارة.</p></div></div>
           <form onSubmit={submitAd} className="mt-4 space-y-3">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 text-xs"><Upload className="h-4 w-4 text-primary" /><span className="flex-1">{adImageFile ? adImageFile.name : "إضافة صورة رئيسية للإعلان أو من أعمالك"}</span><input type="file" accept="image/*" className="sr-only" onChange={(event) => setAdImageFile(event.target.files?.[0] ?? null)} /></label>
             <Input value={adForm.title} onChange={(event) => setAdForm({ ...adForm, title: event.target.value })} placeholder="عنوان الإعلان" className="h-11 rounded-xl" />
             <Textarea value={adForm.description} onChange={(event) => setAdForm({ ...adForm, description: event.target.value })} placeholder="وصف مختصر للخدمة" className="rounded-xl" />
             <div className="grid grid-cols-2 gap-2"><Input value={adForm.city} onChange={(event) => setAdForm({ ...adForm, city: event.target.value })} placeholder="المدينة" className="h-11 rounded-xl" /><Input value={adForm.district} onChange={(event) => setAdForm({ ...adForm, district: event.target.value })} placeholder="المنطقة" className="h-11 rounded-xl" /></div>
@@ -289,7 +298,7 @@ export default function ProviderBusiness() {
             <Input type="number" min="1" step="1" value={adForm.budget} onChange={(event) => setAdForm({ ...adForm, budget: event.target.value })} placeholder="مبلغ الإعلان بالريال اليمني" className="h-11 rounded-xl" />
             <Button type="submit" variant="outline" className="h-11 w-full rounded-xl" disabled={createAd.isPending}><Megaphone className="ml-2 h-4 w-4" />إرسال الإعلان للمراجعة</Button>
           </form>
-          <div className="mt-5 space-y-2">{ads.length === 0 ? <p className="text-center text-xs text-muted-foreground">ستظهر إعلاناتك هنا.</p> : ads.map((ad) => <div key={ad.id} className="rounded-xl border border-border px-3 py-3 text-xs"><div className="flex items-center justify-between gap-3"><span className="font-bold">{ad.title}</span><span className="text-muted-foreground">{adStatus[ad.status] ?? ad.status}</span></div><p className="mt-2 text-muted-foreground">#{ad.id} · {ad.plan === "standard" ? "عادي" : ad.plan === "featured" ? "مميز" : "رئيسي"} · {ad.durationDays} يوماً · <b className="text-foreground">{ad.budget.toLocaleString("ar-YE")} ريال</b></p></div>)}</div>
+          <div className="mt-5 space-y-2">{ads.length === 0 ? <p className="text-center text-xs text-muted-foreground">ستظهر إعلاناتك هنا.</p> : ads.map((ad) => <div key={ad.id} className="rounded-xl border border-border px-3 py-3 text-xs"><div className="flex items-center justify-between gap-3"><span className="font-bold">{ad.title}</span><span className="text-muted-foreground">{adStatus[ad.status] ?? ad.status}</span></div>{ad.imageUrl && <img src={ad.imageUrl} alt="" className="mt-3 h-28 w-full rounded-xl object-cover" />}<p className="mt-2 text-muted-foreground">#{ad.id} · {ad.plan === "standard" ? "عادي" : ad.plan === "featured" ? "مميز" : ad.plan === "homepage" ? "رئيسي" : "VIP"} · {ad.durationDays} يوماً · <b className="text-foreground">{ad.budget.toLocaleString("ar-YE")} ريال</b></p><div className="mt-3 grid grid-cols-4 gap-2 text-center"><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.impressions ?? 0}</b><span className="text-[10px] text-muted-foreground">ظهور</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.clicks ?? 0}</b><span className="text-[10px] text-muted-foreground">نقرات</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.callClicks ?? 0}</b><span className="text-[10px] text-muted-foreground">اتصالات</span></div><div className="rounded-lg bg-muted/50 p-2"><b className="block">{(ad as any).metrics?.whatsappClicks ?? 0}</b><span className="text-[10px] text-muted-foreground">واتساب</span></div></div></div>)}</div>
         </section>
 
         <div className="flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">

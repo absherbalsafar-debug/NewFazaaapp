@@ -13,4 +13,5 @@ export const AdvertisementPlan = {
   standard: 'standard',
   featured: 'featured',
   homepage: 'homepage',
+  vip: 'vip',
 } as const;

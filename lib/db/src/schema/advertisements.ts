@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { providersTable } from "./providers";
 import { categoriesTable } from "./categories";
 
-export const advertisementPlanEnum = pgEnum("advertisement_plan", ["standard", "featured", "homepage"]);
+export const advertisementPlanEnum = pgEnum("advertisement_plan", ["standard", "featured", "homepage", "vip"]);
 export const advertisementStatusEnum = pgEnum("advertisement_status", ["pending", "active", "rejected", "expired"]);
 
 export const advertisementsTable = pgTable("advertisements", {
@@ -19,6 +19,7 @@ export const advertisementsTable = pgTable("advertisements", {
   plan: advertisementPlanEnum("plan").notNull().default("standard"),
   durationDays: integer("duration_days").notNull().default(7),
   budget: numeric("budget", { precision: 10, scale: 2 }).notNull(),
+  impressionsPurchased: integer("impressions_purchased").notNull().default(0),
   imageUrl: text("image_url"),
   status: advertisementStatusEnum("status").notNull().default("pending"),
   reviewNote: text("review_note"),

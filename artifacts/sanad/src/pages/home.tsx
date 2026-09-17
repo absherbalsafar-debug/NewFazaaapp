@@ -198,7 +198,9 @@ export default function Home() {
             <div className="space-y-2.5">
               {featuredAds.slice(0, 3).map((ad) => (
                 <Link key={ad.id} href={`/providers/${ad.providerId}`}>
-                  <div className="rounded-[18px] border border-[#eadba7] bg-[#fffdf4] px-4 py-3 shadow-[0_4px_12px_rgba(14,47,98,0.04)]">
+                  <div className="overflow-hidden rounded-[20px] border-2 border-[#eadba7] bg-gradient-to-l from-[#fffdf4] to-[#fff8e8] shadow-[0_8px_18px_rgba(14,47,98,0.08)]">
+                    {ad.imageUrl && <img src={ad.imageUrl} alt="" className="h-28 w-full object-cover" />}
+                    <div className="px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black text-[#0e2f62]">{ad.title}</p>
@@ -207,6 +209,7 @@ export default function Home() {
                       <span className="shrink-0 rounded-full bg-[#f5b916] px-2 py-1 text-[9px] font-black text-[#0e2f62]">إعلان</span>
                     </div>
                     {ad.description && <p className="mt-2 line-clamp-1 text-[11px] text-[#60728a]">{ad.description}</p>}
+                    </div>
                   </div>
                 </Link>
               ))}

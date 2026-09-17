@@ -229,6 +229,7 @@ export const AdvertisementPlan = {
   standard: 'standard',
   featured: 'featured',
   homepage: 'homepage',
+  vip: 'vip',
 } as const;
 
 export type AdvertisementStatus = typeof AdvertisementStatus[keyof typeof AdvertisementStatus];
@@ -277,6 +278,7 @@ export const AdvertisementInputPlan = {
   standard: 'standard',
   featured: 'featured',
   homepage: 'homepage',
+  vip: 'vip',
 } as const;
 
 export type AdvertisementInputDurationDays = typeof AdvertisementInputDurationDays[keyof typeof AdvertisementInputDurationDays];
@@ -286,6 +288,7 @@ export const AdvertisementInputDurationDays = {
   NUMBER_7: 7,
   NUMBER_14: 14,
   NUMBER_30: 30,
+  NUMBER_60: 60,
 } as const;
 
 export interface AdvertisementInput {

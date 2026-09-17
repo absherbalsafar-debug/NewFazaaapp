@@ -1314,7 +1314,7 @@ components:
           type: ["string", "null"]
         plan:
           type: string
-          enum: [standard, featured, homepage]
+          enum: [standard, featured, homepage, vip]
         durationDays:
           type: integer
         budget:
@@ -1353,10 +1353,10 @@ components:
           type: ["integer", "null"]
         plan:
           type: string
-          enum: [standard, featured, homepage]
+          enum: [standard, featured, homepage, vip]
         durationDays:
           type: integer
-          enum: [7, 14, 30]
+          enum: [7, 14, 30, 60]
         budget:
           type: number
         imageUrl:
