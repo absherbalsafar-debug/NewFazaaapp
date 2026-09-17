@@ -31,6 +31,7 @@ export default function AuthPhone() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState<string | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -69,7 +70,7 @@ export default function AuthPhone() {
         body: JSON.stringify({ phone: phone.trim() }),
       });
       if (data.otp) setDevOtp(data.otp);
-      setStep("otp");
+      setOtpSent(true);
       toast({ title: "تم الإرسال", description: "تم إرسال رمز التحقق إلى هاتفك" });
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -203,9 +204,37 @@ export default function AuthPhone() {
                   onKeyDown={e => e.key === "Enter" && sendOtp()}
                 />
                 <Button onClick={sendOtp} disabled={loading} className="h-14 w-full rounded-2xl bg-primary text-base font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90">
-                  {loading ? "جاري الإرسال..." : "إرسال رمز التحقق"}
+                  {loading ? "جاري الإرسال..." : otpSent ? "إعادة إرسال الرمز" : "إرسال رمز التحقق"}
                   <ArrowLeft className="mr-2 h-4 w-4" />
                 </Button>
+                {otpSent && (
+                  <div className="space-y-4 rounded-[26px] border border-primary/10 bg-white p-4 shadow-[0_12px_28px_rgba(14,47,98,0.06)]">
+                    <div>
+                      <p className="mb-2 text-sm text-[#77766f]">أدخل رمز التأكيد هنا لإكمال الدخول</p>
+                      {devOtp && (
+                        <p className="mb-3 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-[#8a6925]">
+                          رمز التأكيد: <span className="font-mono text-base font-bold tracking-widest">{devOtp}</span>
+                        </p>
+                      )}
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="000000"
+                        maxLength={6}
+                        value={otp}
+                        onChange={e => setOtp(e.target.value.replace(/\D/g, ""))}
+                        className="h-14 rounded-2xl border-[#d4d9df] bg-white text-center font-mono text-2xl tracking-[0.5em] shadow-sm focus-visible:ring-primary"
+                        dir="ltr"
+                        autoFocus
+                        onKeyDown={e => e.key === "Enter" && verifyOtp()}
+                      />
+                    </div>
+                    <Button onClick={verifyOtp} disabled={loading || otp.length !== 6} className="h-14 w-full rounded-2xl bg-primary text-base font-extrabold text-primary-foreground shadow-[0_12px_26px_rgba(14,47,98,0.16)] hover:bg-primary/90">
+                      {loading ? "جاري التحقق..." : "تأكيد الدخول"}
+                      <Check className="mr-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </>
             )}
 
