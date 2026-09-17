@@ -136,6 +136,9 @@ export default function NewRequest() {
                 <AlignLeft className="w-5 h-5 text-primary" />
                 تفاصيل الخدمة
               </h2>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-800">
+                فزعة تربطك بالمهني فقط. سيتم الاتفاق على السعر والتنفيذ مباشرة عبر الاتصال أو واتساب، ولا يتم الدفع مقابل الخدمة داخل التطبيق.
+              </div>
               
               <FormField
                 control={form.control}

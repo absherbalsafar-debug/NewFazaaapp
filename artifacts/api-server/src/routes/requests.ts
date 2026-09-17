@@ -3,7 +3,6 @@ import { db, serviceRequestsTable, usersTable, providersTable, categoriesTable, 
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAuth, requireRole, type AuthRequest } from "../middlewares/auth";
 import { CreateRequestBody, ListRequestsQueryParams, GetRequestParams, UpdateRequestParams, UpdateRequestBody } from "@workspace/api-zod";
-import { createCommissionForCompletedRequest } from "./commissions";
 
 const router: IRouter = Router();
 
@@ -66,6 +65,7 @@ router.get("/requests", requireAuth, async (req: AuthRequest, res): Promise<void
 });
 
 router.post("/requests", requireAuth, requireRole("client"), async (req: AuthRequest, res): Promise<void> => {
+  // Requests only connect clients with providers. Pricing, payment, and execution happen outside Fazaa.
   const parsed = CreateRequestBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const d = parsed.data;
@@ -166,7 +166,6 @@ router.patch("/requests/:id", requireAuth, async (req: AuthRequest, res): Promis
       .update(providersTable)
       .set({ completedJobs: sql`${providersTable.completedJobs} + 1` })
       .where(eq(providersTable.id, r.providerId));
-    await createCommissionForCompletedRequest(r.id, r.providerId, r.agreedAmount);
   }
 
   const [updated] = await db

@@ -188,7 +188,11 @@ router.get("/subscription-plans", (_req, res) => {
   res.json(subscriptionPlans);
 });
 
-router.get("/payment-wallets", requireAuth, async (_req: AuthRequest, res): Promise<void> => {
+router.get("/payment-wallets", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  if (req.userRole !== "provider") {
+    res.status(403).json({ error: "وسائل الدفع متاحة للمهنيين فقط" });
+    return;
+  }
   res.json(await listWalletSettings());
 });
 

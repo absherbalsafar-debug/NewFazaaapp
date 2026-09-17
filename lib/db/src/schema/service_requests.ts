@@ -15,7 +15,6 @@ export const serviceRequestsTable = pgTable("service_requests", {
   status: requestStatusEnum("status").notNull().default("pending"),
   serviceType: text("service_type").notNull(),
   description: text("description").notNull(),
-  agreedAmount: numeric("agreed_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   city: text("city").notNull(),
   district: text("district").notNull(),
   lat: numeric("lat", { precision: 10, scale: 7 }),
