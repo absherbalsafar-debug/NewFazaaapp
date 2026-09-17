@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -130,21 +131,42 @@ private fun NativeRouteScreen(route: String, onBack: () -> Unit, onNavigate: (St
 
 @Composable
 private fun WelcomeScreen(onStart: (String) -> Unit) {
+    var step by remember { mutableStateOf(0) }
     var role by remember { mutableStateOf("client") }
-    Column(modifier = Modifier.fillMaxSize().background(FazaaBackground).padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(34.dp))
-        BrandMark(large = true)
-        Spacer(Modifier.height(24.dp))
-        Text("أهلاً وسهلاً بك في", color = FazaaNavy, fontSize = 28.sp, fontWeight = FontWeight.Black)
-        Text("فزعة", color = FazaaGold, fontSize = 38.sp, fontWeight = FontWeight.Black)
-        Text("منصة توصلك بأفضل المهنيين والفنيين لإنجاز احتياجاتك بسهولة وسرعة.", color = Color(0xFF637087), textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
-        Spacer(Modifier.height(28.dp))
-        RoleCard("أبحث عن خدمة", "أصل إلى الشخص المناسب بثقة", role == "client") { role = "client" }
-        Spacer(Modifier.height(12.dp))
-        RoleCard("أقدّم خدمة", "أحوّل خبرتي إلى فرص حقيقية", role == "provider") { role = "provider" }
-        Spacer(Modifier.weight(1f))
-        Button(onClick = { onStart(role) }, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = FazaaNavy), shape = RoundedCornerShape(18.dp)) { Text("التسجيل برقم الهاتف", fontWeight = FontWeight.Bold) }
-        Text("تجربة آمنة ومصممة لك", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp))
+    val gold = Color(0xFFF5BA20)
+    if (step == 0) {
+        Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F8FA)).padding(horizontal = 20.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            BrandMark(large = true)
+            Text("خدمة تستحق الثقة", color = Color(0xFFA17B29), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+            Text("أهلاً وسهلاً بك في", color = FazaaNavy, fontSize = 31.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
+            Text("فزعة", color = Color(0xFFB08625), fontSize = 38.sp, fontWeight = FontWeight.Black)
+            Text("منصة توصلك بأفضل المهنيين والفنيين لإنجاز احتياجاتك بسهولة وسرعة.", color = Color(0xFF637087), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 10.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(270.dp).padding(top = 18.dp).clip(RoundedCornerShape(30.dp))) {
+                androidx.compose.foundation.Image(painterResource(com.fazaa.app.R.drawable.fazaah_worker_hero), null, modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                Box(Modifier.fillMaxSize().background(Color.White.copy(alpha=.18f)))
+            }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = { step = 1 }, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = gold), shape = RoundedCornerShape(16.dp)) { Text("لنبدأ", color = FazaaNavy, fontWeight = FontWeight.ExtraBold) }
+            Text("تجربة آمنة ومصممة لك", color = Color(0xFF8E8B82), fontSize = 10.sp, modifier = Modifier.padding(top = 10.dp))
+            TextButton(onClick = { step = 1 }) { Text("تخطي", color = Color(0xFF8E8B82), fontSize = 11.sp) }
+        }
+    } else {
+        Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F8FA)).padding(horizontal = 20.dp, vertical = 26.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { step = 0 }) { Icon(Icons.Default.ArrowForward, "رجوع", tint = FazaaNavy) }
+                Text("٠٢ / ٠٢", color = Color(0xFF8E8B82), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
+            BrandMark()
+            Text("مرحباً بك في فزعة", color = Color(0xFFA17B29), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
+            Text("اختر تجربتك،\nونبدأ معاً.", color = FazaaNavy, fontSize = 34.sp, fontWeight = FontWeight.Black, lineHeight = 41.sp, modifier = Modifier.padding(top = 12.dp))
+            Text("أخبرنا كيف ستستخدم فزعة لنجهز لك رحلة تناسب احتياجك من أول خطوة.", color = Color(0xFF77766F), fontSize = 14.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 12.dp))
+            Spacer(Modifier.height(28.dp))
+            RoleCard("أبحث عن خدمة", "أصل إلى الشخص المناسب بثقة", role == "client") { role = "client" }
+            Spacer(Modifier.height(12.dp))
+            RoleCard("أقدّم خدمة", "أحوّل خبرتي إلى فرص حقيقية", role == "provider") { role = "provider" }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = { onStart(role) }, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = FazaaNavy), shape = RoundedCornerShape(16.dp)) { Text("التسجيل برقم الهاتف", fontWeight = FontWeight.ExtraBold) }
+        }
     }
 }
 

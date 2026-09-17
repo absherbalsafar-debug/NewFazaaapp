@@ -134,7 +134,7 @@ object UnavailableClientApi : ClientApi {
 }
 
 @Composable
-fun NativeClientPage(route: String, api: ClientApi = UnavailableClientApi, onNavigate: (String) -> Unit = {}, onBack: () -> Unit = {}) {
+fun NativeClientPage(route: String, api: ClientApi = RealClientApi, onNavigate: (String) -> Unit = {}, onBack: () -> Unit = {}) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         when {
             route == "/" || route == "/home" -> ClientHomePage(api, onNavigate)
