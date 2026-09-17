@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { usersTable } from "./users";
 import { categoriesTable } from "./categories";
 
-export const verificationStatusEnum = pgEnum("verification_status", ["pending", "approved", "rejected"]);
+export const verificationStatusEnum = pgEnum("verification_status", ["pending", "under_review", "changes_requested", "approved", "rejected", "suspended", "expired"]);
 export const professionalStatusEnum = pgEnum("professional_status", ["draft", "incomplete", "awaiting_payment", "under_review", "approved", "rejected", "suspended", "expired"]);
 
 export const providersTable = pgTable("providers", {
@@ -20,6 +20,10 @@ export const providersTable = pgTable("providers", {
   freeSlotNumber: integer("free_slot_number"),
   isVerified: boolean("is_verified").notNull().default(false),
   verificationStatus: verificationStatusEnum("verification_status").notNull().default("pending"),
+  verificationContacted: boolean("verification_contacted").notNull().default(false),
+  verificationContactedAt: timestamp("verification_contacted_at", { withTimezone: true }),
+  verificationContactedBy: integer("verification_contacted_by").references(() => usersTable.id, { onDelete: "set null" }),
+  verificationContactNote: text("verification_contact_note"),
   professionalStatus: professionalStatusEnum("professional_status").notNull().default("incomplete"),
   isSubscriptionActive: boolean("is_subscription_active").notNull().default(false),
   isAvailable: boolean("is_available").notNull().default(true),

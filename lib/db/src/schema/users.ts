@@ -2,7 +2,7 @@ import { pgTable, serial, text, timestamp, boolean, pgEnum } from "drizzle-orm/p
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const userRoleEnum = pgEnum("user_role", ["client", "provider", "admin"]);
+export const userRoleEnum = pgEnum("user_role", ["client", "provider", "admin", "verification_staff"]);
 export const userStatusEnum = pgEnum("user_status", ["active", "pending", "banned"]);
 
 export const usersTable = pgTable("users", {

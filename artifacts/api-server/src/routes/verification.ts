@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
-import { db, providersTable, providerVerificationDocumentsTable } from "@workspace/db";
-import { requireAdmin, requireAuth, type AuthRequest } from "../middlewares/auth";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { db, providersTable, providerVerificationDocumentsTable, providerVerificationAuditTable, usersTable, categoriesTable } from "@workspace/db";
+import { requireAdmin, requireAuth, requireVerificationStaff, type AuthRequest } from "../middlewares/auth";
 
 const router: IRouter = Router();
 const documentTypes = new Set(["id_front", "id_back", "selfie", "portfolio", "certificate"]);
@@ -13,6 +13,10 @@ async function providerForUser(userId: number) {
 
 function serialize(row: typeof providerVerificationDocumentsTable.$inferSelect) {
   return { id: row.id, providerId: row.providerId, type: row.type, objectPath: row.objectPath, originalName: row.originalName, status: row.status, reviewerNote: row.reviewerNote ?? null, reviewedAt: row.reviewedAt?.toISOString() ?? null, createdAt: row.createdAt.toISOString() };
+}
+
+async function audit(providerId: number, actorId: number, action: typeof providerVerificationAuditTable.$inferInsert["action"], details: { documentId?: number; fromStatus?: string | null; toStatus?: string | null; note?: string | null } = {}) {
+  await db.insert(providerVerificationAuditTable).values({ providerId, actorId, action, documentId: details.documentId, fromStatus: details.fromStatus ?? null, toStatus: details.toStatus ?? null, note: details.note ?? null });
 }
 
 router.get("/providers/me/verification-documents", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -30,30 +34,82 @@ router.post("/providers/me/verification-documents", requireAuth, async (req: Aut
   const provider = await providerForUser(req.userId!);
   if (!provider) { res.status(404).json({ error: "ملف المهني غير موجود" }); return; }
   const [document] = await db.insert(providerVerificationDocumentsTable).values({ providerId: provider.id, type, objectPath, originalName: String(originalName).slice(0, 255) }).returning();
-  await db.update(providersTable).set({ verificationStatus: "pending", isVerified: false }).where(eq(providersTable.id, provider.id));
+  await db.update(providersTable).set({ verificationStatus: "under_review", isVerified: false }).where(eq(providersTable.id, provider.id));
+  await audit(provider.id, req.userId!, "submitted", { documentId: document.id, toStatus: "pending" });
   res.status(201).json(serialize(document));
 });
 
-router.get("/admin/providers/:id/verification-documents", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+router.get("/admin/verification/queue", requireAuth, requireVerificationStaff, async (_req: AuthRequest, res): Promise<void> => {
+  const rows = await db.select({ provider: providersTable, user: usersTable, category: categoriesTable })
+    .from(providersTable)
+    .innerJoin(usersTable, eq(providersTable.userId, usersTable.id))
+    .innerJoin(categoriesTable, eq(providersTable.categoryId, categoriesTable.id))
+    .where(inArray(providersTable.verificationStatus, ["pending", "under_review", "changes_requested"]))
+    .orderBy(desc(providersTable.updatedAt));
+  res.json(rows.map(({ provider, user, category }) => ({
+    providerId: provider.id,
+    userId: user.id,
+    name: user.name,
+    phone: user.phone,
+    categoryName: category.name,
+    city: provider.city,
+    verificationStatus: provider.verificationStatus,
+    verificationContacted: provider.verificationContacted,
+    verificationContactNote: provider.verificationContactNote,
+    updatedAt: provider.updatedAt.toISOString(),
+  })));
+});
+
+router.get("/admin/providers/:id/verification-documents", requireAuth, requireVerificationStaff, async (req: AuthRequest, res): Promise<void> => {
   const providerId = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
   if (!Number.isInteger(providerId)) { res.status(400).json({ error: "Invalid id" }); return; }
   const rows = await db.select().from(providerVerificationDocumentsTable).where(eq(providerVerificationDocumentsTable.providerId, providerId)).orderBy(desc(providerVerificationDocumentsTable.createdAt));
   res.json(rows.map(serialize));
 });
 
-router.patch("/admin/verification-documents/:id", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+router.patch("/admin/verification-documents/:id", requireAuth, requireVerificationStaff, async (req: AuthRequest, res): Promise<void> => {
   const id = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
   const { status, reviewerNote = null } = req.body ?? {};
-  if (!Number.isInteger(id) || !["pending", "approved", "rejected"].includes(status)) { res.status(400).json({ error: "بيانات المراجعة غير صالحة" }); return; }
+  if (!Number.isInteger(id) || !["pending", "approved", "rejected", "hidden"].includes(status)) { res.status(400).json({ error: "بيانات المراجعة غير صالحة" }); return; }
   const [document] = await db.select().from(providerVerificationDocumentsTable).where(eq(providerVerificationDocumentsTable.id, id));
   if (!document) { res.status(404).json({ error: "الوثيقة غير موجودة" }); return; }
   const [updated] = await db.update(providerVerificationDocumentsTable).set({ status, reviewerNote: reviewerNote == null ? null : String(reviewerNote).slice(0, 1000), reviewedBy: req.userId!, reviewedAt: new Date() }).where(eq(providerVerificationDocumentsTable.id, id)).returning();
-  if (status === "rejected") await db.update(providersTable).set({ isVerified: false, verificationStatus: "rejected" }).where(eq(providersTable.id, document.providerId));
+  await audit(document.providerId, req.userId!, status === "hidden" ? "hidden" : status === "approved" ? "approved" : "rejected", { documentId: id, fromStatus: document.status, toStatus: status, note: reviewerNote });
+  if (status === "rejected") await db.update(providersTable).set({ isVerified: false, verificationStatus: "changes_requested" }).where(eq(providersTable.id, document.providerId));
   if (status === "approved") {
     const pending = await db.select({ id: providerVerificationDocumentsTable.id }).from(providerVerificationDocumentsTable).where(and(eq(providerVerificationDocumentsTable.providerId, document.providerId), eq(providerVerificationDocumentsTable.status, "pending")));
     if (pending.length === 0) await db.update(providersTable).set({ isVerified: true, verificationStatus: "approved" }).where(eq(providersTable.id, document.providerId));
   }
   res.json(serialize(updated));
+});
+
+router.patch("/admin/providers/:id/verification", requireAuth, requireVerificationStaff, async (req: AuthRequest, res): Promise<void> => {
+  const providerId = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  const { status, contacted, contactNote } = req.body ?? {};
+  const allowed = ["under_review", "changes_requested", "approved", "rejected", "suspended", "expired"];
+  if (!Number.isInteger(providerId) || (status !== undefined && !allowed.includes(status)) || (contacted !== undefined && typeof contacted !== "boolean")) { res.status(400).json({ error: "بيانات التحقق غير صالحة" }); return; }
+  const [provider] = await db.select().from(providersTable).where(eq(providersTable.id, providerId));
+  if (!provider) { res.status(404).json({ error: "المهني غير موجود" }); return; }
+  const nextStatus = status ?? provider.verificationStatus;
+  const isApproved = nextStatus === "approved";
+  const [updated] = await db.update(providersTable).set({
+    verificationStatus: nextStatus,
+    isVerified: isApproved,
+    verificationContacted: contacted ?? provider.verificationContacted,
+    verificationContactedAt: contacted === true ? new Date() : provider.verificationContactedAt,
+    verificationContactedBy: contacted === true ? req.userId! : provider.verificationContactedBy,
+    verificationContactNote: contactNote == null ? provider.verificationContactNote : String(contactNote).slice(0, 1000),
+  }).where(eq(providersTable.id, providerId)).returning();
+  if (status && status !== provider.verificationStatus) await audit(providerId, req.userId!, status === "approved" ? "approved" : status === "changes_requested" ? "changes_requested" : status === "rejected" ? "rejected" : "review_started", { fromStatus: provider.verificationStatus, toStatus: status, note: contactNote });
+  if (contacted !== undefined || contactNote !== undefined) await audit(providerId, req.userId!, "contact_updated", { note: contactNote });
+  res.json({ providerId: updated.id, verificationStatus: updated.verificationStatus, isVerified: updated.isVerified, verificationContacted: updated.verificationContacted, verificationContactNote: updated.verificationContactNote });
+});
+
+router.get("/admin/providers/:id/verification-audit", requireAuth, requireVerificationStaff, async (req: AuthRequest, res): Promise<void> => {
+  const providerId = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+  if (!Number.isInteger(providerId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const rows = await db.select().from(providerVerificationAuditTable).where(eq(providerVerificationAuditTable.providerId, providerId)).orderBy(desc(providerVerificationAuditTable.createdAt));
+  res.json(rows);
 });
 
 export default router;

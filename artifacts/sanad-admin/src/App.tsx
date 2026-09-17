@@ -58,6 +58,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import NotFound from '@/pages/not-found';
+import VerificationCenter from '@/pages/verification-center';
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ const navItems = [
   { href: '/', label: 'نظرة عامة', caption: 'صحة المنصة', icon: LayoutDashboard },
   { href: '/users', label: 'المستخدمون', caption: 'الحسابات والنشاط', icon: UsersRound },
   { href: '/providers', label: 'المهنيون', caption: 'التوثيق والاعتماد', icon: BadgeCheck },
+  { href: '/verification', label: 'مركز التحقق', caption: 'الوثائق والاعتماد', icon: ShieldCheck },
   { href: '/business', label: 'المدفوعات والتجاري', caption: 'المحافظ والإعلانات', icon: WalletCards },
 ];
 
@@ -597,7 +599,7 @@ function EmptyState({ icon: Icon, title, description }: { icon: typeof UsersRoun
 function Router() {
   const [location] = useLocation();
   const hasToken = Boolean(localStorage.getItem('fazaah_token'));
-  return <ErrorBoundary resetKey={location}><Shell>{hasToken ? <Switch><Route path="/" component={Overview} /><Route path="/users" component={UsersPage} /><Route path="/providers" component={ProvidersPage} /><Route path="/business" component={BusinessPage} /><Route component={NotFound} /></Switch> : <AccessRequired />}</Shell></ErrorBoundary>;
+  return <ErrorBoundary resetKey={location}><Shell>{hasToken ? <Switch><Route path="/" component={Overview} /><Route path="/users" component={UsersPage} /><Route path="/providers" component={ProvidersPage} /><Route path="/verification" component={VerificationCenter} /><Route path="/business" component={BusinessPage} /><Route component={NotFound} /></Switch> : <AccessRequired />}</Shell></ErrorBoundary>;
 }
 
 function App() {
